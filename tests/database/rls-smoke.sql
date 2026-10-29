@@ -314,7 +314,79 @@ BEGIN
   IF NOT EXISTS(SELECT 1 FROM community_channels WHERE community_id=v_community_one AND slug='general') THEN
     RAISE EXCEPTION 'Community general channel was not created';
   END IF;
+
+  -- Exercise the database-authoritative LiveKit call invitation and membership state.
+  DECLARE
+    v_call_id uuid := '80000000-0000-4000-8000-000000000001';
+    v_other_call uuid := '80000000-0000-4000-8000-000000000002';
+    v_joined record;
+    v_call_state text;
+    v_joined_count integer;
+  BEGIN
+    SELECT public.create_call_session(
+      v_call_id,v_group_one,v_creator,'video',array[v_other,v_third]
+    ) INTO v_call_id;
+    IF NOT EXISTS(
+      SELECT 1 FROM call_participants WHERE call_id=v_call_id AND profile_id=v_creator AND last_state='joined'
+    ) THEN RAISE EXCEPTION 'Call initiator was not persisted as joined'; END IF;
+    IF (SELECT count(*) FROM call_participants WHERE call_id=v_call_id AND last_state='ringing')<>2 THEN
+      RAISE EXCEPTION 'Call invitations were not persisted for all invited participants';
+    END IF;
+    BEGIN
+      PERFORM public.create_call_session(
+        v_other_call,v_group_one,v_creator,'audio',array[v_other]
+      );
+      RAISE EXCEPTION 'Database permitted a second active call in the same conversation';
+    EXCEPTION WHEN OTHERS THEN
+      IF SQLERRM NOT LIKE '%CALL_ALREADY_ACTIVE%' THEN RAISE; END IF;
+    END;
+    SELECT * INTO v_joined FROM public.join_call_session(v_call_id,v_other);
+    IF v_joined.provider_room<>'zuno-call-'||replace(v_call_id::text,'-','')
+       OR v_joined.participant_count<>2 OR v_joined.state<>'active' THEN
+      RAISE EXCEPTION 'First invited call participant did not join correctly';
+    END IF;
+    SELECT * INTO v_joined FROM public.join_call_session(v_call_id,v_third);
+    IF v_joined.participant_count<>3 THEN RAISE EXCEPTION 'Second invited call participant did not join'; END IF;
+    PERFORM public.leave_call_session(v_call_id,v_other,false);
+    SELECT count(*) INTO v_joined_count FROM call_participants WHERE call_id=v_call_id AND left_at IS NULL AND last_state='joined';
+    IF v_joined_count<>2 THEN RAISE EXCEPTION 'Leaving one call participant changed other participant states'; END IF;
+    PERFORM public.leave_call_session(v_call_id,v_third,false);
+    PERFORM public.leave_call_session(v_call_id,v_creator,false);
+    SELECT state INTO v_call_state FROM call_sessions WHERE id=v_call_id;
+    IF v_call_state<>'ended' THEN RAISE EXCEPTION 'Call did not end when all joined participants left'; END IF;
+    BEGIN
+      PERFORM public.join_call_session(v_call_id,v_other);
+      RAISE EXCEPTION 'Database permitted joining an ended call';
+    EXCEPTION WHEN OTHERS THEN
+      IF SQLERRM NOT LIKE '%CALL_NOT_JOINABLE%' THEN RAISE; END IF;
+    END;
+    IF has_function_privilege('authenticated','public.create_call_session(uuid,uuid,uuid,text,uuid[])','EXECUTE') THEN
+      RAISE EXCEPTION 'Authenticated clients can execute the privileged call creation RPC directly';
+    END IF;
+  END;
+
 END
 $conversation_community_checks$;
 
-SELECT 'ZUNO PostgreSQL migration + RLS + economy + moderation + messaging/community smoke checks passed' AS verification;
+DO $message_identity_checks$
+DECLARE
+  v_message uuid := '50000000-0000-4000-8000-000000000001';
+  v_other_conversation uuid := '40000000-0000-4000-8000-000000000099';
+BEGIN
+  INSERT INTO conversations(id,is_group) VALUES(v_other_conversation,false) ON CONFLICT(id) DO NOTHING;
+  BEGIN
+    UPDATE messages SET sender_id='10000000-0000-4000-8000-000000000002' WHERE id=v_message;
+    RAISE EXCEPTION 'Message sender identity mutation was allowed';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM NOT LIKE '%MESSAGE_IDENTITY_IMMUTABLE%' THEN RAISE; END IF;
+  END;
+  BEGIN
+    UPDATE messages SET conversation_id=v_other_conversation WHERE id=v_message;
+    RAISE EXCEPTION 'Message conversation mutation was allowed';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM NOT LIKE '%MESSAGE_IDENTITY_IMMUTABLE%' THEN RAISE; END IF;
+  END;
+END
+$message_identity_checks$;
+
+SELECT 'ZUNO PostgreSQL migration + RLS + economy + moderation + messaging/community/call smoke checks passed' AS verification;

@@ -1,4 +1,30 @@
 -- Durable, access-controlled audio/video calls and sender-owned message edits.
+create or replace function public.enforce_message_identity_immutability()
+returns trigger
+language plpgsql security definer
+set search_path=public,pg_temp as $
+begin
+  if new.id is distinct from old.id
+     or new.conversation_id is distinct from old.conversation_id
+     or new.sender_id is distinct from old.sender_id
+     or new.created_at is distinct from old.created_at then
+    raise exception 'MESSAGE_IDENTITY_IMMUTABLE';
+  end if;
+  if old.deleted_at is not null
+     and (new.body is distinct from old.body
+       or new.attachments is distinct from old.attachments
+       or new.deleted_at is distinct from old.deleted_at) then
+    raise exception 'MESSAGE_ALREADY_DELETED';
+  end if;
+  return new;
+end;
+$;
+revoke all on function public.enforce_message_identity_immutability() from public,anon,authenticated;
+drop trigger if exists messages_identity_immutable on public.messages;
+create trigger messages_identity_immutable
+before update on public.messages
+for each row execute function public.enforce_message_identity_immutability();
+
 create index if not exists call_participants_active_idx
   on public.call_participants(call_id,last_state) where last_state='joined' and left_at is null;
 create index if not exists call_sessions_state_created_idx on public.call_sessions(state,created_at desc);
