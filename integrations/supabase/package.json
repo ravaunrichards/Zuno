@@ -4,6 +4,6 @@
   "private": true,
   "main": "index.js",
   "scripts": {
-    "check": "node --check index.js"
+    "check": "node --check index.js && node --check storage.js"
   }
 }
