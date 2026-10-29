@@ -10,7 +10,7 @@
     "dist": "node ../../scripts/build-web.js && electron-builder"
   },
   "devDependencies": {
-    "electron": "^42.11.16",
+    "electron": "^45.0.0",
     "electron-builder": "^26.15.0"
   },
   "build": {
