@@ -25,6 +25,80 @@ const config = load();
 const envCheck = validateRequired(config);
 if (!envCheck.ok) console.warn('[config] problems:', envCheck.problems.join('; '));
 
+
+/*
+ * Signup rate limits are deliberately small because ZUNO has email
+ * confirmation disabled for the app's signup flow. Never log passwords.
+ */
+const signupRateBuckets = new Map();
+const SIGNUP_RATE_WINDOW_MS = 60 * 60 * 1000;
+function signupBucketAllowed(key, limit, now = Date.now()) {
+  let bucket = signupRateBuckets.get(key);
+  if (!bucket || now - bucket.startedAt >= SIGNUP_RATE_WINDOW_MS) bucket = { startedAt: now, count: 0 };
+  if (bucket.count >= limit) {
+    signupRateBuckets.set(key, bucket);
+    return false;
+  }
+  bucket.count += 1;
+  signupRateBuckets.set(key, bucket);
+  if (signupRateBuckets.size > 5000) {
+    for (const [candidate, value] of signupRateBuckets) {
+      if (now - value.startedAt >= SIGNUP_RATE_WINDOW_MS) signupRateBuckets.delete(candidate);
+      if (signupRateBuckets.size <= 4000) break;
+    }
+  }
+  return true;
+}
+function signupRateLimited(req, email) {
+  const forwarded = typeof req.headers['x-forwarded-for'] === 'string'
+    ? req.headers['x-forwarded-for'].split(',').pop().trim() : '';
+  const remote = String(forwarded || (req.socket && req.socket.remoteAddress) || 'unknown').slice(0, 120);
+  const normalizedEmail = String(email || '').trim().toLowerCase();
+  const ipAllowed = signupBucketAllowed('signup-ip:' + remote, 30);
+  const emailAllowed = signupBucketAllowed('signup-email:' + remote + ':' + normalizedEmail, 5);
+  return !(ipAllowed && emailAllowed);
+}
+
+async function authProviderRequest(cfg, pathname, options = {}) {
+  const method = options.method || 'GET';
+  const key = options.key || cfg.supabase.serviceRoleKey;
+  const headers = { apikey: key, Accept: 'application/json' };
+  if (options.bearer !== false) headers.Authorization = 'Bearer ' + key;
+  const init = { method, headers };
+  if (options.body !== undefined && options.body !== null) {
+    headers['Content-Type'] = 'application/json';
+    init.body = JSON.stringify(options.body);
+  }
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), options.timeoutMs || 8000);
+  init.signal = controller.signal;
+  try {
+    const response = await fetch(new URL(pathname, cfg.supabase.url), init);
+    const raw = await response.text();
+    let payload = {};
+    try { payload = raw ? JSON.parse(raw) : {}; } catch (_) {}
+    return { ok: response.ok, status: response.status, payload };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function findAuthUserByEmail(cfg, email) {
+  const normalizedEmail = String(email || '').trim().toLowerCase();
+  // This search is only used after Supabase reports a duplicate email. Keep
+  // the page count bounded; the new ZUNO project has a small initial user set.
+  for (let page = 1; page <= 10; page += 1) {
+    const found = await authProviderRequest(cfg, '/auth/v1/admin/users?page=' + page + '&per_page=1000');
+    if (!found.ok) return null;
+    const users = Array.isArray(found.payload) ? found.payload : found.payload.users;
+    if (!Array.isArray(users)) return null;
+    const match = users.find((user) => String(user.email || '').trim().toLowerCase() === normalizedEmail);
+    if (match) return match;
+    if (users.length < 1000) return null;
+  }
+  return null;
+}
+
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const POST_KINDS = new Set(['short_video','long_video','photo','gallery','text','audio','story']);
 const AUDIENCES = new Set(['public','followers','private']);
@@ -181,6 +255,89 @@ const server = http.createServer(async (req, res) => {
         supabaseAnonKey: config.supabase.anonKey || null,
         apiBaseUrl: config.apiPublicBaseUrl || ''
       });
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/auth/signup') {
+      if (!config.supabase.url || !config.supabase.anonKey || !config.supabase.serviceRoleKey) {
+        return error(res, 503, 'AUTH_ADMIN_NOT_CONFIGURED', 'ZUNO registration is not fully configured. The API service must have SUPABASE_SERVICE_ROLE_KEY set server-side.');
+      }
+      const body = await readBody(req, 20000);
+      const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
+      const password = typeof body.password === 'string' ? body.password : '';
+      const username = typeof body.username === 'string' ? body.username.trim().toLowerCase() : '';
+      const displayName = typeof body.displayName === 'string' ? body.displayName.trim().slice(0, 80) : username;
+
+      if (email.length > 254 || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) {
+        return error(res, 400, 'SIGNUP_EMAIL_INVALID', 'Enter a valid email address.');
+      }
+      if (password.length < 8 || password.length > 128) {
+        return error(res, 400, 'SIGNUP_PASSWORD_INVALID', 'Use a password between 8 and 128 characters.');
+      }
+      if (!/^[a-z0-9_.]{3,30}$/.test(username)) {
+        return error(res, 400, 'SIGNUP_USERNAME_INVALID', 'Username must be 3–30 characters using letters, numbers, underscores or periods.');
+      }
+      if (signupRateLimited(req, email)) {
+        return error(res, 429, 'SIGNUP_RATE_LIMITED', 'Too many signup attempts. Wait before trying again.');
+      }
+
+      const created = await authProviderRequest(config, '/auth/v1/admin/users', {
+        method: 'POST',
+        body: {
+          email, password, email_confirm: true,
+          user_metadata: { username, display_name: displayName || username }
+        }
+      });
+
+      if (created.ok) {
+        return json(res, 201, {
+          ok: true, confirmed: true, alreadyExists: false,
+          user: { id: created.payload.id || null, email: created.payload.email || email }
+        });
+      }
+
+      const providerMessage = String(created.payload.message || created.payload.msg || created.payload.error_description || created.payload.error || '');
+      const providerCode = String(created.payload.code || created.payload.error_code || created.payload.error || '');
+      const duplicateEmail = /already registered|already exists|user exists|email.*(registered|exists)|duplicate/i.test(providerMessage + ' ' + providerCode);
+      if (!duplicateEmail) {
+        if (created.status === 429) return error(res, 429, 'SIGNUP_RATE_LIMITED', 'Signup is temporarily rate limited. Wait before trying again.');
+        return error(res, created.status >= 400 && created.status < 500 ? created.status : 503,
+          'SIGNUP_PROVIDER_FAILED', 'Supabase could not create the account. Check the details and try again.');
+      }
+
+      /*
+       * Earlier attempts may already have created an unconfirmed Auth user.
+       * Only activate that existing account after Supabase verifies that the
+       * supplied password is correct. This avoids confirming arbitrary emails
+       * or taking over someone else's pending signup.
+       */
+      const existing = await findAuthUserByEmail(config, email);
+      if (!existing || !existing.id) {
+        return error(res, 409, 'ACCOUNT_EXISTS', 'An account with this email already exists. Use the same password from that signup, or use Sign in if the account is active.');
+      }
+      const verified = await authProviderRequest(config, '/auth/v1/token?grant_type=password', {
+        method: 'POST', key: config.supabase.anonKey, bearer: false, body: { email, password }
+      });
+      if (verified.ok) {
+        if (!existing.email_confirmed_at && !existing.confirmed_at) {
+          const activated = await authProviderRequest(config, '/auth/v1/admin/users/' + encodeURIComponent(existing.id), {
+            method: 'PUT', body: { email_confirm: true }
+          });
+          if (!activated.ok) return error(res, 503, 'SIGNUP_ACTIVATION_FAILED', 'ZUNO could not activate this account. Try again.');
+        }
+        return json(res, 200, { ok: true, confirmed: true, alreadyExists: true, user: { id: existing.id, email } });
+      }
+      const verifyCode = String(verified.payload.code || verified.payload.error_code || verified.payload.error || '').toLowerCase();
+      const verifyMessage = String(verified.payload.message || verified.payload.msg || verified.payload.error_description || '').toLowerCase();
+      const passwordWasCorrect = verifyCode === 'email_not_confirmed'
+        || verifyCode === 'email_not_confirmed' || /email not confirmed|email_not_confirmed/.test(verifyMessage);
+      if (passwordWasCorrect) {
+        const activated = await authProviderRequest(config, '/auth/v1/admin/users/' + encodeURIComponent(existing.id), {
+          method: 'PUT', body: { email_confirm: true }
+        });
+        if (activated.ok) return json(res, 200, { ok: true, confirmed: true, alreadyExists: true, user: { id: existing.id, email } });
+        return error(res, 503, 'SIGNUP_ACTIVATION_FAILED', 'ZUNO could not activate this account. Try again.');
+      }
+      return error(res, 409, 'ACCOUNT_EXISTS', 'An account with this email already exists. Use its password to sign in; ZUNO will not change an account until its password is verified.');
     }
     if (req.method === 'GET' && url.pathname === '/api/payments/packages') {
       const result = await selectAdminRows(config, 'coin_packages', query({
