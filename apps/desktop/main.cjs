@@ -18,15 +18,27 @@ function createWindow() {
       webSecurity: true
     }
   });
+  const bundleIndex = path.join(webBundleDirectory(), 'index.html');
+  const { pathToFileURL } = require('node:url');
+  const ownDocumentUrl = pathToFileURL(bundleIndex).href;
   win.webContents.setWindowOpenHandler(({ url }) => {
-    if (url.startsWith('https://')) shell.openExternal(url);
+    try {
+      const target = new URL(url);
+      if (target.protocol === 'https:' && !target.username && !target.password) shell.openExternal(target.toString());
+    } catch (_) {}
     return { action: 'deny' };
   });
   win.webContents.on('will-navigate', (event, url) => {
-    const allowed = url.startsWith('file://') || url.startsWith('http://localhost:');
-    if (!allowed) event.preventDefault();
+    let target;
+    try { target = new URL(url); } catch (_) { event.preventDefault(); return; }
+    const normalizedPath = target.protocol === 'file:' ? target.href.split(/[?#]/, 1)[0] : '';
+    if (target.protocol === 'file:' && normalizedPath === ownDocumentUrl) return;
+    if (target.protocol === 'http:' && ['localhost','127.0.0.1'].includes(target.hostname) && !app.isPackaged) return;
+    event.preventDefault();
+    if (target.protocol === 'https:' && !target.username && !target.password) {
+      shell.openExternal(target.toString());
+    }
   });
-  const bundleIndex = path.join(webBundleDirectory(), 'index.html');
   win.loadFile(bundleIndex);
 }
 app.whenReady().then(() => {
