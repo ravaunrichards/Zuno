@@ -230,3 +230,58 @@
 .search-empty,.search-error,.search-note{font-size:10px;line-height:1.7;color:var(--muted);padding:9px}
 .search-error{color:#ff9caf}
 @media(max-width:640px){.global-search-wrap{min-width:0}.global-search-results{position:fixed;top:68px;left:10px;right:10px;max-height:calc(100dvh - 85px);}}
+
+.community-workspace{grid-column:1/-1;margin-top:18px;padding:17px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.018)}
+.community-workspace-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.community-workspace-heading h3{font-size:13px;margin:0}.community-workspace-heading p{font-size:9px;color:var(--muted);line-height:1.6;margin:5px 0 0}
+.community-create-form{display:grid;grid-template-columns:minmax(150px,1.4fr) minmax(110px,.7fr) auto;gap:8px;align-items:end;padding:12px;border:1px solid var(--line);border-radius:12px;background:rgba(0,0,0,.08)}
+.community-create-form label,.community-post-form label{font-size:9px;color:var(--muted);font-weight:750}
+.community-create-form input,.community-create-form select,.community-post-form textarea{min-width:0;width:100%;padding:10px;border:1px solid var(--line-strong);border-radius:9px;background:#10101a;color:var(--text);font-size:10px}
+.community-inline-status{padding:9px;font-size:10px;color:var(--muted);line-height:1.6}
+.community-inline-status.is-error{color:#ff9db0}
+.community-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:9px}
+.community-item-card{min-width:0;border:1px solid var(--line);border-radius:12px;padding:11px;background:rgba(255,255,255,.02)}
+.community-item-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.community-item-heading strong{font-size:10px;overflow-wrap:anywhere}
+.community-access-pill{font-size:8px;text-transform:uppercase;letter-spacing:.08em;color:var(--violet)}
+.community-item-card p{font-size:9px;color:var(--muted);margin:7px 0}
+.community-item-actions{display:flex;flex-wrap:wrap;gap:5px}
+.community-post-area{border-top:1px solid var(--line);padding-top:12px;margin-top:14px}
+.community-post-form{display:grid;gap:7px;padding:11px;border:1px solid var(--line);border-radius:12px;margin-bottom:10px}
+.community-post-card{border:1px solid var(--line);border-radius:11px;padding:11px;margin-bottom:7px}
+.community-post-card strong{font-size:10px}.community-post-card time{float:right;font-size:8px;color:var(--muted)}
+.community-post-card p{font-size:11px;white-space:pre-wrap;line-height:1.6;margin:7px 0 0}
+.marketplace-section{scroll-margin-top:20px}
+.marketplace-layout{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(250px,.8fr);gap:14px;align-items:start}
+.marketplace-main,.marketplace-seller-panel{min-width:0}
+.marketplace-toolbar{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:8px;padding:12px;border:1px solid var(--line);border-radius:13px;background:rgba(255,255,255,.02)}
+.marketplace-toolbar label{font-size:9px;color:var(--muted)}
+.marketplace-toolbar input,.marketplace-listing-form input,.marketplace-listing-form textarea{min-width:0;width:100%;padding:9px 10px;border:1px solid var(--line-strong);border-radius:9px;background:#10101a;color:var(--text);font-size:10px}
+.marketplace-status{font-size:10px;line-height:1.6;padding:9px;color:var(--muted)}
+.marketplace-status.is-error{color:#ff9db0}
+.marketplace-listings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.marketplace-listing-card,.marketplace-cart,.marketplace-orders,.marketplace-seller-panel{padding:13px;border:1px solid var(--line);border-radius:15px;background:rgba(255,255,255,.02)}
+.marketplace-listing-art{display:grid;place-items:center;min-height:88px;border-radius:10px;background:radial-gradient(circle at 50% 35%,rgba(245,205,120,.13),transparent 52%),#151522;color:var(--gold);font-size:28px}
+.marketplace-listing-meta{display:flex;justify-content:space-between;gap:8px;margin:9px 0;font-size:8px;color:var(--muted)}
+.marketplace-listing-card h3{font-size:12px;line-height:1.4;margin:0;overflow-wrap:anywhere}
+.marketplace-listing-description{font-size:9px;line-height:1.6;color:var(--muted);min-height:28px;overflow-wrap:anywhere}
+.marketplace-listing-seller{font-size:8px;color:var(--muted);margin:7px 0}
+.marketplace-listing-price{display:block;color:var(--gold);font-size:15px;margin:7px 0}
+.marketplace-listing-actions{display:flex;gap:7px;align-items:center}
+.marketplace-quantity{width:62px;min-width:0;padding:7px;border:1px solid var(--line-strong);border-radius:8px;background:#10101a;color:var(--text);font-size:10px}
+.marketplace-listing-actions .button{flex:1}
+.marketplace-cart,.marketplace-orders{margin-top:13px}
+.marketplace-cart-item{display:flex;align-items:center;gap:8px;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);font-size:9px}
+.marketplace-cart-item strong{white-space:nowrap;color:var(--gold)}
+.marketplace-cart>#marketplace-checkout{width:100%;margin-top:12px}
+.marketplace-orders .community-workspace-heading{margin-top:5px}
+.marketplace-order-card,.marketplace-my-listing{display:grid;gap:5px;border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:7px}
+.marketplace-order-card strong,.marketplace-my-listing strong{font-size:10px}
+.marketplace-order-card small,.marketplace-order-card p,.marketplace-my-listing span,.marketplace-my-listing small{font-size:9px;line-height:1.5;color:var(--muted);overflow-wrap:anywhere}
+.marketplace-seller-panel h3{font-size:16px;margin:7px 0}.marketplace-seller-panel>p{font-size:9px;line-height:1.7;color:var(--muted)}
+.marketplace-listing-form{display:grid;gap:7px;margin:12px 0 17px}
+.marketplace-listing-form label{font-size:9px;color:var(--muted)}
+.marketplace-my-listings{border-top:1px solid var(--line);padding-top:13px}
+.marketplace-empty{font-size:10px;line-height:1.7;color:var(--muted);padding:9px}
+@media(max-width:920px){.marketplace-layout{grid-template-columns:1fr}.marketplace-seller-panel{grid-row:1}.community-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.community-create-form{grid-template-columns:1fr}.community-list{grid-template-columns:1fr}.marketplace-listings{grid-template-columns:1fr}.marketplace-toolbar{grid-template-columns:1fr}.marketplace-layout{gap:10px}.marketplace-listing-art{min-height:74px}}
