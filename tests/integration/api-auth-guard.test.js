@@ -146,6 +146,18 @@ test('event RSVP rejects unauthenticated requests',async()=>{
  const response=await post(await start(),'/api/events/10000000-0000-4000-8000-000000000001/rsvp');
  ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
 });
+test('call creation requires authentication',async()=>{
+ const response=await post(await start(),'/api/calls');
+ ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
+});
+test('call join requires authentication',async()=>{
+ const response=await post(await start(),'/api/calls/10000000-0000-4000-8000-000000000001/join');
+ ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
+});
+test('message reaction requires authentication',async()=>{
+ const response=await post(await start(),'/api/messages/10000000-0000-4000-8000-000000000001/reactions');
+ ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
+});
 test('payment endpoint rejects unauthenticated requests',async()=>{
  const response=await post(await start(),'/api/payments/order');
  ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');

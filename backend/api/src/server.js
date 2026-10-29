@@ -2352,6 +2352,111 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, { ok: true, conversations: conversationRows.data });
     }
 
+    const messageIdMatch=url.pathname.match(/^\/api\/messages\/([0-9a-f-]+)$/i);
+    if(messageIdMatch&&req.method==='PATCH'){
+      const session=await requireSession(req,res);if(!session.ok)return;
+      const messageId=messageIdMatch[1];if(!uuid(messageId))return error(res,400,'INVALID_MESSAGE_ID');
+      const body=await readBody(req);
+      if(typeof body.body!=='string'||body.body.trim().length<1||body.body.trim().length>4000)return error(res,400,'INVALID_MESSAGE');
+      const result=await rowsForUser(session,'messages',{select:'id,conversation_id,sender_id,body,attachments,created_at,edited_at',id:'eq.'+messageId,sender_id:'eq.'+session.profile.id,deleted_at:'is.null'},{
+        method:'PATCH',body:{body:body.body.trim(),edited_at:new Date().toISOString()}
+      });
+      if(!result.ok)return badDatabase(res,result,'MESSAGE_EDIT_FAILED');
+      if(!Array.isArray(result.data)||!result.data[0])return error(res,404,'MESSAGE_NOT_FOUND');
+      return json(res,200,{ok:true,message:result.data[0]});
+    }
+    if(messageIdMatch&&req.method==='DELETE'){
+      const session=await requireSession(req,res);if(!session.ok)return;
+      const messageId=messageIdMatch[1];if(!uuid(messageId))return error(res,400,'INVALID_MESSAGE_ID');
+      const result=await rowsForUser(session,'messages',{select:'id,deleted_at',id:'eq.'+messageId,sender_id:'eq.'+session.profile.id,deleted_at:'is.null'},{
+        method:'PATCH',body:{body:null,attachments:[],deleted_at:new Date().toISOString()}
+      });
+      if(!result.ok)return badDatabase(res,result,'MESSAGE_DELETE_FAILED');
+      if(!Array.isArray(result.data)||!result.data[0])return error(res,404,'MESSAGE_NOT_FOUND');
+      return json(res,200,{ok:true,message:{id:messageId,state:'deleted',deletedAt:result.data[0].deleted_at}});
+    }
+
+    const messageReactionMatch=url.pathname.match(/^\/api\/messages\/([0-9a-f-]+)\/reactions$/i);
+    if(messageReactionMatch&&(req.method==='POST'||req.method==='DELETE')){
+      const session=await requireSession(req,res);if(!session.ok)return;
+      const messageId=messageReactionMatch[1];if(!uuid(messageId))return error(res,400,'INVALID_MESSAGE_ID');
+      const body=await readBody(req);const reaction=String(body.reaction||'').trim();
+      if(!['like','love','laugh','wow','sad','celebrate','custom'].includes(reaction))return error(res,400,'INVALID_MESSAGE_REACTION');
+      if(req.method==='POST'){
+        const created=await rowsForUser(session,'message_reactions',{select:'message_id,profile_id,reaction,created_at'},{method:'POST',body:{message_id:messageId,profile_id:session.profile.id,reaction}});
+        if(!created.ok){
+          if(created.status===409)return json(res,200,{ok:true,idempotent:true,reaction:{messageId,profileId:session.profile.id,reaction}});
+          return badDatabase(res,created,'MESSAGE_REACTION_FAILED');
+        }
+        return json(res,201,{ok:true,reaction:Array.isArray(created.data)?created.data[0]:null});
+      }
+      const removed=await rowsForUser(session,'message_reactions',{message_id:'eq.'+messageId,profile_id:'eq.'+session.profile.id,reaction:'eq.'+reaction},{method:'DELETE'});
+      if(!removed.ok)return badDatabase(res,removed,'MESSAGE_REACTION_REMOVE_FAILED');
+      return json(res,200,{ok:true,removed:true});
+    }
+
+    const messageReadMatch=url.pathname.match(/^\/api\/messages\/([0-9a-f-]+)\/read$/i);
+    if(messageReadMatch&&req.method==='POST'){
+      const session=await requireSession(req,res);if(!session.ok)return;
+      const messageId=messageReadMatch[1];if(!uuid(messageId))return error(res,400,'INVALID_MESSAGE_ID');
+      const prior=await rowsForUser(session,'message_read_receipts',{select:'message_id,profile_id,read_at',message_id:'eq.'+messageId,profile_id:'eq.'+session.profile.id,limit:'1'});
+      if(!prior.ok)return badDatabase(res,prior,'MESSAGE_RECEIPT_LOOKUP_FAILED');
+      if(prior.data.length)return json(res,200,{ok:true,idempotent:true,receipt:prior.data[0]});
+      const created=await rowsForUser(session,'message_read_receipts',{select:'message_id,profile_id,read_at'},{method:'POST',body:{message_id:messageId,profile_id:session.profile.id}});
+      if(!created.ok){
+        if(created.status===409)return json(res,200,{ok:true,idempotent:true});
+        return badDatabase(res,created,'MESSAGE_RECEIPT_CREATE_FAILED');
+      }
+      return json(res,201,{ok:true,receipt:Array.isArray(created.data)?created.data[0]:null});
+    }
+
+    if(req.method==='POST'&&url.pathname==='/api/calls'){
+      const session=await requireSession(req,res);if(!session.ok)return;
+      if(!config.configured.livekit)return error(res,503,'LIVE_NOT_CONFIGURED','LiveKit must be configured before creating a call.');
+      const body=await readBody(req);const conversationId=String(body.conversationId||'');
+      const callType=body.callType==='video'?'video':body.callType==='audio'?'audio':null;
+      const invitees=Array.isArray(body.participantProfileIds)?body.participantProfileIds:[];
+      if(!uuid(conversationId)||!callType)return error(res,400,'INVALID_CALL_REQUEST');
+      if(invitees.length<1||invitees.length>7||invitees.some(id=>!uuid(id)))return error(res,400,'CALL_PARTICIPANT_COUNT_INVALID');
+      const callId=randomUUID();
+      const created=await adminRpc(config,'create_call_session',{
+        p_call_id:callId,p_conversation_id:conversationId,p_initiated_by:session.profile.id,
+        p_call_type:callType,p_invited_profile_ids:[...new Set([...invitees,session.profile.id])]
+      });
+      if(!created.ok)return badDatabase(res,created,'CALL_CREATE_FAILED');
+      const room='zuno-call-'+callId.replace(/-/g,'');
+      const token=livekit.mintToken(config.livekit,{identity:session.profile.id,room,canPublish:true,canSubscribe:true,ttlSeconds:900});
+      if(!token.ok){
+        await adminRpc(config,'leave_call_session',{p_call_id:callId,p_profile_id:session.profile.id,p_decline:true});
+        return error(res,token.status||503,token.code||'LIVE_NOT_CONFIGURED');
+      }
+      return json(res,201,{ok:true,call:{id:callId,callType,state:'ringing',conversationId,providerRoom:room,livekit:{url:token.url,token:token.token,expiresAt:token.expiresAt}}});
+    }
+    const callJoinMatch=url.pathname.match(/^\/api\/calls\/([0-9a-f-]+)\/join$/i);
+    if(callJoinMatch&&req.method==='POST'){
+      const session=await requireSession(req,res);if(!session.ok)return;
+      if(!config.configured.livekit)return error(res,503,'LIVE_NOT_CONFIGURED');
+      const callId=callJoinMatch[1];if(!uuid(callId))return error(res,400,'INVALID_CALL_ID');
+      const joined=await adminRpc(config,'join_call_session',{p_call_id:callId,p_profile_id:session.profile.id});
+      if(!joined.ok)return badDatabase(res,joined,'CALL_JOIN_FAILED');
+      const row=Array.isArray(joined.data)?joined.data[0]:joined.data;
+      if(!row||!row.provider_room)return error(res,503,'CALL_JOIN_RESULT_INVALID');
+      const token=livekit.mintToken(config.livekit,{identity:session.profile.id,room:row.provider_room,canPublish:true,canSubscribe:true,ttlSeconds:900});
+      if(!token.ok){
+        await adminRpc(config,'leave_call_session',{p_call_id:callId,p_profile_id:session.profile.id,p_decline:false});
+        return error(res,token.status||503,token.code||'LIVE_NOT_CONFIGURED');
+      }
+      return json(res,200,{ok:true,call:{id:callId,callType:row.call_type,state:row.state,providerRoom:row.provider_room,participantCount:row.participant_count,livekit:{url:token.url,token:token.token,expiresAt:token.expiresAt}}});
+    }
+    const callLeaveMatch=url.pathname.match(/^\/api\/calls\/([0-9a-f-]+)\/(leave|decline)$/i);
+    if(callLeaveMatch&&req.method==='POST'){
+      const session=await requireSession(req,res);if(!session.ok)return;
+      const callId=callLeaveMatch[1];if(!uuid(callId))return error(res,400,'INVALID_CALL_ID');
+      const result=await adminRpc(config,'leave_call_session',{p_call_id:callId,p_profile_id:session.profile.id,p_decline:callLeaveMatch[2]==='decline'});
+      if(!result.ok)return badDatabase(res,result,'CALL_LEAVE_FAILED');
+      return json(res,200,{ok:true,call:{id:callId,state:'left'}});
+    }
+
     const messagesMatch = url.pathname.match(/^\/api\/conversations\/([0-9a-f-]+)\/messages$/i);
     if (messagesMatch && req.method === 'GET') {
       const session = await requireSession(req, res);
