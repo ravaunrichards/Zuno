@@ -2,7 +2,7 @@
 
 **ZUNO** is an independent, multi-platform social, entertainment, communication and creator ecosystem. The repository is organized as a pnpm/Turborepo-style workspace with separate applications, backend services, shared packages, database migrations, integrations, assets, infrastructure, tests and verification tools.
 
-> **Current status: PARTIALLY IMPLEMENTED.** This branch establishes the rich web experience, application foundations, API safety boundaries, domain-policy modules and a versioned database migration chain. It is not yet a completed production product. Several provider-connected flows are deliberately disabled until their persistent transactional implementation and end-to-end verification are complete.
+> **Current status: PARTIALLY IMPLEMENTED — core backend flows are in the codebase, but the full product is not production-ready.** The current branch includes persisted gift delivery, PayPal checkout/capture/refund paths, verified webhook ingestion, private media upload/processing, LIVE room workflows, protected operations tooling, and migrations through `0017`. CI has exercised the ordered migration chain, RLS, wallet/gift/payment/refund transactions, moderation/audit transitions, the web build, and automated source tests. External-provider sandbox and production deployment verification remain outstanding.
 
 ## Repository map
 
@@ -38,13 +38,15 @@ Review `.env.example` before configuring local services. Never commit actual key
 
 - Authentication-sensitive endpoints require a provider-verified Supabase session and a provisioned ZUNO profile.
 - LiveKit publish permission is determined server-side from room ownership or participant role, not the request body.
-- Gift sending and checkout currently return an explicit not-ready response until atomic persistent delivery/payment lifecycle handling is connected. No demo balance or fake payment is represented as production.
-- Payouts remain gated until recipient eligibility, compliance, provider readiness and reconciliation have been verified.
-- A configured environment value is not proof that a provider call or deployment works.
-- The current deterministic recommendation code is a baseline, not a machine-learned system. Metadata validation is not file-signature validation or transcoding.
+- Gift delivery and PayPal checkout/capture/refund use database transaction functions and provider verification. Actual coin credit requires verified capture reconciliation; a browser redirect by itself does not count as payment.
+- Production payment and payout switches remain gated. Payouts remain disabled until recipient eligibility, compliance, provider readiness and reconciliation have been verified.
+- Provider test accounts/credentials, real Supabase policies/storage, LiveKit webhooks in a deployed environment, and Render deployments still need external end-to-end verification.
+- The current deterministic recommendation code is a bounded baseline, not a machine-learned system. Media byte-signature validation and processing exist, but production antivirus scanning, derivative publishing and storage policy checks still require provider-environment validation.
 
 ## Product direction
 
 ZUNO is intended to combine social networking, video and photo publishing, discovery, messaging and calls, communities, events, livestreaming, original 3D gifts and audio, Z Coins, subscriptions, creator monetization, commerce, ads, moderation, privacy and administrative tools into one coordinated experience. Each capability must have real implementation, schema/policies where persistent, tests and documentation.
+
+Latest documented CI evidence (commit `41ee1320e7a4734670493485ae0576f52836e678`, 2026-10-29): 77 automated tests passed, 10/10 web checks passed, and the disposable PostgreSQL 16 run successfully applied migrations `0001`–`0017` and passed RLS, economy and moderation smoke checks. Android build, security checks and web accessibility/bundle budget also passed on that commit. Check the current Actions page for results after later commits. These checks do not substitute for provider sandbox or production verification.
 
 See `docs/status/implementation-register.md`, `docs/architecture/repository-map.md`, `docs/database/migrations.md`, and `docs/integrations/provider-readiness.md`.

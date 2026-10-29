@@ -4,27 +4,27 @@ This file differentiates committed code from production-verified capability. A s
 
 ## Implemented in this branch
 
-- A substantially richer responsive ZUNO web/PWA homepage and feature navigation.
+- A substantially richer responsive ZUNO web/PWA homepage and feature navigation, including Supabase sign-in, data-backed feed, text publication and creator media upload/processing UI.
 - Shared frontend shell, feature cards, navigation configuration and visual theme primitives.
 - Seven application directories with platform-specific starting implementations; native release builds still need platform CI evidence.
-- API gift-catalogue endpoint and non-secret integration-readiness endpoint.
+- API gift-catalogue endpoint, database-backed Z Coins package catalogue, protected wallet balance/restriction view and non-secret integration-readiness endpoint.
 - Supabase Auth session validation and server-side profile lookup for sensitive API routes.
 - LiveKit token authorization using verified identity, room ownership/participant membership and server-derived publishing capability.
-- Authenticated gift delivery and PayPal checkout/capture routes use database transaction functions, idempotency keys and signed provider webhooks; production payment switching remains gated by environment readiness.
-- Full-refund reservation and finalize SQL tracks coin debit/release, with wallet restrictions for unreconciled external reversals.
-- Versioned SQL migrations for core schema/policies, content/discovery, messaging/calls, communities/events, LIVE interactions, creator economy/payment metadata, commerce/ads/privacy, and operational jobs.
-- Static migration, asset, web, platform-entrypoint and CI checks.
+- Authenticated gift delivery and PayPal order, capture and refund routes use database transaction functions and idempotency keys. PayPal webhook signatures are verified before an event is allowed to update payment state; provider uncertainty stays pending rather than being called paid. Production payment switching remains gated.
+- Full-refund reservation and finalization SQL tracks coin debit/release; verified external reversals can create wallet restrictions pending reconciliation.
+- Versioned SQL migrations `0001`–`0017` cover core schema/policies, content/discovery, messaging/calls, communities/events, LIVE interactions, creator economy/payment metadata, commerce/ads/privacy, operational jobs, media processing, transactional coin/gift/payment/refund functions, LIVE lifecycle, creator analytics and moderation/admin overview.
+- Static migration, asset, web, platform-entrypoint and CI checks. Latest recorded CI at `41ee1320e7a4734670493485ae0576f52836e678`: 77 tests passed; 10/10 web checks passed; PostgreSQL 16 clean database applied migrations `0001`–`0017`, then passed RLS, gift/capture/refund ledger and moderation/audit smoke checks. Android build, security and accessibility/bundle-budget workflows passed on that head.
 
 ## Not yet production-verified
 
-- Applying the migration chain to a real disposable PostgreSQL/Supabase database and running positive/negative RLS tests.
+- Applying the migration chain to a real disposable PostgreSQL/Supabase project and running its actual Storage/Auth policies remain unverified. CI does pass the migration chain and RLS/economy/moderation smoke tests on disposable PostgreSQL 16.
 - Full Supabase signup/provisioning, storage upload policies, profile settings, deletion/export processing and privacy workflows.
-- LiveKit room creation/lifecycle and signed webhook reconciliation, plus race-safe participant-capacity enforcement.
-- Transactional gift delivery, sandbox/provider credentials, refund provider execution and end-to-end PayPal reconciliation still require external test-account evidence. Creator earnings cash conversion remains intentionally unavailable until a real conversion policy is configured.
+- LiveKit room lifecycle APIs, server-side signed webhook receiver and web UI are implemented, but deployed-provider webhook reconciliation and concurrent guest capacity must still be tested against a LiveKit sandbox.
+- Transactional gift delivery, atomic capture-credit, full-refund reservation/finalization, provider-webhook handling and coin-package pricing are implemented and exercised in synthetic PostgreSQL smoke tests. Actual PayPal sandbox account/payment/refund/webhook evidence and production reconciliation remain outstanding. Creator earnings cash conversion remains unavailable until a real conversion policy is configured.
 - Payout execution and country/account eligibility, which must remain disabled until provider and compliance readiness are proven.
-- Server-side media upload, byte validation, queueing and processing modules are implemented; production storage configuration, antivirus scanning and derivative-path behavior still require end-to-end provider validation.
+- Server-side private signed upload URLs, metadata/size checks, byte-signature validation, queueing, media processing and creator upload UI are implemented; production Supabase Storage policies/configuration, antivirus scanning and derivative-path behavior still require provider validation.
 - Durable production queue workers, search index, recommendation evaluation, actual push/email delivery, advertising delivery and marketplace order fulfillment.
-- Desktop/TV/admin/creator release packaging and external provider sandbox tests still need direct end-to-end evidence. iOS and Android simulator/build CI passed on commit `ff370b6529b84d895f63f93cd3abd5f755379ee2`.
+- Desktop/TV release packaging, app-wide cross-platform feature parity and external provider sandbox tests still need direct end-to-end evidence. Android build passed on `41ee1320e7a4734670493485ae0576f52836e678`; current iOS workflow was queued at the time of the last status check, so no result is claimed here.
 - Completed original 3D gift assets and every required distinct sound mapped against a validated manifest.
 
 ## Reporting standard
