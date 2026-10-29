@@ -263,6 +263,12 @@ test('feed preferences GET and PATCH require authentication',async()=>{
  const read=await get(port,'/api/feed/preferences');ok(read.status===401);ok(read.body.code==='AUTH_REQUIRED');
  const update=await patch(port,'/api/feed/preferences');ok(update.status===401);ok(update.body.code==='AUTH_REQUIRED');
 });
+test('push subscription registration and removal require authentication',async()=>{
+ const port=await start();
+ const list=await get(port,'/api/notifications/push-subscriptions');ok(list.status===401);ok(list.body.code==='AUTH_REQUIRED');
+ const create=await post(port,'/api/notifications/push-subscriptions');ok(create.status===401);ok(create.body.code==='AUTH_REQUIRED');
+ const remove=await del(port,'/api/notifications/push-subscriptions');ok(remove.status===401);ok(remove.body.code==='AUTH_REQUIRED');
+});
 test('payment endpoint rejects unauthenticated requests',async()=>{
  const response=await post(await start(),'/api/payments/order');
  ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');

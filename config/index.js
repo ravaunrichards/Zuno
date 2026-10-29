@@ -43,6 +43,13 @@ function load(env = process.env) {
     supabase,
     livekit,
     paypal,
+    notifications: {
+      pushVapidPublicKey: env.WEB_PUSH_VAPID_PUBLIC_KEY || '',
+      pushVapidPrivateKey: env.WEB_PUSH_VAPID_PRIVATE_KEY || '',
+      pushVapidSubject: env.WEB_PUSH_VAPID_SUBJECT || '',
+      resendApiKey: env.RESEND_API_KEY || '',
+      resendFromEmail: env.RESEND_FROM_EMAIL || ''
+    },
     features: {
       productionPayments: bool(env.FEATURE_PRODUCTION_PAYMENTS),
       payouts: bool(env.FEATURE_PAYOUTS),
@@ -53,6 +60,8 @@ function load(env = process.env) {
     supabase: Boolean(supabase.url && supabase.anonKey && supabase.serviceRoleKey),
     livekit: Boolean(livekit.url && livekit.apiKey && livekit.apiSecret),
     paypal: Boolean(paypal.clientId && paypal.clientSecret),
+    pushNotifications: Boolean(config.notifications.pushVapidPublicKey && config.notifications.pushVapidPrivateKey && config.notifications.pushVapidSubject),
+    emailNotifications: Boolean(config.notifications.resendApiKey && config.notifications.resendFromEmail),
   };
   return config;
 }

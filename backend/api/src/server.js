@@ -1001,6 +1001,81 @@ const server = http.createServer(async (req, res) => {
       }});
     }
 
+
+    if (req.method === 'GET' && url.pathname === '/api/notifications/push-public-key') {
+      const enabled = Boolean(config.configured.pushNotifications);
+      return json(res, 200, { ok: true, enabled, publicKey: enabled ? config.notifications.pushVapidPublicKey : null,
+        message: enabled ? null : 'Browser push is not configured on the server.' });
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api/notifications/push-subscriptions') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const found = await rowsForUser(session, 'push_subscriptions', {
+        select: 'id,user_agent,created_at,last_used_at,revoked_at',
+        profile_id: 'eq.' + session.profile.id, revoked_at: 'is.null',
+        order: 'created_at.desc', limit: '50'
+      });
+      if (!found.ok || !Array.isArray(found.data)) return badDatabase(res, found, 'PUSH_SUBSCRIPTIONS_UNAVAILABLE');
+      return json(res, 200, { ok: true, subscriptions: found.data.map(item => ({
+        id: item.id, userAgent: item.user_agent || null, createdAt: item.created_at, lastUsedAt: item.last_used_at || null
+      })), count: found.data.length, providerConfigured: Boolean(config.configured.pushNotifications) });
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/notifications/push-subscriptions') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const body = await readBody(req);
+      const endpoint = typeof body.endpoint === 'string' ? body.endpoint : '';
+      const keys = body.keys && typeof body.keys === 'object' ? body.keys : {};
+      if (endpoint.length < 30 || endpoint.length > 2048) return error(res, 400, 'INVALID_PUSH_ENDPOINT');
+      let parsedEndpoint;
+      try { parsedEndpoint = new URL(endpoint); } catch (_) { return error(res, 400, 'INVALID_PUSH_ENDPOINT'); }
+      if (parsedEndpoint.protocol !== 'https:' || parsedEndpoint.username || parsedEndpoint.password) return error(res, 400, 'INVALID_PUSH_ENDPOINT');
+      const p256dh = typeof keys.p256dh === 'string' ? keys.p256dh : '';
+      const authKey = typeof keys.auth === 'string' ? keys.auth : '';
+      if (!/^[A-Za-z0-9_-]{40,180}$/.test(p256dh) || !/^[A-Za-z0-9_-]{12,80}$/.test(authKey)) return error(res, 400, 'INVALID_PUSH_KEYS');
+      if (!config.configured.pushNotifications) return error(res, 503, 'PUSH_PROVIDER_NOT_CONFIGURED', 'Browser push keys are not configured. The subscription was not saved.');
+      const prior = await rowsForUser(session, 'push_subscriptions', {
+        select: 'id,profile_id,endpoint,created_at',
+        profile_id: 'eq.' + session.profile.id, endpoint: 'eq.' + endpoint, limit: '1'
+      });
+      if (!prior.ok || !Array.isArray(prior.data)) return badDatabase(res, prior, 'PUSH_SUBSCRIPTION_LOOKUP_FAILED');
+      const row = {
+        profile_id: session.profile.id, endpoint, p256dh_key: p256dh, auth_key: authKey,
+        user_agent: String(req.headers['user-agent'] || '').slice(0,300),
+        last_used_at: new Date().toISOString(), revoked_at: null
+      };
+      const result = prior.data[0]
+        ? await rowsForUser(session, 'push_subscriptions', {
+            profile_id: 'eq.' + session.profile.id, endpoint: 'eq.' + endpoint,
+            select: 'id,created_at,last_used_at'
+          }, { method: 'PATCH', body: row })
+        : await rowsForUser(session, 'push_subscriptions', { select: 'id,created_at,last_used_at' }, { method: 'POST', body: row });
+      if (!result.ok || !Array.isArray(result.data) || !result.data[0]) {
+        return error(res, 409, 'PUSH_SUBSCRIPTION_SAVE_FAILED', 'The browser subscription could not be saved to this account.');
+      }
+      return json(res, prior.data[0] ? 200 : 201, { ok: true, idempotent: Boolean(prior.data[0]), subscription: {
+        id: result.data[0].id, createdAt: result.data[0].created_at || null, lastUsedAt: result.data[0].last_used_at || null
+      } });
+    }
+
+    if (req.method === 'DELETE' && url.pathname === '/api/notifications/push-subscriptions') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const body = await readBody(req);
+      const endpoint = typeof body.endpoint === 'string' ? body.endpoint : '';
+      if (!endpoint || endpoint.length > 2048) return error(res, 400, 'INVALID_PUSH_ENDPOINT');
+      let parsedEndpoint;
+      try { parsedEndpoint = new URL(endpoint); } catch (_) { return error(res, 400, 'INVALID_PUSH_ENDPOINT'); }
+      if (parsedEndpoint.protocol !== 'https:' || parsedEndpoint.username || parsedEndpoint.password) return error(res, 400, 'INVALID_PUSH_ENDPOINT');
+      const result = await rowsForUser(session, 'push_subscriptions', {
+        profile_id: 'eq.' + session.profile.id, endpoint: 'eq.' + endpoint, revoked_at: 'is.null', select: 'id,revoked_at'
+      }, { method: 'PATCH', body: { revoked_at: new Date().toISOString() } });
+      if (!result.ok) return badDatabase(res, result, 'PUSH_SUBSCRIPTION_REMOVE_FAILED');
+      return json(res, 200, { ok: true, removed: true });
+    }
+
     if (req.method === 'GET' && url.pathname === '/api/notifications/preferences') {
       const session = await requireSession(req, res);
       if (!session.ok) return;

@@ -7,7 +7,7 @@ const USER_TABLES = new Set([
   'stories','story_views','story_replies','feed_preferences','conversations','conversation_members',
   'messages','message_reactions','message_read_receipts','communities','community_members',
   'community_channels','community_posts','community_post_reactions','events','community_event_rsvps',
-  'muted_profiles','restricted_profiles','notification_preferences','notifications','live_rooms',
+  'muted_profiles','restricted_profiles','notification_preferences','notifications','push_subscriptions','live_rooms',
   'live_participants','guest_requests','live_chat_messages','live_polls','live_poll_options',
   'live_poll_votes','live_questions','creator_subscription_tiers','creator_subscriptions',
   'creator_subscription_entitlements','coin_packages','payment_orders','refund_records',
