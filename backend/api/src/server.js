@@ -297,11 +297,24 @@ const server = http.createServer(async (req, res) => {
 
       const providerMessage = String(created.payload.message || created.payload.msg || created.payload.error_description || created.payload.error || '');
       const providerCode = String(created.payload.code || created.payload.error_code || created.payload.error || '');
-      const duplicateEmail = /already registered|already exists|user exists|email.*(registered|exists)|duplicate/i.test(providerMessage + ' ' + providerCode);
+      const providerFailure = (providerMessage + ' ' + providerCode).slice(0, 240);
+      const duplicateEmail = /already registered|already exists|user exists|email.*(registered|exists)|duplicate|email_exists/i.test(providerFailure);
       if (!duplicateEmail) {
+        // Log provider status/code only. Never log the email, password, token or raw provider body.
+        const safeProviderCode = providerCode.replace(/[^a-zA-Z0-9_.-]/g, '').slice(0, 64) || 'UNSPECIFIED';
+        console.warn('[auth.signup] Supabase Admin create failed', { status: created.status, code: safeProviderCode });
+
         if (created.status === 429) return error(res, 429, 'SIGNUP_RATE_LIMITED', 'Signup is temporarily rate limited. Wait before trying again.');
-        return error(res, created.status >= 400 && created.status < 500 ? created.status : 503,
-          'SIGNUP_PROVIDER_FAILED', 'Supabase could not create the account. Check the details and try again.');
+        if ([401, 403].includes(created.status)) {
+          return error(res, 503, 'AUTH_ADMIN_KEY_REJECTED',
+            'Supabase rejected the API service admin credential. SUPABASE_SERVICE_ROLE_KEY must be the service_role key for this exact Supabase project.');
+        }
+        if (created.status >= 500 || /database error saving new user|database error|trigger|constraint/i.test(providerFailure)) {
+          return error(res, 503, 'AUTH_PROFILE_BOOTSTRAP_FAILED',
+            'Supabase Auth could not save the new account through its database setup. The Auth profile-creation trigger or a database constraint needs attention.');
+        }
+        return error(res, 502, 'SIGNUP_PROVIDER_FAILED',
+          'Supabase rejected account creation (HTTP ' + created.status + ', code ' + safeProviderCode + ').');
       }
 
       /*
@@ -4169,5 +4182,29 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-if (require.main === module) server.listen(config.apiPort, '0.0.0.0', () => console.log('ZUNO API listening on port ' + config.apiPort));
+async function verifySupabaseAdminCredentials() {
+  if (!config.supabase.url || !config.supabase.anonKey || !config.supabase.serviceRoleKey) {
+    console.warn('[auth-config] Supabase Auth Admin API probe skipped: required settings are missing');
+    return;
+  }
+  try {
+    // A tiny read-only Admin API request verifies the configured server secret
+    // without creating a test user or exposing user rows or the secret in logs.
+    const result = await authProviderRequest(config, '/auth/v1/admin/users?page=1&per_page=1', { timeoutMs: 5000 });
+    if (result.ok) {
+      console.info('[auth-config] Supabase Auth Admin API credential check passed (HTTP ' + result.status + ')');
+    } else {
+      const providerCode = String(result.payload.code || result.payload.error_code || result.payload.error || 'UNSPECIFIED')
+        .replace(/[^a-zA-Z0-9_.-]/g, '').slice(0, 64);
+      console.error('[auth-config] Supabase Auth Admin API credential check failed (HTTP ' + result.status + ', code ' + providerCode + ')');
+    }
+  } catch (_) {
+    console.error('[auth-config] Supabase Auth Admin API credential check failed (network/timeout)');
+  }
+}
+
+if (require.main === module) server.listen(config.apiPort, '0.0.0.0', () => {
+  console.log('ZUNO API listening on port ' + config.apiPort);
+  verifySupabaseAdminCredentials().catch(() => {});
+});
 module.exports = { server, config };
