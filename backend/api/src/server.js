@@ -267,7 +267,7 @@ const server = http.createServer(async (req, res) => {
       const username = typeof body.username === 'string' ? body.username.trim().toLowerCase() : '';
       const displayName = typeof body.displayName === 'string' ? body.displayName.trim().slice(0, 80) : username;
 
-      if (email.length > 254 || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) {
+      if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         return error(res, 400, 'SIGNUP_EMAIL_INVALID', 'Enter a valid email address.');
       }
       if (password.length < 8 || password.length > 128) {
