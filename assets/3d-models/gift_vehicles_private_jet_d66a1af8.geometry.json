@@ -1,0 +1,78 @@
+{
+  "giftId": "gift_vehicles_private_jet_d66a1af8",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "sphere",
+      "scale": 1.558,
+      "color": "#be7589",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        0.078,
+        -0.619,
+        0.065
+      ]
+    },
+    {
+      "shape": "box",
+      "scale": 1.119,
+      "color": "#bc5929",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        0.569,
+        0.077,
+        -0.775
+      ]
+    },
+    {
+      "shape": "sphere",
+      "scale": 0.732,
+      "color": "#4b022d",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        -0.56,
+        0.033,
+        -0.185
+      ]
+    },
+    {
+      "shape": "torus",
+      "scale": 1.355,
+      "color": "#be7589",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        -0.842,
+        -0.08,
+        0.229
+      ]
+    },
+    {
+      "shape": "icosahedron",
+      "scale": 0.766,
+      "color": "#bc5929",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        -0.203,
+        0.163,
+        -0.677
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 4300
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.75
+  }
+}

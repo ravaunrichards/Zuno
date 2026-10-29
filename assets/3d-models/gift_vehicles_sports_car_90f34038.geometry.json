@@ -1,0 +1,66 @@
+{
+  "giftId": "gift_vehicles_sports_car_90f34038",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "cylinder",
+      "scale": 0.467,
+      "color": "#a3049a",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        -0.988,
+        0.901,
+        0.125
+      ]
+    },
+    {
+      "shape": "cylinder",
+      "scale": 0.673,
+      "color": "#370b36",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        -0.177,
+        -0.981,
+        0.484
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 1.76,
+      "color": "#379521",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        -0.803,
+        0.277,
+        0.337
+      ]
+    },
+    {
+      "shape": "torus",
+      "scale": 1.511,
+      "color": "#a3049a",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        -0.566,
+        -0.208,
+        0.552
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": false,
+    "durationMs": 3100
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.6000000000000001
+  }
+}

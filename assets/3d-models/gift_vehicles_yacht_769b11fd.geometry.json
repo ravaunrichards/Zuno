@@ -1,0 +1,78 @@
+{
+  "giftId": "gift_vehicles_yacht_769b11fd",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "tetrahedron",
+      "scale": 1.374,
+      "color": "#fc47bb",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        -0.327,
+        0.707,
+        0.015
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 1.035,
+      "color": "#dd513e",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        0.064,
+        -0.399,
+        -0.123
+      ]
+    },
+    {
+      "shape": "icosahedron",
+      "scale": 0.657,
+      "color": "#615d66",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        0.227,
+        0.739,
+        0.878
+      ]
+    },
+    {
+      "shape": "sphere",
+      "scale": 0.886,
+      "color": "#fc47bb",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        -0.428,
+        -0.158,
+        -0.595
+      ]
+    },
+    {
+      "shape": "box",
+      "scale": 0.923,
+      "color": "#dd513e",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        0.517,
+        -0.719,
+        0.09
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 3900
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.7000000000000001
+  }
+}
