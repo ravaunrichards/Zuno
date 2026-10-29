@@ -176,6 +176,10 @@
         <div class="settings-time-grid"><label for="settings-quiet-start">Quiet hours start<input id="settings-quiet-start" type="time"></label><label for="settings-quiet-end">Quiet hours end<input id="settings-quiet-end" type="time"></label></div>
         <div class="settings-actions"><button class="button button-secondary button-small" type="submit" id="notification-settings-save">Save notifications</button><span id="notification-settings-status" class="settings-inline-status" role="status"></span></div>
       </form>
+      <div class="push-settings-row">
+        <div><strong>Browser push alerts</strong><p>Enable notifications for this browser. Delivery requires the server’s VAPID setup and your permission.</p><span id="push-subscription-status" class="settings-inline-status" role="status">Push status has not been checked.</span></div>
+        <div class="push-settings-buttons"><button class="button button-primary button-small" type="button" id="push-subscribe-button">Enable push</button><button class="button button-secondary button-small" type="button" id="push-unsubscribe-button">Disable this browser</button></div>
+      </div>
     </div>
     <div class="settings-section">
       <div class="settings-section-heading"><h3>Feed & playback preferences</h3><span>Saved to your account</span></div>

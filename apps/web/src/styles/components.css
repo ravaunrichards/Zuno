@@ -442,3 +442,8 @@
 
 .settings-check-grid label input{accent-color:var(--violet)}
 body.zuno-reduced-motion *,body.zuno-reduced-motion *::before,body.zuno-reduced-motion *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}
+
+.push-settings-row{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:12px;border:1px solid var(--line);border-radius:11px;background:rgba(255,255,255,.02);margin:4px 0 10px}
+.push-settings-row strong{font-size:10px}.push-settings-row p{font-size:9px;line-height:1.6;color:var(--muted);margin:4px 0 7px}
+.push-settings-buttons{display:flex;gap:6px;flex-wrap:wrap;flex-shrink:0}
+@media(max-width:650px){.push-settings-row{display:grid}.push-settings-buttons>*{flex:1}}

@@ -56,6 +56,71 @@ function closeDialog() {
   else dialog?.removeAttribute('open');
 }
 
+
+function base64UrlToBytes(value) {
+  const padding='='.repeat((4-value.length%4)%4);
+  const base64=(value+padding).replace(/-/g,'+').replace(/_/g,'/');
+  const raw=window.atob(base64);
+  return Uint8Array.from(raw,char=>char.charCodeAt(0));
+}
+function pushStatus(message,isError=false) {
+  showStatus('push-subscription-status',message,isError);
+}
+async function loadPushStatus() {
+  if(!getSession()) { pushStatus('Sign in to manage browser push.'); return; }
+  if(!('serviceWorker' in navigator)||!('PushManager' in window)||!('Notification' in window)) {
+    pushStatus('This browser does not support Web Push.',true);return;
+  }
+  try {
+    const response=await requestJson('/api/notifications/push-subscriptions');
+    const registration=await navigator.serviceWorker.ready;
+    const subscription=await registration.pushManager.getSubscription();
+    const count=Number(response.count||0);
+    pushStatus(subscription?'This browser is subscribed. '+count+' active device(s) on your account.':count+' active device(s) on your account; this browser is not subscribed.');
+  } catch(error) {
+    pushStatus(error.message||'Push subscription status is unavailable.',true);
+  }
+}
+async function enablePushForBrowser() {
+  if(!requireSession())return;
+  if(!('serviceWorker' in navigator)||!('PushManager' in window)||!('Notification' in window)) {
+    pushStatus('This browser does not support Web Push.',true);return;
+  }
+  const button=$('push-subscribe-button');if(button)button.disabled=true;
+  try {
+    const publicConfig=await requestJson('/api/notifications/push-public-key');
+    if(!publicConfig.enabled||!publicConfig.publicKey) {
+      pushStatus('Browser push is not configured on the server. No subscription was created.',true);return;
+    }
+    const permission=await Notification.requestPermission();
+    if(permission!=='granted') { pushStatus('Browser notification permission was not granted.',true);return; }
+    const registration=await navigator.serviceWorker.ready;
+    const existing=await registration.pushManager.getSubscription();
+    const subscription=existing||await registration.pushManager.subscribe({
+      userVisibleOnly:true,applicationServerKey:base64UrlToBytes(publicConfig.publicKey)
+    });
+    await requestJson('/api/notifications/push-subscriptions',{method:'POST',body:subscription.toJSON()});
+    pushStatus('This browser is subscribed to ZUNO push notifications. Delivery depends on configured server credentials.');
+  } catch(error) {
+    pushStatus(error.message||'Browser push could not be enabled.',true);
+  } finally { if(button)button.disabled=false; }
+}
+async function disablePushForBrowser() {
+  if(!requireSession())return;
+  const button=$('push-unsubscribe-button');if(button)button.disabled=true;
+  try {
+    const registration=await navigator.serviceWorker.ready;
+    const subscription=await registration.pushManager.getSubscription();
+    if(!subscription) { pushStatus('This browser has no active push subscription.'); return; }
+    await requestJson('/api/notifications/push-subscriptions',{method:'DELETE',body:{endpoint:subscription.endpoint}});
+    await subscription.unsubscribe();
+    pushStatus('Push notifications were disabled for this browser.');
+    await loadPushStatus();
+  } catch(error) {
+    pushStatus(error.message||'Push subscription could not be removed.',true);
+  } finally { if(button)button.disabled=false; }
+}
+
 async function loadProfile() {
   const result = await requestJson('/api/profile/me');
   const profile = result.profile || {};
@@ -298,7 +363,7 @@ async function openSettings() {
   if(loadBusy)return;
   loadBusy=true;
   showStatus('profile-settings-status','Loading account settings…');
-  const results=await Promise.allSettled([loadProfile(),loadNotificationPreferences(),loadFeedPreferences(),loadConsents(),loadRelationships(),loadDataRequests()]);
+  const results=await Promise.allSettled([loadProfile(),loadNotificationPreferences(),loadFeedPreferences(),loadConsents(),loadRelationships(),loadDataRequests(),loadPushStatus()]);
   const failed=results.filter(result=>result.status==='rejected');
   if(failed.length)showStatus('profile-settings-status','Some settings could not load. Check the status shown in each section and retry.',true);
   else showStatus('profile-settings-status','Account settings loaded from ZUNO.');
@@ -311,6 +376,8 @@ export function mountProfileSettings() {
   document.querySelectorAll('[data-close-profile-settings]').forEach(button=>button.addEventListener('click',closeDialog));
   $('profile-settings-form')?.addEventListener('submit',saveProfile);
   $('notification-settings-form')?.addEventListener('submit',saveNotificationPreferences);
+  $('push-subscribe-button')?.addEventListener('click',enablePushForBrowser);
+  $('push-unsubscribe-button')?.addEventListener('click',disablePushForBrowser);
   $('feed-preferences-form')?.addEventListener('submit',saveFeedPreferences);
   $('relationship-settings-form')?.addEventListener('submit',addRelationship);
   $('data-request-form')?.addEventListener('submit',submitDataRequest);

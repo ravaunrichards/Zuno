@@ -13,3 +13,42 @@ self.addEventListener('fetch', (event) => {
     }).catch(() => caches.match('./index.html'));
   }));
 });
+
+
+self.addEventListener('push', event => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch (_) {}
+  const title = typeof data.title === 'string' ? data.title.slice(0,120) : 'ZUNO update';
+  const body = typeof data.body === 'string' ? data.body.slice(0,500) : 'There is an update in your ZUNO account.';
+  let target = '/';
+  if (typeof data.url === 'string') {
+    try {
+      const parsed = new URL(data.url, self.location.origin);
+      if (parsed.origin === self.location.origin) target = parsed.pathname + parsed.search + parsed.hash;
+    } catch (_) {}
+  }
+  event.waitUntil(self.registration.showNotification(title, {
+    body, tag: typeof data.notificationId === 'string' ? 'zuno-' + data.notificationId : 'zuno-notification',
+    data: { target }
+  }));
+});
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const requested = event.notification && event.notification.data && typeof event.notification.data.target === 'string'
+    ? event.notification.data.target : '/';
+  let target = '/';
+  try {
+    const parsed = new URL(requested, self.location.origin);
+    if (parsed.origin === self.location.origin) target = parsed.pathname + parsed.search + parsed.hash;
+  } catch (_) {}
+  event.waitUntil((async () => {
+    const items = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const client of items) {
+      if (new URL(client.url).origin === self.location.origin) {
+        if ('navigate' in client) await client.navigate(target);
+        return client.focus();
+      }
+    }
+    return self.clients.openWindow(target);
+  })());
+});
