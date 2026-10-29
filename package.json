@@ -4,7 +4,7 @@
   "private": true,
   "description": "ZUNO — unified global social, entertainment, communication, livestreaming, commerce and creator ecosystem.",
   "license": "SEE LICENSE IN LICENSE",
-  "packageManager": "pnpm@8.15.0",
+  "packageManager": "pnpm@9.15.9",
   "engines": {
     "node": ">=20"
   },
@@ -36,5 +36,11 @@
   "devDependencies": {
     "turbo": "^1.13.0",
     "typescript": "^5.4.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "tar@<=7.5.20": "^7.5.21",
+      "extract-zip": "npm:@electron-internal/extract-zip@1.0.6"
+    }
   }
 }

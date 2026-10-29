@@ -90,14 +90,7 @@ alter table gift_deliveries add column if not exists state text not null default
   check(state in ('delivered','refunded','reversed'));
 create index if not exists gift_deliveries_eligible_sender_idx on gift_deliveries(sender_profile_id,state,delivered_at);
 
-create table if not exists gifter_milestone_history (
-  id uuid primary key default gen_random_uuid(),
-  profile_id uuid not null references profiles(id) on delete cascade,
-  milestone_key text not null check(milestone_key in ('ultimate_universe','level_10','level_20','level_30','level_40','level_50')),
-  eligible_lifetime_coins bigint not null check(eligible_lifetime_coins>=0),
-  awarded_at timestamptz not null default now(),
-  unique(profile_id,milestone_key)
-);
+
 alter table gifter_milestone_history enable row level security;
 drop policy if exists gifter_milestones_owner_read on gifter_milestone_history;
 create policy gifter_milestones_owner_read on gifter_milestone_history for select using(profile_id=current_profile_id());

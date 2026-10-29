@@ -22,7 +22,7 @@ jobs:
         with:
           node-version: "20"
       - name: Setup pnpm
-        run: corepack enable && corepack prepare pnpm@8.15.0 --activate
+        run: corepack enable && corepack prepare pnpm@9.15.9 --activate
       - name: Install
         run: pnpm install --no-frozen-lockfile
       - name: Lint JavaScript source
