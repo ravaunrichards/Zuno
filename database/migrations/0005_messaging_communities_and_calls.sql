@@ -4,12 +4,6 @@ language sql stable security definer set search_path=public,pg_temp as $$
  select exists(select 1 from public.messages m join public.conversation_members cm on cm.conversation_id=m.conversation_id
  where m.id=p_message_id and cm.profile_id=public.current_profile_id())
 $$;
-create or replace function is_call_party(p_call_id uuid) returns boolean
-language sql stable security definer set search_path=public,pg_temp as $$
- select exists(select 1 from public.call_sessions cs where cs.id=p_call_id and cs.initiated_by=public.current_profile_id())
- or exists(select 1 from public.call_participants cp where cp.call_id=p_call_id and cp.profile_id=public.current_profile_id())
-$$;
-
 create table if not exists message_reactions (
  message_id uuid not null references messages(id) on delete cascade,
  profile_id uuid not null references profiles(id) on delete cascade,
@@ -46,6 +40,12 @@ create table if not exists call_participants (
  last_state text not null default 'invited' check(last_state in ('invited','ringing','joined','declined','missed','left')),
  primary key(call_id,profile_id)
 );
+
+create or replace function is_call_party(p_call_id uuid) returns boolean
+language sql stable security definer set search_path=public,pg_temp as $
+ select exists(select 1 from public.call_sessions cs where cs.id=p_call_id and cs.initiated_by=public.current_profile_id())
+ or exists(select 1 from public.call_participants cp where cp.call_id=p_call_id and cp.profile_id=public.current_profile_id())
+$;
 create table if not exists community_channels (
  id uuid primary key default gen_random_uuid(),
  community_id uuid not null references communities(id) on delete cascade,
