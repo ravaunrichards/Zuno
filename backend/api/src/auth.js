@@ -20,7 +20,7 @@ const USER_TABLES = new Set([
 const ADMIN_TABLES = new Set([
   'coin_packages','provider_webhook_attempts',
   'wallet_restrictions','live_rooms','live_participants','profiles','wallet_accounts','ledger_postings',
-  'ranking_aggregates','notifications','live_room_events','guest_requests','gift_definitions','live_poll_votes',
+  'ranking_aggregates','notifications','live_room_events','guest_requests','gift_definitions','live_poll_votes','live_polls',
   'media_assets','posts','follows','blocks','recommendation_events','event_outbox',
   'background_jobs','payment_orders','payment_webhook_events','refund_records','gift_deliveries',
   'creator_earning_entries','creator_earnings','payouts','recharge_purchases','creator_subscriptions',

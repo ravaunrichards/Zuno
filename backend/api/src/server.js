@@ -9,7 +9,7 @@
  */
 const http = require('node:http');
 const { URL } = require('node:url');
-const { randomUUID } = require('node:crypto');
+const { randomUUID, createHash } = require('node:crypto');
 const { load, validateRequired } = require('../../../config');
 const livekit = require('../../../integrations/livekit');
 const paypal = require('../../../integrations/paypal');
@@ -79,6 +79,27 @@ function readBody(req, limit = MAX_REQUEST_BYTES) {
       if (!chunks.length) return resolve({});
       try { resolve(JSON.parse(Buffer.concat(chunks).toString('utf8'))); }
       catch (_) { reject(new Error('INVALID_JSON')); }
+    });
+    req.on('error', reject);
+  });
+}
+function readRawBody(req, limit = MAX_REQUEST_BYTES) {
+  return new Promise((resolve, reject) => {
+    let size = 0;
+    const chunks = [];
+    let tooLarge = false;
+    req.on('data', (chunk) => {
+      if (tooLarge) return;
+      size += chunk.length;
+      if (size > limit) {
+        tooLarge = true;
+        reject(new Error('PAYLOAD_TOO_LARGE'));
+        return;
+      }
+      chunks.push(chunk);
+    });
+    req.on('end', () => {
+      if (!tooLarge) resolve(Buffer.concat(chunks).toString('utf8'));
     });
     req.on('error', reject);
   });
@@ -354,6 +375,99 @@ const server = http.createServer(async (req, res) => {
       const category = url.searchParams.get('category');
       const gifts = loadGifts().filter((gift) => !category || String(gift.category || '').toLowerCase().includes(category.toLowerCase()));
       return json(res, 200, { ok: true, count: gifts.length, gifts });
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/livekit/webhook') {
+      if (!config.configured.livekit) return error(res, 503, 'LIVE_NOT_CONFIGURED');
+      const rawBody = await readRawBody(req, MAX_REQUEST_BYTES);
+      let body;
+      try { body = JSON.parse(rawBody); } catch (_) { return error(res, 400, 'INVALID_WEBHOOK_JSON'); }
+      const verified = await livekit.verifyWebhook(config.livekit, rawBody, req.headers.authorization);
+      if (!verified.ok || !verified.verified) return error(res, 401, verified.code || 'LIVEKIT_WEBHOOK_SIGNATURE_INVALID');
+      const event = verified.event || body;
+      const eventType = typeof event.event === 'string' ? event.event : '';
+      const roomInfo = event.room && typeof event.room === 'object' ? event.room : {};
+      const roomId = String(roomInfo.name || '');
+      const participantInfo = event.participant && typeof event.participant === 'object' ? event.participant : {};
+      const profileId = String(participantInfo.identity || '');
+      const providerEventId = 'livekit:' + String(event.id || createHash('sha256').update(rawBody).digest('hex'));
+      const prior = await selectAdminRows(config, 'live_room_events', query({
+        select: 'id,room_id,event_type,occurred_at',
+        provider_event_id: 'eq.' + providerEventId,
+        limit: '1'
+      }));
+      if (!prior.ok) return error(res, 503, 'LIVEKIT_WEBHOOK_IDEMPOTENCY_LOOKUP_FAILED');
+      if (prior.rows.length) return json(res, 200, { ok: true, duplicate: true, eventId: providerEventId });
+      if (!uuid(roomId)) return json(res, 200, { ok: true, ignored: true, reason: 'ROOM_NAME_NOT_ZUNO_UUID', eventType });
+      const roomLookup = await selectAdminRows(config, 'live_rooms', query({
+        select: 'id,host_id,state,is_private',
+        id: 'eq.' + roomId,
+        limit: '1'
+      }));
+      if (!roomLookup.ok) return error(res, 503, 'LIVEKIT_ROOM_LOOKUP_FAILED');
+      if (!roomLookup.rows[0]) return error(res, 503, 'LIVEKIT_ROOM_NOT_PROVISIONED');
+      const liveRoom = roomLookup.rows[0];
+      const now = new Date().toISOString();
+      const eventSeconds = Number(event.createdAt);
+      const occurredAt = Number.isFinite(eventSeconds) && eventSeconds > 0
+        ? new Date(eventSeconds * 1000).toISOString() : now;
+
+      if (eventType === 'room_started') {
+        const update = await adminRest(config, 'live_rooms', query({ id: 'eq.' + roomId, state: 'neq.ended' }), 'PATCH', {
+          state: 'live', started_at: liveRoom.started_at || occurredAt, ended_at: null
+        });
+        if (!update.ok) return error(res, 503, 'LIVEKIT_ROOM_START_SYNC_FAILED');
+      } else if (eventType === 'room_finished') {
+        const update = await adminRest(config, 'live_rooms', query({ id: 'eq.' + roomId }), 'PATCH', {
+          state: 'ended', ended_at: occurredAt
+        });
+        if (!update.ok) return error(res, 503, 'LIVEKIT_ROOM_END_SYNC_FAILED');
+        await adminRest(config, 'live_participants', query({ room_id: 'eq.' + roomId, left_at: 'is.null' }), 'PATCH', { left_at: occurredAt });
+        await adminRest(config, 'guest_requests', query({ room_id: 'eq.' + roomId, state: 'eq.pending' }), 'PATCH', { state: 'rejected', resolved_at: occurredAt });
+        await adminRest(config, 'live_polls', query({ room_id: 'eq.' + roomId, state: 'eq.open' }), 'PATCH', { state: 'closed', closed_at: occurredAt });
+      } else if (eventType === 'participant_joined' && uuid(profileId)) {
+        const existing = await selectAdminRows(config, 'live_participants', query({
+          select: 'room_id,profile_id,role',
+          room_id: 'eq.' + roomId, profile_id: 'eq.' + profileId,
+          limit: '1'
+        }));
+        if (!existing.ok) return error(res, 503, 'LIVEKIT_PARTICIPANT_LOOKUP_FAILED');
+        if (existing.rows.length) {
+          const patch = await adminRest(config, 'live_participants', query({
+            room_id: 'eq.' + roomId, profile_id: 'eq.' + profileId
+          }), 'PATCH', { joined_at: occurredAt, left_at: null });
+          if (!patch.ok) return error(res, 503, 'LIVEKIT_PARTICIPANT_SYNC_FAILED');
+        } else {
+          const role = profileId === liveRoom.host_id ? 'host' : 'viewer';
+          const created = await adminRest(config, 'live_participants', new URLSearchParams(), 'POST', {
+            room_id: roomId, profile_id: profileId, role, joined_at: occurredAt, left_at: null
+          });
+          if (!created.ok) return error(res, 503, 'LIVEKIT_PARTICIPANT_SYNC_FAILED');
+        }
+      } else if ((eventType === 'participant_left' || eventType === 'participant_connection_aborted') && uuid(profileId)) {
+        const update = await adminRest(config, 'live_participants', query({
+          room_id: 'eq.' + roomId, profile_id: 'eq.' + profileId, left_at: 'is.null'
+        }), 'PATCH', { left_at: occurredAt });
+        if (!update.ok) return error(res, 503, 'LIVEKIT_PARTICIPANT_LEAVE_SYNC_FAILED');
+      }
+
+      const eventPayload = {
+        event: eventType, roomName: roomInfo.name || null, roomSid: roomInfo.sid || null,
+        participantIdentity: uuid(profileId) ? profileId : null,
+        participantSid: participantInfo.sid || null,
+        createdAt: event.createdAt || null
+      };
+      const saved = await adminRest(config, 'live_room_events', new URLSearchParams(), 'POST', {
+        room_id: roomId, event_type: eventType || 'unknown',
+        provider_event_id: providerEventId, payload: eventPayload, occurred_at: occurredAt
+      });
+      if (!saved.ok) {
+        const check = await selectAdminRows(config, 'live_room_events', query({
+          select: 'id', provider_event_id: 'eq.' + providerEventId, limit: '1'
+        }));
+        if (!check.ok || !check.rows.length) return error(res, 503, 'LIVEKIT_WEBHOOK_EVENT_STORE_FAILED');
+      }
+      return json(res, 200, { ok: true, duplicate: false, eventId: providerEventId, eventType });
     }
 
     if (req.method === 'GET' && url.pathname === '/api/live/rooms/mine') {
