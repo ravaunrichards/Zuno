@@ -1,5 +1,5 @@
 import { requestJson } from '../../services/api-client.js';
-import { getSession } from './auth/session.js';
+import { getSession } from '../auth/session.js';
 
 const PAGE_SIZE=25;
 let items=[];
