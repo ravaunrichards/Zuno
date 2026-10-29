@@ -158,6 +158,7 @@ async function loadNotificationPreferences() {
   });
   $('settings-quiet-start').value = result.preferences?.quietHoursStart || '';
   $('settings-quiet-end').value = result.preferences?.quietHoursEnd || '';
+  $('settings-notification-timezone').value = result.preferences?.timezone || 'America/Jamaica';
 }
 async function saveNotificationPreferences(event) {
   event.preventDefault();
@@ -174,7 +175,7 @@ async function saveNotificationPreferences(event) {
   if (button) button.disabled = true;
   showStatus('notification-settings-status','Saving notification preferences…');
   try {
-    await requestJson('/api/notifications/preferences',{method:'PATCH',body:{preferences,quietHoursStart:start,quietHoursEnd:end}});
+    await requestJson('/api/notifications/preferences',{method:'PATCH',body:{preferences,quietHoursStart:start,quietHoursEnd:end,timezone:$('settings-notification-timezone').value}});
     showStatus('notification-settings-status','Notification preferences saved.');
   } catch (error) {
     showStatus('notification-settings-status',error.message || 'Notification preferences could not be saved.',true);

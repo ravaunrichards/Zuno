@@ -1,5 +1,6 @@
 -- Retryable external notification delivery queue and profile timezone for quiet hours.
 alter table public.notification_preferences add column if not exists timezone text not null default 'America/Jamaica';
+alter table public.notification_preferences drop constraint if exists notification_preferences_timezone_length;
 alter table public.notification_preferences add constraint notification_preferences_timezone_length
  check(length(timezone) between 1 and 100) not valid;
 

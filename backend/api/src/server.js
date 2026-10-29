@@ -1080,7 +1080,7 @@ const server = http.createServer(async (req, res) => {
       const session = await requireSession(req, res);
       if (!session.ok) return;
       const queryPrefs = {
-        select: 'profile_id,preferences,quiet_hours_start,quiet_hours_end,updated_at',
+        select: 'profile_id,preferences,quiet_hours_start,quiet_hours_end,timezone,updated_at',
         profile_id: 'eq.' + session.profile.id, limit: '1'
       };
       const found = await rowsForUser(session, 'notification_preferences', queryPrefs);
@@ -1088,7 +1088,7 @@ const server = http.createServer(async (req, res) => {
       let prefs = found.data[0];
       if (!prefs) {
         const created = await rowsForUser(session, 'notification_preferences', {
-          select: 'profile_id,preferences,quiet_hours_start,quiet_hours_end,updated_at'
+          select: 'profile_id,preferences,quiet_hours_start,quiet_hours_end,timezone,updated_at'
         }, { method: 'POST', body: { profile_id: session.profile.id } });
         if (!created.ok || !Array.isArray(created.data) || !created.data[0]) return badDatabase(res, created, 'NOTIFICATION_PREFERENCES_CREATE_FAILED');
         prefs = created.data[0];
@@ -1097,6 +1097,7 @@ const server = http.createServer(async (req, res) => {
         values: prefs.preferences || {},
         quietHoursStart: prefs.quiet_hours_start || null,
         quietHoursEnd: prefs.quiet_hours_end || null,
+        timezone: prefs.timezone || 'America/Jamaica',
         updatedAt: prefs.updated_at
       }});
     }
@@ -1121,8 +1122,13 @@ const server = http.createServer(async (req, res) => {
       }
       if ((body.quietHoursStart === null) !== (body.quietHoursEnd === null) &&
           (body.quietHoursStart === null || body.quietHoursEnd === null)) return error(res, 400, 'QUIET_HOURS_PAIR_REQUIRED');
+      if (body.timezone !== undefined) {
+        if (typeof body.timezone !== 'string' || body.timezone.length > 100) return error(res, 400, 'INVALID_NOTIFICATION_TIMEZONE');
+        try { new Intl.DateTimeFormat('en-US', { timeZone: body.timezone }).format(new Date()); }
+        catch (_) { return error(res, 400, 'INVALID_NOTIFICATION_TIMEZONE'); }
+      }
       const current = await rowsForUser(session, 'notification_preferences', {
-        select: 'profile_id,preferences,quiet_hours_start,quiet_hours_end',
+        select: 'profile_id,preferences,quiet_hours_start,quiet_hours_end,timezone',
         profile_id: 'eq.' + session.profile.id, limit: '1'
       });
       if (!current.ok || !Array.isArray(current.data)) return badDatabase(res, current, 'NOTIFICATION_PREFERENCES_LOOKUP_FAILED');
@@ -1133,13 +1139,14 @@ const server = http.createServer(async (req, res) => {
       };
       if (body.quietHoursStart !== undefined) updates.quiet_hours_start = body.quietHoursStart;
       if (body.quietHoursEnd !== undefined) updates.quiet_hours_end = body.quietHoursEnd;
+      if (body.timezone !== undefined) updates.timezone = body.timezone;
       const saved = current.data[0]
-        ? await rowsForUser(session,'notification_preferences',{select:'profile_id,preferences,quiet_hours_start,quiet_hours_end,updated_at',profile_id:'eq.'+session.profile.id},{method:'PATCH',body:updates})
-        : await rowsForUser(session,'notification_preferences',{select:'profile_id,preferences,quiet_hours_start,quiet_hours_end,updated_at'},{method:'POST',body:{profile_id:session.profile.id,...updates}});
+        ? await rowsForUser(session,'notification_preferences',{select:'profile_id,preferences,quiet_hours_start,quiet_hours_end,timezone,updated_at',profile_id:'eq.'+session.profile.id},{method:'PATCH',body:updates})
+        : await rowsForUser(session,'notification_preferences',{select:'profile_id,preferences,quiet_hours_start,quiet_hours_end,timezone,updated_at'},{method:'POST',body:{profile_id:session.profile.id,...updates}});
       if (!saved.ok || !Array.isArray(saved.data) || !saved.data[0]) return badDatabase(res, saved, 'NOTIFICATION_PREFERENCES_SAVE_FAILED');
       return json(res, 200, { ok:true, preferences:{
         values:saved.data[0].preferences || {}, quietHoursStart:saved.data[0].quiet_hours_start || null,
-        quietHoursEnd:saved.data[0].quiet_hours_end || null, updatedAt:saved.data[0].updated_at
+        quietHoursEnd:saved.data[0].quiet_hours_end || null, timezone:saved.data[0].timezone || 'America/Jamaica', updatedAt:saved.data[0].updated_at
       }});
     }
 
