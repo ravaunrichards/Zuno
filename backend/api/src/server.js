@@ -63,7 +63,7 @@ async function authProviderRequest(cfg, pathname, options = {}) {
   const method = options.method || 'GET';
   const key = options.key || cfg.supabase.serviceRoleKey;
   const headers = { apikey: key, Accept: 'application/json' };
-  if (options.bearer !== false) headers.Authorization = 'Bearer ' + key;
+  if (options.bearer !== false && !(typeof key === 'string' && key.startsWith('sb_secret_'))) headers.Authorization = 'Bearer ' + key;
   const init = { method, headers };
   if (options.body !== undefined && options.body !== null) {
     headers['Content-Type'] = 'application/json';
@@ -4196,7 +4196,11 @@ async function verifySupabaseAdminCredentials() {
     } else {
       const providerCode = String(result.payload.code || result.payload.error_code || result.payload.error || 'UNSPECIFIED')
         .replace(/[^a-zA-Z0-9_.-]/g, '').slice(0, 64);
-      console.error('[auth-config] Supabase Auth Admin API credential check failed (HTTP ' + result.status + ', code ' + providerCode + ')');
+      const providerMessage = String(result.payload.message || result.payload.msg || '').toLowerCase();
+      const reason = /invalid jwt|jwt.*invalid/.test(providerMessage) ? 'INVALID_JWT_OR_SECRET_SENT_AS_BEARER'
+        : /invalid api key|invalid key/.test(providerMessage) ? 'INVALID_API_KEY'
+        : 'PROVIDER_REJECTED_KEY';
+      console.error('[auth-config] Supabase Auth Admin API credential check failed (HTTP ' + result.status + ', code ' + providerCode + ', reason ' + reason + ')');
     }
   } catch (_) {
     console.error('[auth-config] Supabase Auth Admin API credential check failed (network/timeout)');
