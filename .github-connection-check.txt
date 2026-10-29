@@ -1,0 +1,2 @@
+GitHub connector write-access verification.
+Created on 2026-10-29 to test repository Contents API access.
