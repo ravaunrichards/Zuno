@@ -275,10 +275,42 @@ const server = http.createServer(async (req, res) => {
         const profileRows = await rowsForUser(session, 'profiles', { select: 'id,username,display_name,avatar_url,is_verified', id: profileIdIn(authors) });
         if (profileRows.ok && Array.isArray(profileRows.data)) profileById = new Map(profileRows.data.map((profile) => [profile.id, profile]));
       }
+      const mediaAssetIds = [...new Set(rows.flatMap((post) => Array.isArray(post.media) ? post.media.map((item) => item && item.assetId).filter(uuid) : []))];
+      const mediaAssetsResult = mediaAssetIds.length
+        ? await selectAdminRows(config, 'media_assets', query({
+            select: 'id,storage_path,media_type,mime_type,state,width,height,duration_ms',
+            id: profileIdIn(mediaAssetIds), limit: String(Math.min(mediaAssetIds.length, 300))
+          }))
+        : { ok: true, rows: [] };
+      const mediaAssets = new Map((mediaAssetsResult.rows || []).map((asset) => [asset.id, asset]));
+      const readyAssets = [...mediaAssets.values()].filter((asset) => asset.state === 'ready' && typeof asset.storage_path === 'string');
+      let signedByPath = new Map();
+      if (readyAssets.length) {
+        const signed = await storage.createSignedDownloadUrls(config, config.storageBucket, readyAssets.map((asset) => asset.storage_path), config.mediaSignedUrlTtlSeconds);
+        if (signed.ok) signedByPath = new Map(signed.signedUrls.map((item) => [item.path, item.signedUrl]));
+      }
+      function publicMedia(mediaItems) {
+        if (!Array.isArray(mediaItems)) return [];
+        return mediaItems.map((item) => {
+          if (!item || typeof item !== 'object') return null;
+          const asset = uuid(item.assetId) ? mediaAssets.get(item.assetId) : null;
+          if (!asset) return { assetId: item.assetId || null, mediaType: item.mediaType || null, mimeType: item.mimeType || null, url: null, state: 'unavailable' };
+          return {
+            assetId: asset.id,
+            mediaType: asset.media_type,
+            mimeType: asset.mime_type,
+            url: asset.state === 'ready' ? signedByPath.get(asset.storage_path) || null : null,
+            state: asset.state,
+            width: asset.width || null,
+            height: asset.height || null,
+            durationMs: asset.duration_ms || null
+          };
+        }).filter(Boolean);
+      }
       const events = rows.map((post, index) => ({ profile_id: session.profile.id, content_type: 'post', content_id: post.id, event_type: 'impression', position: index }));
       if (events.length) await adminRest(config, 'recommendation_events', new URLSearchParams(), 'POST', events);
       return json(res, 200, { ok: true, mode, offset, limit, hasMore: rows.length === limit && (mode !== 'for-you' || offset + rows.length < 300), posts: rows.map((post) => ({
-        id: post.id, kind: post.kind, caption: post.caption || '', media: Array.isArray(post.media) ? post.media : [],
+        id: post.id, kind: post.kind, caption: post.caption || '', media: publicMedia(post.media),
         audience: post.audience, createdAt: post.created_at, expiresAt: post.expires_at || null,
         rankingScore: post.rankingScore ?? null,
         author: profileProjection(profileById.get(post.author_id))
