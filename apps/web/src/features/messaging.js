@@ -197,25 +197,6 @@ async function toggleCallCamera(){
  try{await call.room.localParticipant.setCameraEnabled(call.camera);id('call-camera-toggle').textContent=call.camera?'Turn camera off':'Turn camera on';}
  catch(error){call.camera=!call.camera;setStatus(error.message||'Camera unavailable.',true);}
 }
-function mountMessaging(){
- const dialog=id('messaging-dialog');
- id('messages-launch')?.addEventListener('click',()=>{openDialog();loadConversations();});
- id('messages')?.querySelector('h3')?.addEventListener('click',()=>{openDialog();loadConversations();});
- id('messaging-close')?.addEventListener('click',()=>dialog?.close());
- id('messaging-refresh')?.addEventListener('click',async()=>{await loadConversations();await loadIncomingCalls();if(currentConversation)await loadMessages();});
- id('conversation-create-form')?.addEventListener('submit',createConversation);
- id('message-compose-form')?.addEventListener('submit',sendMessage);
- id('call-audio')?.addEventListener('click',()=>startCall('audio'));
- id('call-video')?.addEventListener('click',()=>startCall('video'));
- id('call-end')?.addEventListener('click',()=>endCall());
- id('call-mic-toggle')?.addEventListener('click',toggleCallMic);
- id('call-camera-toggle')?.addEventListener('click',toggleCallCamera);
- dialog?.addEventListener('cancel',event=>{if(call){event.preventDefault();endCall();}});
- dialog?.addEventListener('close',()=>{if(call)endCall();});
- window.addEventListener('zuno:session-change',()=>{loadConversations();loadIncomingCalls();});
- if(getSession())loadIncomingCalls();
- incomingPoller=window.setInterval(()=>{if(dialog?.open){loadIncomingCalls();if(currentConversation)loadMessages();}},6000);
-}
 export function mountMessaging(){
  const dialog=id('messaging-dialog');
  id('messages-launch')?.addEventListener('click',()=>{openDialog();loadConversations();loadIncomingCalls();});
