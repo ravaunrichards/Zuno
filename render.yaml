@@ -107,6 +107,12 @@ services:
         sync: false
       - key: APP_BASE_URL
         sync: false
+      - key: PAYPAL_ENV
+        value: sandbox
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
       - key: NOTIFICATION_WORKER_POLL_MS
         value: "1500"
       - key: WEB_PUSH_VAPID_PUBLIC_KEY

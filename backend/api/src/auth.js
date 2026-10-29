@@ -91,7 +91,7 @@ async function authenticateProfile(req, cfg) {
 
     const query = new URLSearchParams({
       auth_user_id: 'eq.' + user.id,
-      select: 'id,auth_user_id,username,display_name,bio,avatar_url,cover_url,visibility,is_creator,is_verified,created_at,updated_at'
+      select: 'id,auth_user_id,username,display_name,bio,avatar_url,cover_url,visibility,is_creator,is_verified,is_deleted,created_at,updated_at'
     });
     const profileUrl = new URL('/rest/v1/profiles?' + query.toString(), cfg.supabase.url);
     const profileResponse = await boundedFetch(profileUrl, {
@@ -100,6 +100,7 @@ async function authenticateProfile(req, cfg) {
     if (!profileResponse.ok) return { ok: false, status: 503, code: 'PROFILE_LOOKUP_FAILED', message: 'The authenticated profile could not be verified.' };
     const profiles = await readResponse(profileResponse);
     if (!Array.isArray(profiles) || profiles.length !== 1 || !profiles[0].id) return { ok: false, status: 403, code: 'PROFILE_NOT_PROVISIONED', message: 'This account does not have a ZUNO profile yet.' };
+    if (profiles[0].is_deleted) return { ok: false, status: 403, code: 'ACCOUNT_DELETION_IN_PROGRESS', message: 'This account is being erased and can no longer be used.' };
     return { ok: true, user: { id: user.id }, profile: profiles[0], jwt: token };
   } catch (_) {
     return { ok: false, status: 503, code: 'AUTH_PROVIDER_UNAVAILABLE', message: 'Authentication could not be verified. Please retry when the service is available.' };
