@@ -77,3 +77,6 @@ Expired privacy export objects are removed by the worker after their 7-day avail
 ## Account deletion worker update
 
 Migration `0028_privacy_deletion_processing.sql` adds a service-role-only deletion lease/context. The job anonymizes and blocks profile access immediately; it removes owned media and prior private exports, cancels active PayPal recurring subscriptions when configured, revokes the Supabase Auth user, and then erases personal content, relationship and message records. Ledger, payment, payout, commerce and safety/audit history remain linked to the anonymized profile for reconciliation/legal recordkeeping. If provider cancellation or storage/Auth cleanup cannot be verified, the request stays retrying/failed instead of being reported as complete.
+
+
+Privacy deletion now also removes call-participant/session records, blocks direct Supabase profile reads/updates after deletion begins, and cleans up an uploaded export object if deletion wins a race with export finalization.

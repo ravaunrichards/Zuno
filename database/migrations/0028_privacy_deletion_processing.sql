@@ -4,6 +4,31 @@ alter table public.profiles add column if not exists deleted_at timestamptz;
 alter table public.profiles alter column auth_user_id drop not null;
 
 alter table public.data_requests add column if not exists deletion_context jsonb;
+
+create or replace function public.current_profile_id() returns uuid
+language sql stable security definer
+set search_path=public,pg_temp as $privacy_current_profile$
+  select id from public.profiles where auth_user_id=auth.uid() and not is_deleted limit 1
+$privacy_current_profile$;
+
+drop policy if exists profiles_select on public.profiles;
+create policy profiles_select on public.profiles for select
+  using (not is_deleted and (
+    visibility='public'
+    or auth_user_id=auth.uid()
+    or (visibility='restricted' and exists(
+      select 1 from public.follows f
+      where f.follower_id=public.current_profile_id() and f.followee_id=profiles.id
+    ))
+  ));
+drop policy if exists profiles_update on public.profiles;
+create policy profiles_update on public.profiles for update
+  using (auth_user_id=auth.uid() and not is_deleted)
+  with check (auth_user_id=auth.uid() and not is_deleted);
+drop policy if exists profiles_insert on public.profiles;
+create policy profiles_insert on public.profiles for insert
+  with check (auth_user_id=auth.uid() and not is_deleted);
+
 create index if not exists data_requests_deletion_claim_idx
   on public.data_requests(run_after,requested_at)
   where request_type='deletion' and state in ('submitted','processing');
@@ -145,7 +170,7 @@ begin
     select * from (values
       ('comments','author_id'),('reactions','profile_id'),
       ('message_reactions','profile_id'),('message_read_receipts','profile_id'),
-      ('messages','sender_id'),('story_replies','author_id'),('stories','author_id'),
+      ('call_participants','profile_id'),('call_sessions','initiated_by'),('messages','sender_id'),('story_replies','author_id'),('stories','author_id'),
       ('story_views','viewer_id'),('post_bookmarks','profile_id'),('post_reposts','profile_id'),
       ('post_view_events','profile_id'),('post_share_events','profile_id'),
       ('feed_preferences','profile_id'),('recommendation_feedback','profile_id'),

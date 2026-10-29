@@ -222,10 +222,31 @@ function createPrivacyExportWorker(options={}) {
       await adapter.deleteObject({supabase:{url:base,serviceRoleKey:serviceKey}},bucket,objectPath,fetcher).catch(()=>{});
       const uploaded=await adapter.uploadObjectFromFile({supabase:{url:base,serviceRoleKey:serviceKey}},bucket,objectPath,file,'application/json',fetcher);
       if(!uploaded.ok)throw Object.assign(new Error(uploaded.code||'EXPORT_STORAGE_UPLOAD_FAILED'),{code:uploaded.code||'EXPORT_STORAGE_UPLOAD_FAILED'});
-      await rpc('finish_privacy_export',{
-        p_request_id:row.id,p_worker:workerId,p_success:true,p_storage_path:objectPath,
-        p_byte_size:body.length,p_sha256:digest,p_error_code:null
-      });
+      let finished;
+      try {
+        finished=await rpc('finish_privacy_export',{
+          p_request_id:row.id,p_worker:workerId,p_success:true,p_storage_path:objectPath,
+          p_byte_size:body.length,p_sha256:digest,p_error_code:null
+        });
+      } catch(error) {
+        const requestRows=await restRows('data_requests',{id:'eq.'+row.id,select:'state,result_storage_path',limit:'1'}).catch(()=>[]);
+        if(requestRows[0]&&requestRows[0].state==='completed'&&requestRows[0].result_storage_path===objectPath) {
+          return {ok:true,requestId:row.id,byteSize:body.length,sha256:digest};
+        }
+        const deletedProfiles=await restRows('profiles',{id:'eq.'+row.profile_id,select:'is_deleted',limit:'1'}).catch(()=>[]);
+        const removed=await adapter.deleteObject({supabase:{url:base,serviceRoleKey:serviceKey}},bucket,objectPath,fetcher);
+        if(!removed.ok&&removed.status!==404)throw Object.assign(new Error('PRIVACY_EXPORT_ORPHAN_CLEANUP_FAILED'),{code:'PRIVACY_EXPORT_ORPHAN_CLEANUP_FAILED'});
+        if(deletedProfiles[0]&&deletedProfiles[0].is_deleted)throw Object.assign(new Error('PRIVACY_EXPORT_RECIPIENT_DELETED'),{code:'PRIVACY_EXPORT_RECIPIENT_DELETED'});
+        throw error;
+      }
+      if(finished!=='completed') {
+        const requestRows=await restRows('data_requests',{id:'eq.'+row.id,select:'state,result_storage_path',limit:'1'}).catch(()=>[]);
+        if(!(requestRows[0]&&requestRows[0].state==='completed'&&requestRows[0].result_storage_path===objectPath)) {
+          const removed=await adapter.deleteObject({supabase:{url:base,serviceRoleKey:serviceKey}},bucket,objectPath,fetcher);
+          if(!removed.ok&&removed.status!==404)throw Object.assign(new Error('PRIVACY_EXPORT_ORPHAN_CLEANUP_FAILED'),{code:'PRIVACY_EXPORT_ORPHAN_CLEANUP_FAILED'});
+          throw Object.assign(new Error('PRIVACY_EXPORT_FINALIZATION_FAILED'),{code:'PRIVACY_EXPORT_FINALIZATION_FAILED'});
+        }
+      }
       return {ok:true,requestId:row.id,byteSize:body.length,sha256:digest};
     } finally {
       currentRequestId=null;
