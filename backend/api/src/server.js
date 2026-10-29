@@ -238,10 +238,79 @@ const server = http.createServer(async (req, res) => {
               state: 'in.(created,approved)'
             }), 'PATCH', { state: 'failed', updated_at: new Date().toISOString() });
           }
-        } else if (body.event_type === 'PAYMENT.CAPTURE.REFUNDED' || body.event_type === 'PAYMENT.CAPTURE.REVERSED') {
-          // Preserve the verified event for financial reconciliation. Do not silently
-          // mint/debit coins or claim refund completion without a balanced reversal.
-          processing = 'failed'; errorCode = 'REFUND_RECONCILIATION_REQUIRED';
+        } else if (body.event_type === 'PAYMENT.CAPTURE.REFUNDED') {
+          const related = resource.supplementary_data && resource.supplementary_data.related_ids || {};
+          const providerRefundId = String(resource.id || '');
+          const captureId = String(related.capture_id || '');
+          let refundRows = providerRefundId ? await selectAdminRows(config, 'refund_records', query({
+            select: 'id,payment_order_id,requested_by,state,provider_refund_id',
+            provider_refund_id: 'eq.' + providerRefundId, state: 'eq.processing', limit: '1'
+          })) : { ok: true, rows: [] };
+          if ((!refundRows.ok || !refundRows.rows.length) && captureId) {
+            const paymentRows = await selectAdminRows(config, 'payment_orders', query({
+              select: 'id,profile_id,state,provider_capture_id',
+              provider_capture_id: 'eq.' + captureId, limit: '1'
+            }));
+            if (paymentRows.ok && paymentRows.rows[0]) {
+              if (paymentRows.rows[0].state === 'refunded') {
+                processing = 'processed';
+              } else {
+                const pending = await selectAdminRows(config, 'refund_records', query({
+                  select: 'id,payment_order_id,requested_by,state,provider_refund_id',
+                  payment_order_id: 'eq.' + paymentRows.rows[0].id, state: 'eq.processing', limit: '1'
+                }));
+                if (pending.ok && pending.rows.length) refundRows = pending;
+                else {
+                  const restrictionPatch = await adminRest(config, 'wallet_restrictions', query({ profile_id: 'eq.' + paymentRows.rows[0].profile_id }), 'PATCH', {
+                    state: 'active', reason_code: 'EXTERNAL_REFUND_REQUIRES_RECONCILIATION',
+                    source_order_id: paymentRows.rows[0].id, updated_at: new Date().toISOString(), cleared_at: null
+                  });
+                  if (restrictionPatch.ok && Array.isArray(restrictionPatch.data) && restrictionPatch.data.length === 0) {
+                    await adminRest(config, 'wallet_restrictions', new URLSearchParams(), 'POST', {
+                      profile_id: paymentRows.rows[0].profile_id, state: 'active',
+                      reason_code: 'EXTERNAL_REFUND_REQUIRES_RECONCILIATION', source_order_id: paymentRows.rows[0].id
+                    });
+                  }
+                  await adminRest(config, 'payment_orders', query({ id: 'eq.' + paymentRows.rows[0].id, state: 'eq.credited' }), 'PATCH', {
+                    state: 'reversed', updated_at: new Date().toISOString()
+                  });
+                  processing = 'failed'; errorCode = 'EXTERNAL_REFUND_REQUIRES_RECONCILIATION';
+                }
+              }
+            } else {
+              processing = 'failed'; errorCode = 'REFUND_ORDER_LOOKUP_FAILED';
+            }
+          }
+          if (refundRows.ok && refundRows.rows.length) {
+            const final = await adminRpc(config, 'finalize_coin_refund', {
+              p_refund_id: refundRows.rows[0].id,
+              p_provider_refund_id: providerRefundId || refundRows.rows[0].provider_refund_id,
+              p_succeeded: true,
+              p_error_code: null
+            });
+            if (!final.ok) { processing = 'failed'; errorCode = 'REFUND_FINALIZATION_FAILED'; }
+          }
+        } else if (body.event_type === 'PAYMENT.CAPTURE.REVERSED') {
+          const captureId = String(resource.id || '');
+          const paymentRows = await selectAdminRows(config, 'payment_orders', query({
+            select: 'id,profile_id,state,provider_capture_id', provider_capture_id: 'eq.' + captureId, limit: '1'
+          }));
+          if (paymentRows.ok && paymentRows.rows[0] && paymentRows.rows[0].state !== 'refunded') {
+            const restrictionPatch = await adminRest(config, 'wallet_restrictions', query({ profile_id: 'eq.' + paymentRows.rows[0].profile_id }), 'PATCH', {
+              state: 'active', reason_code: 'PAYPAL_CAPTURE_REVERSED',
+              source_order_id: paymentRows.rows[0].id, updated_at: new Date().toISOString(), cleared_at: null
+            });
+            if (restrictionPatch.ok && Array.isArray(restrictionPatch.data) && restrictionPatch.data.length === 0) {
+              await adminRest(config, 'wallet_restrictions', new URLSearchParams(), 'POST', {
+                profile_id: paymentRows.rows[0].profile_id, state: 'active',
+                reason_code: 'PAYPAL_CAPTURE_REVERSED', source_order_id: paymentRows.rows[0].id
+              });
+            }
+            await adminRest(config, 'payment_orders', query({ id: 'eq.' + paymentRows.rows[0].id, state: 'eq.credited' }), 'PATCH', {
+              state: 'reversed', updated_at: new Date().toISOString()
+            });
+            processing = 'failed'; errorCode = 'PAYPAL_CAPTURE_REVERSED';
+          }
         } else {
           processing = 'ignored';
         }
@@ -763,6 +832,11 @@ const server = http.createServer(async (req, res) => {
       if (liveRoomId && !uuid(liveRoomId)) return error(res, 400, 'INVALID_LIVE_ROOM_ID');
       if (message !== null && message.length > 240) return error(res, 400, 'GIFT_MESSAGE_TOO_LONG');
       if (!/^[a-zA-Z0-9._:-]{16,180}$/.test(rawKey)) return error(res, 400, 'IDEMPOTENCY_KEY_REQUIRED');
+      const restriction = await selectAdminRows(config, 'wallet_restrictions', query({
+        select: 'state,reason_code', profile_id: 'eq.' + session.profile.id, state: 'eq.active', limit: '1'
+      }));
+      if (!restriction.ok) return error(res, 503, 'WALLET_RESTRICTION_LOOKUP_FAILED');
+      if (restriction.rows.length) return error(res, 403, 'WALLET_RESTRICTED', 'This wallet is temporarily restricted while a verified payment reversal is reconciled.');
       const idempotencyKey = 'gift:' + session.profile.id + ':' + rawKey;
       const replayLookup = await selectAdminRows(config, 'gift_deliveries', query({
         select: 'id', idempotency_key: 'eq.' + idempotencyKey, limit: '1'
@@ -822,6 +896,11 @@ const server = http.createServer(async (req, res) => {
         return error(res, 503, 'PRODUCTION_CHECKOUT_DISABLED', 'Live checkout remains disabled until production payment safeguards and signed webhooks are configured.');
       }
       const body = await readBody(req);
+      const restriction = await selectAdminRows(config, 'wallet_restrictions', query({
+        select: 'state,reason_code', profile_id: 'eq.' + session.profile.id, state: 'eq.active', limit: '1'
+      }));
+      if (!restriction.ok) return error(res, 503, 'WALLET_RESTRICTION_LOOKUP_FAILED');
+      if (restriction.rows.length) return error(res, 403, 'WALLET_RESTRICTED', 'This wallet is temporarily restricted while a verified payment reversal is reconciled.');
       const packageId = typeof body.packageId === 'string' ? body.packageId : null;
       const customInput = body.customAmountUSD;
       const hasPackage = Boolean(packageId);
@@ -885,7 +964,16 @@ const server = http.createServer(async (req, res) => {
         return error(res, 503, 'PAYMENT_ORDER_CREATE_FAILED', 'No checkout was created because the payment order could not be stored.');
       }
       order = inserted.data[0];
-      const providerOrder = await paypal.createOrder(config.paypal, { amountUSD, referenceId: order.id, requestId: order.id });
+      const returnUrl = new URL('/', config.appBaseUrl);
+      returnUrl.searchParams.set('payment', 'return');
+      returnUrl.searchParams.set('order', order.id);
+      const cancelUrl = new URL('/', config.appBaseUrl);
+      cancelUrl.searchParams.set('payment', 'cancel');
+      cancelUrl.searchParams.set('order', order.id);
+      const providerOrder = await paypal.createOrder(config.paypal, {
+        amountUSD, referenceId: order.id, requestId: order.id,
+        returnUrl: returnUrl.toString(), cancelUrl: cancelUrl.toString()
+      });
       if (!providerOrder.ok || !providerOrder.orderId || !providerOrder.approvalUrl) {
         await adminRest(config, 'payment_orders', query({ id: 'eq.' + order.id, state: 'eq.created' }), 'PATCH', {
           state: 'failed', updated_at: new Date().toISOString()
@@ -902,6 +990,79 @@ const server = http.createServer(async (req, res) => {
         id: order.id, state: 'created', amountUSD, currency: 'USD', coins,
         provider: 'paypal', providerOrderId: providerOrder.orderId, approvalUrl: providerOrder.approvalUrl
       } });
+    }
+
+    const refundRoute = url.pathname.match(/^\/api\/payments\/orders\/([0-9a-f-]+)\/refund$/i);
+    if (req.method === 'POST' && refundRoute) {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      if (!config.configured.paypal) return error(res, 503, 'PAYMENTS_NOT_CONFIGURED');
+      if (config.paypal.env === 'live' && (!config.features.productionPayments || !config.paypal.webhookId)) {
+        return error(res, 503, 'PRODUCTION_REFUNDS_DISABLED');
+      }
+      const orderId = refundRoute[1];
+      if (!uuid(orderId)) return error(res, 400, 'INVALID_PAYMENT_ORDER_ID');
+      const body = await readBody(req);
+      const rawKey = String(req.headers['idempotency-key'] || body.idempotencyKey || '');
+      if (!/^[A-Za-z0-9._:-]{16,180}$/.test(rawKey)) return error(res, 400, 'IDEMPOTENCY_KEY_REQUIRED');
+      const reason = typeof body.reasonCode === 'string' ? body.reasonCode : 'customer_request';
+      if (!/^[A-Za-z0-9_.:-]{2,80}$/.test(reason)) return error(res, 400, 'INVALID_REFUND_REASON');
+      const found = await selectAdminRows(config, 'payment_orders', query({
+        select: 'id,profile_id,amount_usd,state,provider_capture_id,provider_order_id,credited_ledger_entry',
+        id: 'eq.' + orderId, profile_id: 'eq.' + session.profile.id, limit: '1'
+      }));
+      if (!found.ok) return error(res, 503, 'PAYMENT_ORDER_UNAVAILABLE');
+      const order = found.rows[0];
+      if (!order) return error(res, 404, 'PAYMENT_ORDER_NOT_FOUND');
+      const idempotencyKey = session.profile.id + ':refund:' + rawKey;
+      const reservation = await adminRpc(config, 'reserve_coin_refund', {
+        p_payment_order_id: order.id, p_profile_id: session.profile.id,
+        p_idempotency_key: idempotencyKey, p_reason_code: reason
+      });
+      if (!reservation.ok) {
+        const code = reservation.code || 'REFUND_RESERVATION_FAILED';
+        if (code === 'REFUND_COIN_BALANCE_INSUFFICIENT') return error(res, 409, code, 'The unspent coin balance is insufficient for a full recharge refund.');
+        if (code === 'REFUND_ALREADY_EXISTS' || code === 'PAYMENT_NOT_REFUNDABLE') return error(res, 409, code);
+        return error(res, reservation.status === 503 ? 503 : 409, code, 'A refund reservation was not created.');
+      }
+      const refundId = typeof reservation.data === 'string' ? reservation.data : Array.isArray(reservation.data) ? reservation.data[0] : reservation.data && reservation.data.reserve_coin_refund;
+      if (!uuid(String(refundId || ''))) return error(res, 503, 'REFUND_RESERVATION_RESULT_INVALID');
+      const refundLookup = await selectAdminRows(config, 'refund_records', query({
+        select: 'id,payment_order_id,requested_by,amount_usd,reason_code,state,provider_refund_id,idempotency_key,failure_code',
+        id: 'eq.' + refundId, requested_by: 'eq.' + session.profile.id, limit: '1'
+      }));
+      if (!refundLookup.ok || !refundLookup.rows[0]) return error(res, 503, 'REFUND_STATUS_UNAVAILABLE');
+      const refund = refundLookup.rows[0];
+      if (refund.state === 'refunded') return json(res, 200, { ok: true, idempotent: true, refund: { id: refund.id, state: 'refunded', amountUSD: Number(refund.amount_usd) } });
+      if (refund.state === 'failed') return error(res, 409, 'REFUND_ATTEMPT_FAILED', 'A prior definitive refund attempt failed and its reserved coins were released. Use a new idempotency key to retry.');
+      if (refund.provider_refund_id) return json(res, 202, { ok: true, idempotent: true, refund: { id: refund.id, state: 'processing', providerRefundId: refund.provider_refund_id } });
+      if (!order.provider_capture_id || order.state !== 'credited') return error(res, 409, 'PAYMENT_NOT_REFUNDABLE');
+
+      const providerResult = await paypal.refundCapture(config.paypal, order.provider_capture_id, refund.id.replace(/-/g, '') + 'r');
+      if (!providerResult.ok) {
+        if (providerResult.status >= 500) {
+          return json(res, 202, { ok: true, refund: { id: refund.id, state: 'processing' }, code: 'REFUND_RECONCILIATION_PENDING',
+            message: 'PayPal outcome is uncertain. Coins remain reserved until a verified provider event reconciles the refund.' });
+        }
+        const released = await adminRpc(config, 'finalize_coin_refund', {
+          p_refund_id: refund.id, p_provider_refund_id: null, p_succeeded: false, p_error_code: providerResult.code || 'PAYPAL_REFUND_REJECTED'
+        });
+        if (!released.ok) return error(res, 503, 'REFUND_RELEASE_RECONCILIATION_REQUIRED', 'Provider rejected the refund but the coin reservation release needs reconciliation.');
+        return error(res, 409, 'PAYPAL_REFUND_REJECTED', 'PayPal rejected the refund. Reserved coins were released.');
+      }
+      if (providerResult.refundId) {
+        await adminRest(config, 'refund_records', query({ id: 'eq.' + refund.id }), 'PATCH', {
+          provider_refund_id: providerResult.refundId, updated_at: new Date().toISOString()
+        });
+      }
+      if (providerResult.status === 'COMPLETED') {
+        const finalized = await adminRpc(config, 'finalize_coin_refund', {
+          p_refund_id: refund.id, p_provider_refund_id: providerResult.refundId, p_succeeded: true, p_error_code: null
+        });
+        if (!finalized.ok) return json(res, 202, { ok: true, refund: { id: refund.id, state: 'processing', providerRefundId: providerResult.refundId }, code: 'REFUND_FINALIZATION_PENDING' });
+        return json(res, 200, { ok: true, refund: { id: refund.id, state: 'refunded', amountUSD: Number(refund.amount_usd), providerRefundId: providerResult.refundId } });
+      }
+      return json(res, 202, { ok: true, refund: { id: refund.id, state: 'processing', providerRefundId: providerResult.refundId || null }, code: 'REFUND_PENDING_PROVIDER_CONFIRMATION' });
     }
 
     const captureRoute = url.pathname.match(/^\/api\/payments\/orders\/([0-9a-f-]+)\/capture$/i);

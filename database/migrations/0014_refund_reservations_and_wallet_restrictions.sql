@@ -4,6 +4,7 @@
 alter table public.payment_orders drop constraint if exists payment_orders_state_check;
 alter table public.payment_orders add constraint payment_orders_state_check
  check(state in ('created','approved','captured','credited','failed','cancelled','refunded','partially_refunded','reversed'));
+alter table public.refund_records add column if not exists failure_code text;
 
 create table if not exists public.wallet_restrictions (
  profile_id uuid primary key references public.profiles(id) on delete cascade,
@@ -16,6 +17,32 @@ create table if not exists public.wallet_restrictions (
 );
 alter table public.wallet_restrictions enable row level security;
 -- Wallet restrictions are only visible and mutable through trusted server/admin routes.
+
+create or replace function public.enforce_active_wallet_restriction()
+returns trigger
+language plpgsql security definer
+set search_path=public,pg_temp as $
+declare
+ v_profile_id uuid;
+begin
+ if tg_table_name='gift_deliveries' then v_profile_id:=new.sender_profile_id;
+ else v_profile_id:=new.profile_id;
+ end if;
+ if exists(select 1 from public.wallet_restrictions wr where wr.profile_id=v_profile_id and wr.state='active') then
+   raise exception 'WALLET_RESTRICTED';
+ end if;
+ return new;
+end;
+$;
+revoke all on function public.enforce_active_wallet_restriction() from public;
+drop trigger if exists gift_delivery_wallet_restriction on public.gift_deliveries;
+create trigger gift_delivery_wallet_restriction
+before insert on public.gift_deliveries
+for each row execute function public.enforce_active_wallet_restriction();
+drop trigger if exists payment_order_wallet_restriction on public.payment_orders;
+create trigger payment_order_wallet_restriction
+before insert on public.payment_orders
+for each row execute function public.enforce_active_wallet_restriction();
 
 create or replace function public.reserve_coin_refund(
  p_payment_order_id uuid,
@@ -160,7 +187,7 @@ begin
    insert into public.ledger_postings(entry_id,account_id,delta,unit)
    values(v_entry_id,v_user_account,v_coins,'coins'),(v_entry_id,v_sink_account,-v_coins,'coins');
  end if;
- update public.refund_records set state='failed',updated_at=now(),reason_code=left(coalesce(p_error_code,'PROVIDER_REFUND_FAILED'),80)
+ update public.refund_records set state='failed',updated_at=now(),failure_code=left(coalesce(p_error_code,'PROVIDER_REFUND_FAILED'),100)
  where id=v_refund.id;
  insert into public.event_outbox(event_key,event_type,aggregate_type,aggregate_id,payload)
  values('coin-refund-released:'||v_refund.id::text,'payment.refund_failed','refund',v_refund.id::text,
