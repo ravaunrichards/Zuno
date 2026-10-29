@@ -1,6 +1,7 @@
 'use strict';
-/** Minimal build orchestrator for environments without turbo installed.
- *  Validates that each workspace entry point parses; real app builds (web/
- *  android/ios/desktop/tv) require their own toolchains documented in docs/. */
-require('child_process').execSync('node scripts/lint.js', { cwd: require('path').join(__dirname, '..'), stdio: 'inherit' });
-console.log('build: source validated. Platform artifacts require their native toolchains (see docs/platforms.md).');
+const { execFileSync } = require('node:child_process');
+const path = require('node:path');
+const root = path.join(__dirname, '..');
+execFileSync(process.execPath, [path.join(__dirname, 'lint.js')], { cwd: root, stdio: 'inherit' });
+execFileSync(process.execPath, [path.join(__dirname, 'build-web.js')], { cwd: root, stdio: 'inherit' });
+console.log('JavaScript source and static web package checks completed. Native Android/iOS/Desktop/TV release builds need their target toolchains and are not implied by this command.');

@@ -1,0 +1,37 @@
+name: ZUNO CI
+
+on:
+  push:
+    branches: [main, "zuno-**"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-and-domain-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Setup pnpm
+        run: corepack enable && corepack prepare pnpm@8.15.0 --activate
+      - name: Install
+        run: pnpm install --no-frozen-lockfile
+      - name: Lint JavaScript source
+        run: pnpm lint
+      - name: Unit and integration tests
+        run: pnpm test
+      - name: Gift asset integrity
+        run: pnpm assets:validate
+      - name: Database static checks
+        run: pnpm db:validate
+      - name: Web package build
+        run: pnpm --filter @zuno/web build

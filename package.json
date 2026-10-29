@@ -1,20 +1,16 @@
 {
   "name": "zuno",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "ZUNO — unified global social, entertainment, communication, livestreaming, commerce and creator ecosystem.",
   "license": "SEE LICENSE IN LICENSE",
   "packageManager": "pnpm@8.15.0",
-  "engines": { "node": ">=16" },
-  "workspaces": [
-    "apps/*",
-    "backend/*",
-    "packages/*"
-  ],
+  "engines": { "node": ">=20" },
+  "workspaces": ["apps/*", "backend/*", "packages/*"],
   "scripts": {
     "dev": "node scripts/dev.js",
     "check:env": "node scripts/check-env.js",
-    "typecheck": "tsc -b || true",
+    "typecheck": "node scripts/lint.js",
     "lint": "node scripts/lint.js",
     "format": "node scripts/lint.js",
     "test": "node scripts/run-tests.js",
@@ -26,7 +22,8 @@
     "assets:validate": "node scripts/validate-assets.js",
     "db:validate": "node scripts/validate-db.js",
     "verify": "node scripts/verify.js",
-    "build": "turbo run build || node scripts/build.js",
+    "build": "node scripts/build.js",
+    "build:web": "node scripts/build-web.js",
     "package": "node scripts/package.js"
   },
   "devDependencies": {
