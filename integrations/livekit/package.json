@@ -5,5 +5,8 @@
   "main": "index.js",
   "scripts": {
     "check": "node --check index.js"
+  },
+  "dependencies": {
+    "livekit-server-sdk": "^2.19.2"
   }
 }
