@@ -12,6 +12,7 @@ const { URL } = require('node:url');
 const { randomUUID } = require('node:crypto');
 const { load, validateRequired } = require('../../../config');
 const livekit = require('../../../integrations/livekit');
+const paypal = require('../../../integrations/paypal');
 const { rankCandidates } = require('../../recommendations/src/scoring');
 const { monthlyPeriodStart, weeklyPeriodStart } = require('../../../packages/gift-engine/src/rankings');
 const { authenticateProfile, userRest, adminRest, adminRpc, selectAdminRows, profileProjection } = require('./auth');
@@ -148,6 +149,115 @@ const server = http.createServer(async (req, res) => {
         apiBaseUrl: config.apiPublicBaseUrl || ''
       });
     }
+    if (req.method === 'GET' && url.pathname === '/api/payments/packages') {
+      const result = await selectAdminRows(config, 'coin_packages', query({
+        select: 'id,coins,amount_usd,sort_order', enabled: 'eq.true', order: 'sort_order.asc'
+      }));
+      if (!result.ok) return error(res, 503, 'COIN_PACKAGES_UNAVAILABLE', 'Recharge packages are not available from the database.');
+      return json(res, 200, {
+        ok: true,
+        currency: 'USD',
+        packages: result.rows.map((item) => ({
+          id: item.id, coins: Number(item.coins), amountUSD: Number(item.amount_usd), sortOrder: Number(item.sort_order)
+        })),
+        custom: { minimumUSD: 0.99, maximumUSD: 999.99, coinsPerUSD: 60 },
+        note: 'Coin credit is granted only after a provider-confirmed capture is verified and reconciled.'
+      });
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/payments/paypal/webhook') {
+      const body = await readBody(req, MAX_REQUEST_BYTES);
+      if (!body || typeof body !== 'object' || typeof body.id !== 'string' || typeof body.event_type !== 'string') {
+        return error(res, 400, 'INVALID_WEBHOOK_PAYLOAD');
+      }
+      const verified = await paypal.verifyWebhook(config.paypal, req.headers, body).catch(() => ({ ok: false, verified: false, code: 'WEBHOOK_VERIFICATION_UNAVAILABLE' }));
+      const eventRow = {
+        provider: 'paypal',
+        provider_event_id: body.id,
+        event_type: body.event_type,
+        signature_verified: Boolean(verified.ok && verified.verified),
+        processing_state: verified.ok && verified.verified ? 'received' : 'failed',
+        attempt_count: 0,
+        payload: body,
+        last_error_code: verified.ok && verified.verified ? null : (verified.code || 'WEBHOOK_SIGNATURE_INVALID')
+      };
+      const inserted = await adminRest(config, 'payment_webhook_events', new URLSearchParams(), 'POST', eventRow);
+      if (!inserted.ok) {
+        const prior = await selectAdminRows(config, 'payment_webhook_events', query({
+          select: 'id,signature_verified,processing_state,last_error_code',
+          provider: 'eq.paypal', provider_event_id: 'eq.' + body.id, limit: '1'
+        }));
+        if (prior.ok && prior.rows[0] && prior.rows[0].processing_state === 'processed') {
+          return json(res, 200, { ok: true, duplicate: true, processed: true });
+        }
+        if (!prior.ok || !prior.rows[0]) return error(res, 503, 'WEBHOOK_EVENT_STORE_FAILED');
+        if (!prior.rows[0].signature_verified && !(verified.ok && verified.verified)) {
+          return error(res, 400, 'WEBHOOK_SIGNATURE_INVALID');
+        }
+      }
+      const eventLookup = await selectAdminRows(config, 'payment_webhook_events', query({
+        select: 'id,processing_state,signature_verified',
+        provider: 'eq.paypal', provider_event_id: 'eq.' + body.id, limit: '1'
+      }));
+      const storedEvent = eventLookup.ok ? eventLookup.rows[0] : null;
+      if (!(verified.ok && verified.verified) || !storedEvent || !storedEvent.signature_verified) {
+        return error(res, 400, 'WEBHOOK_SIGNATURE_INVALID');
+      }
+
+      let processing = 'processed';
+      let errorCode = null;
+      try {
+        const resource = body.resource && typeof body.resource === 'object' ? body.resource : {};
+        if (body.event_type === 'CHECKOUT.ORDER.APPROVED') {
+          const providerOrderId = String(resource.id || '');
+          if (providerOrderId) {
+            await adminRest(config, 'payment_orders', query({
+              provider_order_id: 'eq.' + providerOrderId, state: 'eq.created'
+            }), 'PATCH', { state: 'approved', updated_at: new Date().toISOString() });
+          }
+        } else if (body.event_type === 'PAYMENT.CAPTURE.COMPLETED') {
+          const relatedIds = resource.supplementary_data && resource.supplementary_data.related_ids || {};
+          const providerOrderId = String(relatedIds.order_id || '');
+          const captureId = String(resource.id || '');
+          const amount = resource.amount && Number(resource.amount.value);
+          const currency = String(resource.amount && resource.amount.currency_code || '');
+          if (!providerOrderId || !captureId || !Number.isFinite(amount)) {
+            processing = 'failed'; errorCode = 'CAPTURE_WEBHOOK_FIELDS_MISSING';
+          } else {
+            const credit = await adminRpc(config, 'credit_captured_coin_order', {
+              p_provider_order_id: providerOrderId, p_capture_id: captureId,
+              p_capture_amount: amount, p_currency: currency
+            });
+            if (!credit.ok) { processing = 'failed'; errorCode = 'CAPTURE_CREDIT_RECONCILIATION_FAILED'; }
+          }
+        } else if (body.event_type === 'PAYMENT.CAPTURE.DENIED') {
+          const relatedIds = resource.supplementary_data && resource.supplementary_data.related_ids || {};
+          if (relatedIds.order_id) {
+            await adminRest(config, 'payment_orders', query({
+              provider_order_id: 'eq.' + String(relatedIds.order_id),
+              state: 'in.(created,approved)'
+            }), 'PATCH', { state: 'failed', updated_at: new Date().toISOString() });
+          }
+        } else if (body.event_type === 'PAYMENT.CAPTURE.REFUNDED' || body.event_type === 'PAYMENT.CAPTURE.REVERSED') {
+          // Preserve the verified event for financial reconciliation. Do not silently
+          // mint/debit coins or claim refund completion without a balanced reversal.
+          processing = 'failed'; errorCode = 'REFUND_RECONCILIATION_REQUIRED';
+        } else {
+          processing = 'ignored';
+        }
+      } catch (_) {
+        processing = 'failed';
+        errorCode = 'WEBHOOK_PROCESSING_FAILED';
+      }
+      await adminRest(config, 'payment_webhook_events', query({
+        provider: 'eq.paypal', provider_event_id: 'eq.' + body.id
+      }), 'PATCH', {
+        processing_state: processing, processed_at: new Date().toISOString(),
+        last_error_code: errorCode, attempt_count: 1
+      });
+      return json(res, 200, { ok: true, eventId: body.id, processingState: processing, ...(errorCode ? { code: errorCode } : {}) });
+    }
+
     if (req.method === 'GET' && url.pathname === '/api/catalog/gifts') {
       const giftsResult = await adminRest(config, 'gift_definitions', query({ select: 'id,name,category,tier,price_coins,unlock_rule,model_path,audio_path,audio_status,asset_version,license', order: 'tier.asc,name.asc', limit: '200' }));
       if (giftsResult.ok && Array.isArray(giftsResult.data) && giftsResult.data.length) {
@@ -639,17 +749,189 @@ const server = http.createServer(async (req, res) => {
       }) });
     }
 
-    // Gift delivery and payment mutation stay disabled instead of using the in-memory demo ledger.
     if (req.method === 'POST' && url.pathname === '/api/gifts/send') {
       const session = await requireSession(req, res);
       if (!session.ok) return;
-      return error(res, 503, 'PERSISTENT_GIFT_DELIVERY_NOT_READY', 'Gift delivery is disabled until the persistent database transaction and delivery record are connected. No wallet balance was changed.');
+      const body = await readBody(req);
+      const recipientId = String(body.recipientProfileId || '');
+      const giftId = String(body.giftId || '');
+      const liveRoomId = body.liveRoomId == null || body.liveRoomId === '' ? null : String(body.liveRoomId);
+      const message = body.message == null ? null : String(body.message);
+      const rawKey = String(req.headers['idempotency-key'] || body.idempotencyKey || '');
+      if (!uuid(recipientId) || recipientId === session.profile.id) return error(res, 400, 'INVALID_GIFT_RECIPIENT');
+      if (!/^[a-zA-Z0-9._:-]{3,120}$/.test(giftId)) return error(res, 400, 'INVALID_GIFT_ID');
+      if (liveRoomId && !uuid(liveRoomId)) return error(res, 400, 'INVALID_LIVE_ROOM_ID');
+      if (message !== null && message.length > 240) return error(res, 400, 'GIFT_MESSAGE_TOO_LONG');
+      if (!/^[a-zA-Z0-9._:-]{16,180}$/.test(rawKey)) return error(res, 400, 'IDEMPOTENCY_KEY_REQUIRED');
+      const idempotencyKey = 'gift:' + session.profile.id + ':' + rawKey;
+      const delivered = await adminRpc(config, 'deliver_gift', {
+        p_sender_profile_id: session.profile.id,
+        p_recipient_profile_id: recipientId,
+        p_gift_id: giftId,
+        p_live_room_id: liveRoomId,
+        p_message: message,
+        p_idempotency_key: idempotencyKey
+      });
+      if (!delivered.ok) {
+        const code = delivered.code || 'GIFT_DELIVERY_FAILED';
+        if (code === 'INSUFFICIENT_FUNDS') return error(res, 409, code, 'Your Z Coins balance is too low for this gift.');
+        if (code === 'GIFT_LOCKED') return error(res, 403, code, 'Your gifter level has not unlocked this gift yet.');
+        if (code === 'SELF_GIFT_FORBIDDEN') return error(res, 400, code);
+        if (code === 'UNKNOWN_GIFT') return error(res, 404, code);
+        return error(res, delivered.status === 503 ? 503 : 409, code, 'The gift transaction was not completed. No success is being reported.');
+      }
+      const deliveryId = typeof delivered.data === 'string' ? delivered.data : Array.isArray(delivered.data) ? delivered.data[0] : delivered.data && delivered.data.deliver_gift;
+      if (!uuid(String(deliveryId || ''))) return error(res, 503, 'GIFT_DELIVERY_RESULT_INVALID');
+      const detail = await selectAdminRows(config, 'gift_deliveries', query({
+        select: 'id,gift_id,sender_profile_id,recipient_profile_id,live_room_id,ledger_entry_id,price_coins,idempotency_key,message,delivered_at,state',
+        id: 'eq.' + deliveryId, limit: '1'
+      }));
+      if (!detail.ok || !detail.rows[0]) return error(res, 503, 'GIFT_DELIVERY_READBACK_FAILED');
+      const delivery = detail.rows[0];
+      const gift = await selectAdminRows(config, 'gift_definitions', query({
+        select: 'id,name,category,tier,price_coins,unlock_rule,model_path,audio_path,audio_status,asset_version,license',
+        id: 'eq.' + delivery.gift_id, limit: '1'
+      }));
+      await adminRpc(config, 'refresh_gifter_progress', { p_profile_id: session.profile.id });
+      return json(res, 201, {
+        ok: true, idempotent: false,
+        delivery: {
+          id: delivery.id, senderProfileId: delivery.sender_profile_id, recipientProfileId: delivery.recipient_profile_id,
+          liveRoomId: delivery.live_room_id, giftId: delivery.gift_id, priceCoins: Number(delivery.price_coins),
+          ledgerEntryId: delivery.ledger_entry_id, message: delivery.message, deliveredAt: delivery.delivered_at,
+          state: delivery.state,
+          gift: gift.rows && gift.rows[0] ? {
+            id: gift.rows[0].id, name: gift.rows[0].name, category: gift.rows[0].category,
+            tier: gift.rows[0].tier, modelPath: gift.rows[0].model_path, audioPath: gift.rows[0].audio_path,
+            audioStatus: gift.rows[0].audio_status, assetVersion: gift.rows[0].asset_version
+          } : null
+        }
+      });
     }
+
     if (req.method === 'POST' && url.pathname === '/api/payments/order') {
       const session = await requireSession(req, res);
       if (!session.ok) return;
-      return error(res, 503, 'PAYMENT_WORKFLOW_NOT_READY', 'Checkout is disabled until persistent order storage, capture verification, signed webhooks, idempotent coin credit, refunds and reconciliation are connected. No payment was created.');
+      if (!config.configured.paypal) return error(res, 503, 'PAYMENTS_NOT_CONFIGURED', 'PayPal Developer credentials are required for checkout.');
+      if (config.paypal.env === 'live' && (!config.features.productionPayments || !config.paypal.webhookId)) {
+        return error(res, 503, 'PRODUCTION_CHECKOUT_DISABLED', 'Live checkout remains disabled until production payment safeguards and signed webhooks are configured.');
+      }
+      const body = await readBody(req);
+      const packageId = typeof body.packageId === 'string' ? body.packageId : null;
+      const customInput = body.customAmountUSD;
+      const hasPackage = Boolean(packageId);
+      const hasCustom = customInput !== undefined && customInput !== null && customInput !== '';
+      if (hasPackage === hasCustom) return error(res, 400, 'SELECT_ONE_RECHARGE_OPTION');
+      let amountUSD, coins, customCoins = null, selectedPackage = null;
+      if (hasPackage) {
+        const packageResult = await selectAdminRows(config, 'coin_packages', query({
+          select: 'id,coins,amount_usd,enabled', id: 'eq.' + packageId, enabled: 'eq.true', limit: '1'
+        }));
+        if (!packageResult.ok) return error(res, 503, 'COIN_PACKAGES_UNAVAILABLE');
+        selectedPackage = packageResult.rows[0];
+        if (!selectedPackage) return error(res, 400, 'COIN_PACKAGE_UNAVAILABLE');
+        amountUSD = Number(selectedPackage.amount_usd);
+        coins = Number(selectedPackage.coins);
+      } else {
+        const customAmount = Number(customInput);
+        if (!Number.isFinite(customAmount) || Math.round(customAmount * 100) / 100 !== customAmount || customAmount < 0.99 || customAmount > 999.99) {
+          return error(res, 400, 'CUSTOM_AMOUNT_OUT_OF_RANGE', 'Custom recharge must be between USD 0.99 and USD 999.99.');
+        }
+        amountUSD = customAmount;
+        coins = Math.floor(customAmount * 60);
+        customCoins = coins;
+      }
+      if (!Number.isSafeInteger(coins) || coins <= 0 || !Number.isFinite(amountUSD) || amountUSD <= 0) return error(res, 400, 'RECHARGE_QUOTE_INVALID');
+      const requestKey = String(req.headers['idempotency-key'] || body.idempotencyKey || '');
+      if (!/^[A-Za-z0-9._:-]{16,180}$/.test(requestKey)) return error(res, 400, 'IDEMPOTENCY_KEY_REQUIRED', 'Send an Idempotency-Key header of at least 16 safe characters.');
+      const idempotencyKey = session.profile.id + ':paypal:' + requestKey;
+      const findExisting = async () => selectAdminRows(config, 'payment_orders', query({
+        select: 'id,profile_id,package_id,custom_coins,amount_usd,idempotency_key,state,provider_order_id,provider_approval_url,provider_capture_id',
+        idempotency_key: 'eq.' + idempotencyKey, limit: '1'
+      }));
+      let existing = await findExisting();
+      if (!existing.ok) return error(res, 503, 'PAYMENT_ORDER_STORE_UNAVAILABLE');
+      let order = existing.rows[0] || null;
+      if (order) {
+        const sameQuote = order.profile_id === session.profile.id && order.package_id === (selectedPackage ? selectedPackage.id : null)
+          && Number(order.custom_coins || 0) === Number(customCoins || 0) && Number(order.amount_usd) === amountUSD;
+        if (!sameQuote) return error(res, 409, 'IDEMPOTENCY_KEY_REUSED');
+        if (order.provider_order_id && order.provider_approval_url) {
+          return json(res, 200, { ok: true, idempotent: true, order: {
+            id: order.id, state: order.state, amountUSD: Number(order.amount_usd),
+            coins, approvalUrl: order.provider_approval_url, providerOrderId: order.provider_order_id
+          } });
+        }
+        return error(res, 409, 'PAYMENT_ORDER_INITIALIZATION_IN_PROGRESS');
+      }
+      const inserted = await adminRest(config, 'payment_orders', new URLSearchParams(), 'POST', {
+        profile_id: session.profile.id,
+        package_id: selectedPackage ? selectedPackage.id : null,
+        custom_coins: customCoins,
+        amount_usd: amountUSD,
+        currency: 'USD',
+        provider: 'paypal',
+        idempotency_key: idempotencyKey,
+        state: 'created'
+      });
+      if (!inserted.ok || !Array.isArray(inserted.data) || !inserted.data[0]) {
+        existing = await findExisting();
+        if (existing.ok && existing.rows[0]) return error(res, 409, 'PAYMENT_ORDER_INITIALIZATION_IN_PROGRESS');
+        return error(res, 503, 'PAYMENT_ORDER_CREATE_FAILED', 'No checkout was created because the payment order could not be stored.');
+      }
+      order = inserted.data[0];
+      const providerOrder = await paypal.createOrder(config.paypal, { amountUSD, referenceId: order.id, requestId: order.id });
+      if (!providerOrder.ok || !providerOrder.orderId || !providerOrder.approvalUrl) {
+        await adminRest(config, 'payment_orders', query({ id: 'eq.' + order.id, state: 'eq.created' }), 'PATCH', {
+          state: 'failed', updated_at: new Date().toISOString()
+        });
+        return error(res, 503, providerOrder.code || 'PAYPAL_ORDER_CREATE_FAILED', 'PayPal could not create an approval link. No coins have been credited.');
+      }
+      const saved = await adminRest(config, 'payment_orders', query({ id: 'eq.' + order.id, profile_id: 'eq.' + session.profile.id }), 'PATCH', {
+        provider_order_id: providerOrder.orderId,
+        provider_approval_url: providerOrder.approvalUrl,
+        updated_at: new Date().toISOString()
+      });
+      if (!saved.ok) return error(res, 503, 'PAYPAL_ORDER_PERSIST_FAILED', 'PayPal order was created but not fully reconciled. Do not pay twice; retry with the same idempotency key.');
+      return json(res, 201, { ok: true, order: {
+        id: order.id, state: 'created', amountUSD, currency: 'USD', coins,
+        provider: 'paypal', providerOrderId: providerOrder.orderId, approvalUrl: providerOrder.approvalUrl
+      } });
     }
+
+    const captureRoute = url.pathname.match(/^\/api\/payments\/orders\/([0-9a-f-]+)\/capture$/i);
+    if (req.method === 'POST' && captureRoute) {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const orderId = captureRoute[1];
+      if (!uuid(orderId)) return error(res, 400, 'INVALID_PAYMENT_ORDER_ID');
+      const found = await selectAdminRows(config, 'payment_orders', query({
+        select: 'id,profile_id,package_id,custom_coins,amount_usd,currency,state,provider_order_id,provider_capture_id,credited_ledger_entry',
+        id: 'eq.' + orderId, profile_id: 'eq.' + session.profile.id, limit: '1'
+      }));
+      if (!found.ok) return error(res, 503, 'PAYMENT_ORDER_UNAVAILABLE');
+      const order = found.rows[0];
+      if (!order) return error(res, 404, 'PAYMENT_ORDER_NOT_FOUND');
+      if (order.state === 'credited') return json(res, 200, { ok: true, idempotent: true, order: { id: order.id, state: 'credited', ledgerEntryId: order.credited_ledger_entry } });
+      if (!['created','approved','captured'].includes(order.state) || !order.provider_order_id) return error(res, 409, 'PAYMENT_ORDER_NOT_CAPTURABLE');
+      const captured = await paypal.captureOrder(config.paypal, order.provider_order_id, order.id.replace(/-/g, '') + 'c');
+      if (!captured.ok || captured.captureStatus !== 'COMPLETED' || !captured.captureId) {
+        return error(res, captured.status === 503 ? 503 : 409, captured.code || 'PAYPAL_CAPTURE_NOT_CONFIRMED', 'PayPal has not confirmed a completed capture. No coins were credited.');
+      }
+      if (captured.currency !== order.currency || !Number.isFinite(captured.amountUSD) || Math.round(captured.amountUSD * 100) !== Math.round(Number(order.amount_usd) * 100)) {
+        return error(res, 409, 'PAYPAL_CAPTURE_AMOUNT_MISMATCH', 'The capture amount did not match the stored payment order. Coins were not credited.');
+      }
+      const credited = await adminRpc(config, 'credit_captured_coin_order', {
+        p_provider_order_id: order.provider_order_id,
+        p_capture_id: captured.captureId,
+        p_capture_amount: captured.amountUSD,
+        p_currency: captured.currency
+      });
+      if (!credited.ok) return error(res, 503, 'PAYMENT_RECONCILIATION_REQUIRED', 'The capture could not yet be reconciled to the ZUNO ledger. Do not create another payment; a verified event may complete reconciliation.');
+      const ledgerEntryId = typeof credited.data === 'string' ? credited.data : Array.isArray(credited.data) ? credited.data[0] : credited.data && credited.data.credit_captured_coin_order;
+      return json(res, 200, { ok: true, order: { id: order.id, state: 'credited', captureId: captured.captureId, ledgerEntryId: ledgerEntryId || null, coins } });
+    }
+
 
     return error(res, 404, 'NOT_FOUND');
   } catch (e) {

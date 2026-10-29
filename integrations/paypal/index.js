@@ -46,14 +46,14 @@ async function getAccessToken(cfg) {
 }
 
 /** Create a checkout order (coins recharge). Amount in USD. */
-async function createOrder(cfg, { amountUSD, referenceId }) {
+async function createOrder(cfg, { amountUSD, referenceId, requestId }) {
   if (!cfg || !cfg.clientId || !cfg.clientSecret) return notConfigured();
   const tok = await getAccessToken(cfg);
   if (!tok.ok) return tok;
   const host = HOSTS[cfg.env] || HOSTS.sandbox;
   const res = await request(host, '/v2/checkout/orders', 'POST',
-    { Authorization: `Bearer ${tok.accessToken}` },
-    { intent: 'CAPTURE', purchase_units: [{ reference_id: referenceId, amount: { currency_code: 'USD', value: amountUSD.toFixed(2) } }] });
+    { Authorization: `Bearer ${tok.accessToken}`, ...(requestId ? { 'PayPal-Request-Id': String(requestId).slice(0, 38) } : {}) },
+    { intent: 'CAPTURE', purchase_units: [{ reference_id: referenceId, custom_id: referenceId, amount: { currency_code: 'USD', value: amountUSD.toFixed(2) } }] });
   if (res.status >= 300) return { ok: false, status: res.status, code: 'ORDER_FAILED', body: res.body };
   const links = Array.isArray(res.body && res.body.links) ? res.body.links : [];
   const approval = links.find((link) => link.rel === 'approve' || link.rel === 'payer-action');
@@ -61,13 +61,13 @@ async function createOrder(cfg, { amountUSD, referenceId }) {
 }
 
 /** Capture an approved order. */
-async function captureOrder(cfg, orderId) {
+async function captureOrder(cfg, orderId, requestId) {
   if (!cfg || !cfg.clientId || !cfg.clientSecret) return notConfigured();
   const tok = await getAccessToken(cfg);
   if (!tok.ok) return tok;
   const host = HOSTS[cfg.env] || HOSTS.sandbox;
   const res = await request(host, `/v2/checkout/orders/${orderId}/capture`, 'POST',
-    { Authorization: `Bearer ${tok.accessToken}` }, {});
+    { Authorization: `Bearer ${tok.accessToken}`, ...(requestId ? { 'PayPal-Request-Id': String(requestId).slice(0, 38) } : {}) }, {});
   if (res.status >= 300) return { ok: false, status: res.status, code: 'CAPTURE_FAILED', body: res.body };
   const units = Array.isArray(res.body && res.body.purchase_units) ? res.body.purchase_units : [];
   const payments = units[0] && units[0].payments;
