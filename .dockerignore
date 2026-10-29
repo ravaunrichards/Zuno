@@ -1,0 +1,19 @@
+# Credentials and local-only data
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!.env.example
+.git
+.github
+node_modules
+**/node_modules
+dist
+**/dist
+build
+**/build
+coverage
+**/coverage
+.DS_Store
+*.log

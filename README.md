@@ -50,7 +50,7 @@ ZUNO is intended to combine social networking, video and photo publishing, disco
 
 Latest documented CI evidence (commit `41ee1320e7a4734670493485ae0576f52836e678`, 2026-10-29): 77 automated tests passed, 10/10 web checks passed, and the disposable PostgreSQL 16 run successfully applied migrations `0001`–`0026` and passed RLS, economy and moderation smoke checks. Android build, security checks and web accessibility/bundle budget also passed on that commit. Check the current Actions page for results after later commits. These checks do not substitute for provider sandbox or production verification.
 
-See `docs/status/implementation-register.md`, `docs/architecture/repository-map.md`, `docs/database/migrations.md`, and `docs/integrations/provider-readiness.md`.
+See `docs/status/implementation-register.md`, `docs/architecture/repository-map.md`, `docs/database/migrations.md`, `docs/integrations/provider-readiness.md`, and `docs/deployment/render.md`.
 
 
 ### Multi-app local previews

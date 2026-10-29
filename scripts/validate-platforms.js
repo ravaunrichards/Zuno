@@ -3,7 +3,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 const root=path.join(__dirname,'..');
 const required=[
- 'apps/web/index.html','apps/web/app.js','apps/web/manifest.webmanifest',
+ 'apps/web/index.html','apps/web/app.js','apps/web/manifest.webmanifest','render.yaml',
  'apps/android/settings.gradle.kts','apps/android/app/build.gradle.kts','apps/android/app/src/main/AndroidManifest.xml',
  'apps/ios/project.yml','apps/desktop/main.cjs','apps/desktop/preload.cjs','apps/desktop/package.json',
  'apps/tv/index.html','apps/tv/app.js','apps/admin/index.html','apps/admin/app.js',
@@ -35,6 +35,20 @@ for(const group of packageRoots){
   const name=path.join(folder,entry.name);
   if(!fs.existsSync(path.join(name,'package.json')) && !(group==='apps'&&['android','ios'].includes(entry.name)))missingManifests.push(path.relative(root,name));
  }
+}
+const renderBlueprintPath=path.join(root,'render.yaml');
+if(fs.existsSync(renderBlueprintPath)){
+ const blueprint=fs.readFileSync(renderBlueprintPath,'utf8');
+ const requiredRenderTokens=[
+  'name: zuno-api','name: zuno-web','name: zuno-notification-worker','name: zuno-media-worker',
+  'healthCheckPath: /health','staticPublishPath: dist',
+  'key: SUPABASE_SERVICE_ROLE_KEY\n        sync: false',
+  'key: PAYPAL_CLIENT_SECRET\n        sync: false',
+  'key: LIVEKIT_API_SECRET\n        sync: false',
+  'autoDeployTrigger: "off"'
+ ];
+ for(const token of requiredRenderTokens)if(!blueprint.includes(token))missing.push('Render Blueprint is missing a required deployment/security setting: '+token.split('\n')[0]);
+ if(/(SUPABASE_SERVICE_ROLE_KEY|PAYPAL_CLIENT_SECRET|LIVEKIT_API_SECRET):\s*[^\s#]+/.test(blueprint))placeholders.push('render.yaml contains a possible hardcoded provider secret');
 }
 const desktopMain=fs.readFileSync(path.join(root,'apps/desktop/main.cjs'),'utf8');
 const desktopPackage=JSON.parse(fs.readFileSync(path.join(root,'apps/desktop/package.json'),'utf8'));

@@ -38,7 +38,7 @@ function load(env = process.env) {
     corsAllowedOrigins: (env.CORS_ALLOWED_ORIGINS || '').split(',').map((origin) => origin.trim().replace(/\/$/, '')).filter(Boolean),
     storageBucket: env.SUPABASE_MEDIA_BUCKET || 'zuno-media',
     mediaSignedUrlTtlSeconds: Number(env.MEDIA_SIGNED_URL_TTL_SECONDS || 600),
-    apiPort: Number(env.API_PORT || 4000),
+    apiPort: Number(env.PORT || env.API_PORT || 4000),
     rankingResetTz: env.RANKING_RESET_TZ || 'America/Jamaica',
     supabase,
     livekit,
