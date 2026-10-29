@@ -17,15 +17,15 @@ This file differentiates committed code from production-verified capability. A s
 
 ## Not yet production-verified
 
-- Applying the migration chain to a real disposable PostgreSQL/Supabase project and running its actual Storage/Auth policies remain unverified. CI does pass the migration chain and RLS/economy/moderation smoke tests on disposable PostgreSQL 16.
+- Applying the migration chain to a real disposable PostgreSQL/Supabase project and running its actual Storage/Auth policies remain unverified. Earlier CI records describe migration/RLS/economy/moderation smoke tests on disposable PostgreSQL 16, but those results are from older commits; verify the exact merge commit against current Actions results.
 - Full Supabase signup/provisioning, storage upload policies, profile settings, deletion/export processing and privacy workflows.
 - LiveKit room lifecycle APIs, signed webhook receiver and web UI are in the repository. Clean-source CI covers the adapter’s missing/forged signature cases, but deployed-provider webhook reconciliation, real audio/video tracks and concurrent guest capacity still require a LiveKit sandbox test.
 - Transactional gift delivery, atomic capture-credit, full-refund reservation/finalization, provider-webhook handling and coin-package pricing are implemented and exercised in synthetic PostgreSQL smoke tests. Actual PayPal sandbox account/payment/refund/webhook evidence and production reconciliation remain outstanding. Creator earnings cash conversion remains unavailable until a real conversion policy is configured.
 - Payout execution and country/account eligibility, which must remain disabled until provider and compliance readiness are proven.
 - Server-side private signed upload URLs, metadata/size checks, byte-signature validation, queueing, media processing and creator upload UI are implemented; production Supabase Storage policies/configuration, antivirus scanning and derivative-path behavior still require provider validation.
-- The search index has a PostgreSQL-backed queue, visibility-aware query function, GIN-indexed vector, and worker implementation. CI is validating the latest vector-trigger migration; production worker deployment and actual search relevance evaluation remain unverified. Actual push/email delivery, advertising delivery and marketplace order fulfillment still need provider verification.
+- The search index has a PostgreSQL-backed queue, visibility-aware query function, GIN-indexed vector, and worker implementation. The current merge commit's migration-trigger checks are not confirmed by this register; production worker deployment and actual search relevance evaluation remain unverified. Actual push/email delivery, advertising delivery and marketplace order fulfillment still need provider verification.
 - Marketplace fulfillment now supports seller-scoped label/shipped/delivered/lost/returned transitions and buyer-visible tracking in source; real shipping-carrier API integrations and fulfillment/provider operational verification are not configured. Desktop/TV release packaging, app-wide cross-platform feature parity and external provider sandbox tests still need direct end-to-end evidence. Android and iOS status must be read from the most recent workflow runs; this register does not claim a release artifact or device-level validation without a completed green build.
-- Completed original 3D gift assets and every required distinct sound mapped against a validated manifest.
+- Completion and validation of original 3D gift models and distinct gift-specific sounds against the asset manifest remain to be evidenced by a current audit.
 
 ## Reporting standard
 
