@@ -137,7 +137,8 @@ export async function signUp({ email, password, username, displayName }) {
   if (!/^[a-z0-9_.]{3,30}$/.test(normalizedUsername)) {
     throw new Error('Username must be 3–30 characters using letters, numbers, underscores or periods.');
   }
-  const response = await authRequest('/auth/v1/signup', {
+  const redirect = encodeURIComponent(authRedirectUrl('confirmed'));
+  const response = await authRequest('/auth/v1/signup?redirect_to=' + redirect, {
     email: email.trim(),
     password,
     data: {
