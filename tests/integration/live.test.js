@@ -40,7 +40,9 @@ test('livekit adapter mints a real signed JWT when configured', () => {
   ok(out.ok, 'ok'); ok(out.token.split('.').length === 3, 'three-part JWT'); ok(out.expiresAt > 0, 'expiry set');
 });
 
-test('livekit webhook verification rejects unsigned payloads', () => {
-  eq(livekit.verifyWebhook({ webhookKey: 'k' }, '{}', ''), false, 'no header rejected');
-  eq(livekit.verifyWebhook({ webhookKey: '' }, '{}', 'sig'), false, 'no key rejected');
+test('livekit webhook verification rejects unsigned payloads', async () => {
+  const noHeader = await livekit.verifyWebhook({ apiKey: 'devkey', apiSecret: 'devsecret' }, '{}', '');
+  ok(!noHeader.ok && !noHeader.verified, 'no header rejected');
+  const noKey = await livekit.verifyWebhook({}, '{}', 'sig');
+  ok(!noKey.ok && !noKey.verified, 'no API credentials rejected');
 });
