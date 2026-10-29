@@ -15,10 +15,16 @@ targets:
     platform: iOS
     sources:
       - path: ZunoApp
+    resources:
+      - path: Resources/ZunoWeb
+        type: folder
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.zuno.app
         INFOPLIST_KEY_CFBundleDisplayName: ZUNO
+        INFOPLIST_KEY_NSCameraUsageDescription: ZUNO uses your camera when you choose to create videos or join a video call.
+        INFOPLIST_KEY_NSMicrophoneUsageDescription: ZUNO uses your microphone when you choose to record audio or join a call.
+        INFOPLIST_KEY_NSPhotoLibraryUsageDescription: ZUNO lets you choose photos and videos to share.
         INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoads: NO
         GENERATE_INFOPLIST_FILE: YES
         SWIFT_VERSION: "5.9"

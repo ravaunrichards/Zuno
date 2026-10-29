@@ -19,6 +19,22 @@ jobs:
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Enable pnpm
+        run: corepack enable && corepack prepare pnpm@9.15.9 --activate
+      - name: Install the shared web build
+        run: pnpm install --no-frozen-lockfile
+      - name: Build production web bundle for iOS resources
+        env:
+          ZUNO_PUBLIC_API_BASE_URL: ${{ secrets.ZUNO_PUBLIC_API_BASE_URL }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          pnpm build:web
+          mkdir -p apps/ios/Resources/ZunoWeb
+          cp -R dist/web/. apps/ios/Resources/ZunoWeb/
       - name: Install XcodeGen
         run: brew install xcodegen
       - name: Generate project from the tracked specification
