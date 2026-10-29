@@ -1983,6 +1983,65 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, { ok: true });
     }
 
+    const relationshipRouteMatch = url.pathname.match(/^\/api\/relationships\/(blocks|mutes|restrictions)$/i);
+    if (relationshipRouteMatch && req.method === 'GET') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const kind = relationshipRouteMatch[1].toLowerCase();
+      const spec = kind === 'blocks'
+        ? { table:'blocks', ownerColumn:'blocker_id', targetColumn:'blocked_id', select:'blocker_id,blocked_id,created_at' }
+        : kind === 'mutes'
+          ? { table:'muted_profiles', ownerColumn:'profile_id', targetColumn:'muted_profile_id', select:'profile_id,muted_profile_id,created_at' }
+          : { table:'restricted_profiles', ownerColumn:'profile_id', targetColumn:'restricted_profile_id', select:'profile_id,restricted_profile_id,reason_code,created_at' };
+      const relationships = await rowsForUser(session, spec.table, {
+        select:spec.select, [spec.ownerColumn]:'eq.'+session.profile.id, order:'created_at.desc', limit:'500'
+      });
+      if (!relationships.ok || !Array.isArray(relationships.data)) return badDatabase(res, relationships, 'RELATIONSHIPS_UNAVAILABLE');
+      const targetIds = [...new Set(relationships.data.map(row => row[spec.targetColumn]).filter(uuid))];
+      const profiles = targetIds.length ? await selectAdminRows(config, 'profiles', query({
+        select:'id,username,display_name,avatar_url,is_verified', id:profileIdIn(targetIds), limit:String(targetIds.length)
+      })) : { ok:true, rows:[] };
+      if (!profiles.ok) return error(res, 503, 'RELATIONSHIP_PROFILES_UNAVAILABLE');
+      const byId = new Map(profiles.rows.map(profile => [profile.id, profile]));
+      return json(res, 200, { ok:true, kind, relationships:relationships.data.map(row => {
+        const targetId = row[spec.targetColumn];
+        return { profileId:targetId, createdAt:row.created_at, reasonCode:row.reason_code || null,
+          profile:byId.has(targetId) ? profileProjection(byId.get(targetId)) : null };
+      }) });
+    }
+
+    if (relationshipRouteMatch && req.method === 'POST') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const kind = relationshipRouteMatch[1].toLowerCase();
+      const body = await readBody(req);
+      if (!uuid(body.profileId) || body.profileId === session.profile.id) return error(res, 400, 'INVALID_RELATIONSHIP_TARGET');
+      const reasonCode = body.reasonCode == null || body.reasonCode === '' ? null : String(body.reasonCode);
+      if (reasonCode && !/^[A-Za-z0-9_.:-]{2,80}$/.test(reasonCode)) return error(res, 400, 'INVALID_RELATIONSHIP_REASON');
+      const rpcKind = kind === 'blocks' ? 'block' : kind === 'mutes' ? 'mute' : 'restrict';
+      const result = await adminRpc(config, 'set_profile_relationship', {
+        p_owner_profile_id:session.profile.id, p_target_profile_id:body.profileId,
+        p_kind:rpcKind, p_action:'add', p_reason_code:reasonCode
+      });
+      if (!result.ok) return badDatabase(res, result, 'RELATIONSHIP_ADD_FAILED');
+      return json(res, 200, { ok:true, kind:rpcKind, profileId:body.profileId, state:'added' });
+    }
+
+    if (relationshipRouteMatch && req.method === 'DELETE') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const kind = relationshipRouteMatch[1].toLowerCase();
+      const targetId = url.searchParams.get('profileId');
+      if (!uuid(targetId) || targetId === session.profile.id) return error(res, 400, 'INVALID_RELATIONSHIP_TARGET');
+      const rpcKind = kind === 'blocks' ? 'block' : kind === 'mutes' ? 'mute' : 'restrict';
+      const result = await adminRpc(config, 'set_profile_relationship', {
+        p_owner_profile_id:session.profile.id, p_target_profile_id:targetId,
+        p_kind:rpcKind, p_action:'remove', p_reason_code:null
+      });
+      if (!result.ok) return badDatabase(res, result, 'RELATIONSHIP_REMOVE_FAILED');
+      return json(res, 200, { ok:true, kind:rpcKind, profileId:targetId, state:'removed' });
+    }
+
     if (req.method === 'GET' && url.pathname === '/api/communities') {
       const session = await requireSession(req, res);
       if (!session.ok) return;

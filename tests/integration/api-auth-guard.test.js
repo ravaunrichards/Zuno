@@ -30,6 +30,18 @@ function get(port,path) {
   });
 }
 
+test('block, mute and restrict lists reject unauthenticated access',async()=>{
+ for(const kind of ['blocks','mutes','restrictions']){
+  const response=await get(await start(),'/api/relationships/'+kind);
+  ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
+ }
+});
+test('block, mute and restrict mutations reject unauthenticated access',async()=>{
+ for(const kind of ['blocks','mutes','restrictions']){
+  const response=await post(await start(),'/api/relationships/'+kind);
+  ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
+ }
+});
 test('LIVE token endpoint rejects unauthenticated requests',async()=>{
  const response=await post(await start(),'/api/livekit/token');
  ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
