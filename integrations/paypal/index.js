@@ -145,4 +145,128 @@ async function verifyWebhook(cfg, headers, eventBody) {
     return { ok: true, verified: Boolean(result.body && result.body.verification_status === 'SUCCESS') };
   } catch (_) { return { ok: false, status: 503, verified: false, code: 'PAYPAL_PROVIDER_UNAVAILABLE' }; }
 }
-module.exports = { getAccessToken, createOrder, captureOrder, refundCapture, verifyWebhook, notConfigured, HOSTS };
+
+async function createSubscriptionPlan(cfg, { creatorProfileId, tierKey, title, description, amountUSD, requestId }) {
+  if (!cfg || !cfg.clientId || !cfg.clientSecret) return notConfigured();
+  if (!creatorProfileId || !tierKey || typeof title !== 'string' || title.trim().length < 2 ||
+      !Number.isFinite(Number(amountUSD)) || Number(amountUSD) <= 0) {
+    return { ok: false, status: 400, code: 'PAYPAL_PLAN_INPUT_INVALID' };
+  }
+  const token = await getAccessToken(cfg);
+  if (!token.ok) return token;
+  const host = HOSTS[cfg.env] || HOSTS.sandbox;
+  const base = String(requestId || '').replace(/[^A-Za-z0-9._-]/g, '').slice(0, 34);
+  if (base.length < 10) return { ok: false, status: 400, code: 'PAYPAL_PLAN_REQUEST_ID_INVALID' };
+  try {
+    const productResult = await request(host, '/v1/catalogs/products', 'POST', {
+      Authorization: 'Bearer ' + token.accessToken,
+      'PayPal-Request-Id': (base + 'p').slice(0, 38)
+    }, {
+      name: ('ZUNO Creator ' + title.trim()).slice(0, 127),
+      description: String(description || ('ZUNO creator subscription tier ' + tierKey)).trim().slice(0, 256),
+      type: 'SERVICE',
+      category: 'SOFTWARE',
+      home_url: 'https://zuno.example'
+    });
+    if (productResult.status < 200 || productResult.status >= 300 || !productResult.body || !productResult.body.id) {
+      return { ok: false, status: productResult.status || 502, code: 'PAYPAL_PRODUCT_CREATE_FAILED' };
+    }
+    const productId = String(productResult.body.id);
+    const planResult = await request(host, '/v1/billing/plans', 'POST', {
+      Authorization: 'Bearer ' + token.accessToken,
+      'PayPal-Request-Id': (base + 'l').slice(0, 38)
+    }, {
+      product_id: productId,
+      name: ('ZUNO ' + title.trim()).slice(0, 127),
+      description: String(description || ('Monthly creator subscription: ' + tierKey)).trim().slice(0, 127),
+      status: 'ACTIVE',
+      billing_cycles: [{
+        frequency: { interval_unit: 'MONTH', interval_count: 1 },
+        tenure_type: 'REGULAR',
+        sequence: 1,
+        total_cycles: 0,
+        pricing_scheme: { fixed_price: { value: Number(amountUSD).toFixed(2), currency_code: 'USD' } }
+      }],
+      payment_preferences: {
+        auto_bill_outstanding: true,
+        setup_fee_failure_action: 'CONTINUE',
+        payment_failure_threshold: 3
+      }
+    });
+    if (planResult.status < 200 || planResult.status >= 300 || !planResult.body || !planResult.body.id) {
+      return { ok: false, status: planResult.status || 502, code: 'PAYPAL_BILLING_PLAN_CREATE_FAILED', productId };
+    }
+    return {
+      ok: true,
+      productId,
+      planId: String(planResult.body.id),
+      status: planResult.body.status || 'ACTIVE'
+    };
+  } catch (_) {
+    return { ok: false, status: 503, code: 'PAYPAL_PROVIDER_UNAVAILABLE' };
+  }
+}
+
+async function createBillingSubscription(cfg, { planId, customId, returnUrl, cancelUrl, requestId }) {
+  if (!cfg || !cfg.clientId || !cfg.clientSecret) return notConfigured();
+  if (typeof planId !== 'string' || !/^[A-Za-z0-9_-]{3,100}$/.test(planId) || !customId) {
+    return { ok: false, status: 400, code: 'PAYPAL_SUBSCRIPTION_INPUT_INVALID' };
+  }
+  const token = await getAccessToken(cfg);
+  if (!token.ok) return token;
+  const host = HOSTS[cfg.env] || HOSTS.sandbox;
+  try {
+    const response = await request(host, '/v1/billing/subscriptions', 'POST', {
+      Authorization: 'Bearer ' + token.accessToken,
+      ...(requestId ? { 'PayPal-Request-Id': String(requestId).slice(0, 38) } : {})
+    }, {
+      plan_id: planId,
+      custom_id: String(customId).slice(0, 127),
+      application_context: {
+        brand_name: 'ZUNO',
+        locale: 'en-US',
+        shipping_preference: 'NO_SHIPPING',
+        user_action: 'SUBSCRIBE_NOW',
+        ...(returnUrl ? { return_url: returnUrl } : {}),
+        ...(cancelUrl ? { cancel_url: cancelUrl } : {})
+      }
+    });
+    if (response.status < 200 || response.status >= 300 || !response.body || !response.body.id) {
+      return { ok: false, status: response.status || 502, code: 'PAYPAL_SUBSCRIPTION_CREATE_FAILED' };
+    }
+    const links = Array.isArray(response.body.links) ? response.body.links : [];
+    const approve = links.find(link => link.rel === 'approve');
+    return {
+      ok: true,
+      subscriptionId: String(response.body.id),
+      status: response.body.status || 'APPROVAL_PENDING',
+      approvalUrl: approve && approve.href || null,
+      nextBillingTime: response.body.billing_info && response.body.billing_info.next_billing_time || null
+    };
+  } catch (_) {
+    return { ok: false, status: 503, code: 'PAYPAL_PROVIDER_UNAVAILABLE' };
+  }
+}
+
+async function cancelBillingSubscription(cfg, providerSubscriptionId, reason = 'Subscriber requested cancellation') {
+  if (!cfg || !cfg.clientId || !cfg.clientSecret) return notConfigured();
+  if (typeof providerSubscriptionId !== 'string' || !/^[A-Za-z0-9_-]{3,100}$/.test(providerSubscriptionId)) {
+    return { ok: false, status: 400, code: 'PAYPAL_SUBSCRIPTION_ID_INVALID' };
+  }
+  const token = await getAccessToken(cfg);
+  if (!token.ok) return token;
+  const host = HOSTS[cfg.env] || HOSTS.sandbox;
+  try {
+    const response = await request(host, '/v1/billing/subscriptions/' + encodeURIComponent(providerSubscriptionId) + '/cancel', 'POST', {
+      Authorization: 'Bearer ' + token.accessToken
+    }, { reason: String(reason || 'Subscriber requested cancellation').slice(0, 128) });
+    if (response.status < 200 || response.status >= 300) {
+      return { ok: false, status: response.status || 502, code: 'PAYPAL_SUBSCRIPTION_CANCEL_FAILED' };
+    }
+    return { ok: true, status: response.status, subscriptionId: providerSubscriptionId };
+  } catch (_) {
+    return { ok: false, status: 503, code: 'PAYPAL_PROVIDER_UNAVAILABLE' };
+  }
+}
+
+module.exports = { getAccessToken, createOrder, captureOrder, refundCapture, verifyWebhook, createSubscriptionPlan, createBillingSubscription, cancelBillingSubscription, notConfigured, HOSTS };
