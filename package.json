@@ -38,7 +38,9 @@
     "serve:web": "pnpm build:web && node scripts/serve-static.js --root dist/web --port 3000",
     "serve:admin": "node scripts/serve-static.js --root apps/admin --port 3002",
     "serve:creator": "node scripts/serve-static.js --root apps/creator-studio --port 3003",
-    "serve:tv": "node scripts/serve-static.js --root apps/tv --port 3004"
+    "serve:tv": "node scripts/serve-static.js --root apps/tv --port 3004",
+    "build:apps": "node scripts/build-static-apps.js",
+    "build:creator": "node scripts/build-static-apps.js creator-studio"
   },
   "devDependencies": {
     "turbo": "^1.13.0",

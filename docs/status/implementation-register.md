@@ -10,7 +10,8 @@ This file differentiates committed code from production-verified capability. A s
 - API gift-catalogue endpoint and non-secret integration-readiness endpoint.
 - Supabase Auth session validation and server-side profile lookup for sensitive API routes.
 - LiveKit token authorization using verified identity, room ownership/participant membership and server-derived publishing capability.
-- Disabled unauthenticated/unpersisted gift and payment mutation paths; they return explicit not-ready responses rather than simulate transactions.
+- Authenticated gift delivery and PayPal checkout/capture routes use database transaction functions, idempotency keys and signed provider webhooks; production payment switching remains gated by environment readiness.
+- Full-refund reservation and finalize SQL tracks coin debit/release, with wallet restrictions for unreconciled external reversals.
 - Versioned SQL migrations for core schema/policies, content/discovery, messaging/calls, communities/events, LIVE interactions, creator economy/payment metadata, commerce/ads/privacy, and operational jobs.
 - Static migration, asset, web, platform-entrypoint and CI checks.
 
@@ -19,11 +20,11 @@ This file differentiates committed code from production-verified capability. A s
 - Applying the migration chain to a real disposable PostgreSQL/Supabase database and running positive/negative RLS tests.
 - Full Supabase signup/provisioning, storage upload policies, profile settings, deletion/export processing and privacy workflows.
 - LiveKit room creation/lifecycle and signed webhook reconciliation, plus race-safe participant-capacity enforcement.
-- Transactional gift delivery, creator earnings conversion, checkout capture, verified PayPal webhooks, refunds and reconciliation. Gift sending and checkout are intentionally gated.
+- Transactional gift delivery, sandbox/provider credentials, refund provider execution and end-to-end PayPal reconciliation still require external test-account evidence. Creator earnings cash conversion remains intentionally unavailable until a real conversion policy is configured.
 - Payout execution and country/account eligibility, which must remain disabled until provider and compliance readiness are proven.
-- Server-side media signature inspection, scanning, transcoding, derivative storage and upload orchestration.
+- Server-side media upload, byte validation, queueing and processing modules are implemented; production storage configuration, antivirus scanning and derivative-path behavior still require end-to-end provider validation.
 - Durable production queue workers, search index, recommendation evaluation, actual push/email delivery, advertising delivery and marketplace order fulfillment.
-- Full Android/iOS/desktop/TV release builds, external provider sandbox tests, accessibility/performance/security test evidence and deployment verification.
+- Desktop/TV/admin/creator release packaging and external provider sandbox tests still need direct end-to-end evidence. iOS and Android simulator/build CI passed on commit `ff370b6529b84d895f63f93cd3abd5f755379ee2`.
 - Completed original 3D gift assets and every required distinct sound mapped against a validated manifest.
 
 ## Reporting standard

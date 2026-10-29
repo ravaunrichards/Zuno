@@ -943,6 +943,79 @@ const server = http.createServer(async (req, res) => {
       })) });
     }
 
+    if (req.method === 'GET' && url.pathname === '/api/media/mine') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const selected = await rowsForUser(session, 'media_assets', {
+        select: 'id,post_id,media_type,mime_type,byte_size,state,width,height,duration_ms,metadata,created_at,updated_at',
+        uploader_id: 'eq.' + session.profile.id, order: 'created_at.desc', limit: '100'
+      });
+      if (!selected.ok || !Array.isArray(selected.data)) return badDatabase(res, selected, 'MEDIA_LIBRARY_UNAVAILABLE');
+      const ready = selected.data.filter(asset => asset.state === 'ready');
+      const signed = ready.length ? await storage.createSignedDownloadUrls(
+        config, config.storageBucket,
+        ready.map(asset => {
+          const meta = asset.metadata && typeof asset.metadata === 'object' ? asset.metadata : {};
+          return typeof meta.finalStoragePath === 'string' ? meta.finalStoragePath : null;
+        }).filter(Boolean),
+        config.mediaSignedUrlTtlSeconds
+      ) : {ok:true,signedUrls:[]};
+      const signedByPath = new Map((signed.signedUrls || []).map(item => [item.path,item.signedUrl]));
+      return json(res,200,{ok:true,assets:selected.data.map(asset=>{
+        const meta=asset.metadata && typeof asset.metadata==='object'?asset.metadata:{};
+        const originalPath=typeof meta.finalStoragePath==='string'?meta.finalStoragePath:null;
+        return {
+          id:asset.id,postId:asset.post_id,mediaType:asset.media_type,mimeType:asset.mime_type,
+          byteSize:Number(asset.byte_size),state:asset.state,width:asset.width||null,height:asset.height||null,
+          durationMs:asset.duration_ms||null,createdAt:asset.created_at,updatedAt:asset.updated_at,
+          url:asset.state==='ready'&&originalPath?signedByPath.get(originalPath)||null:null
+        };
+      })});
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api/posts/mine') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const selected = await rowsForUser(session,'posts',{
+        select:'id,author_id,kind,caption,media,audience,created_at,expires_at,deleted_at',
+        author_id:'eq.'+session.profile.id,deleted_at:'is.null',order:'created_at.desc',limit:'100'
+      });
+      if (!selected.ok || !Array.isArray(selected.data)) return badDatabase(res,selected,'CREATOR_POSTS_UNAVAILABLE');
+      const posts=selected.data;
+      const mediaIds=[...new Set(posts.flatMap(post=>Array.isArray(post.media)?post.media.map(item=>item&&item.assetId).filter(uuid):[]))];
+      const assets=mediaIds.length?await selectAdminRows(config,'media_assets',query({
+        select:'id,storage_path,media_type,mime_type,state,width,height,duration_ms',
+        id:profileIdIn(mediaIds),uploader_id:'eq.'+session.profile.id,limit:String(Math.min(mediaIds.length,300))
+      })):{ok:true,rows:[]};
+      if(!assets.ok)return error(res,503,'CREATOR_POST_MEDIA_UNAVAILABLE');
+      const byId=new Map(assets.rows.map(asset=>[asset.id,asset]));
+      const ready=assets.rows.filter(asset=>asset.state==='ready'&&asset.storage_path);
+      const signed=ready.length?await storage.createSignedDownloadUrls(config,config.storageBucket,ready.map(asset=>asset.storage_path),config.mediaSignedUrlTtlSeconds):{ok:true,signedUrls:[]};
+      const byPath=new Map((signed.signedUrls||[]).map(item=>[item.path,item.signedUrl]));
+      return json(res,200,{ok:true,posts:posts.map(post=>({
+        id:post.id,kind:post.kind,caption:post.caption||'',audience:post.audience,createdAt:post.created_at,
+        media:Array.isArray(post.media)?post.media.map(item=>{
+          const asset=item&&byId.get(item.assetId);
+          return asset?{assetId:asset.id,mediaType:asset.media_type,mimeType:asset.mime_type,state:asset.state,
+            url:asset.state==='ready'?byPath.get(asset.storage_path)||null:null}:null;
+        }).filter(Boolean):[]
+      }))});
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api/creator/analytics') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const analytics=await adminRpc(config,'get_creator_analytics',{p_profile_id:session.profile.id});
+      if (!analytics.ok) return badDatabase(res,analytics,'CREATOR_ANALYTICS_UNAVAILABLE');
+      const row=Array.isArray(analytics.data)?analytics.data[0]:analytics.data;
+      if(!row)return error(res,503,'CREATOR_ANALYTICS_UNAVAILABLE');
+      return json(res,200,{ok:true,analytics:{
+        totalPosts:Number(row.total_posts||0),views:Number(row.total_views||0),
+        completedViews:Number(row.completed_views||0),watchTimeMs:Number(row.watch_time_ms||0),
+        followers:Number(row.follower_count||0),comments:Number(row.comment_count||0),reactions:Number(row.reaction_count||0)
+      }});
+    }
+
     if (req.method === 'POST' && url.pathname === '/api/media/upload-url') {
       const session = await requireSession(req, res);
       if (!session.ok) return;
