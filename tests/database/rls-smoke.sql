@@ -425,4 +425,36 @@ BEGIN
 END
 $search_index_checks$;
 
-SELECT 'ZUNO PostgreSQL migration + RLS + economy + moderation + messaging/community/call/search smoke checks passed' AS verification;
+
+DO $marketplace_fulfillment_checks$
+DECLARE
+  v_listing uuid := '70000000-0000-4000-8000-000000000001';
+  v_order uuid := '70000000-0000-4000-8000-000000000001';
+  v_shipment uuid;
+  v_state text;
+  v_event_count integer;
+BEGIN
+  INSERT INTO marketplace_listings(id,seller_id,title,description,category,currency,price_minor,status)
+  VALUES(v_listing,'10000000-0000-4000-8000-000000000001','Synthetic shipping test','Fixture only','test','USD',1250,'sold_out')
+  ON CONFLICT(id) DO NOTHING;
+  INSERT INTO listing_inventory(listing_id,quantity_available,quantity_reserved)
+  VALUES(v_listing,2,0) ON CONFLICT(listing_id) DO NOTHING;
+  INSERT INTO commerce_orders(id,buyer_id,currency,subtotal_minor,tax_minor,shipping_minor,total_minor,status,idempotency_key)
+  VALUES(v_order,'10000000-0000-4000-8000-000000000002','USD',2500,0,0,2500,'paid','fulfillment-smoke-order-00000001')
+  ON CONFLICT(id) DO NOTHING;
+  INSERT INTO commerce_order_items(order_id,listing_id,seller_id,quantity,unit_price_minor,line_total_minor)
+  VALUES(v_order,v_listing,'10000000-0000-4000-8000-000000000001',2,1250,2500)
+  ON CONFLICT DO NOTHING;
+
+  v_shipment:=public.update_commerce_fulfillment(v_order,'10000000-0000-4000-8000-000000000001','label_created',null,null);
+  v_shipment:=public.update_commerce_fulfillment(v_order,'10000000-0000-4000-8000-000000000001','in_transit','ZUNO Test Carrier','ZUNO-TRACK-0001');
+  v_shipment:=public.update_commerce_fulfillment(v_order,'10000000-0000-4000-8000-000000000001','delivered','ZUNO Test Carrier','ZUNO-TRACK-0001');
+  SELECT state INTO v_state FROM commerce_shipments WHERE id=v_shipment;
+  IF v_state<>'delivered' THEN RAISE EXCEPTION 'Fulfillment did not reach delivered'; END IF;
+  IF (SELECT status FROM commerce_orders WHERE id=v_order)<>'fulfilled' THEN RAISE EXCEPTION 'One-seller order did not become fulfilled'; END IF;
+  SELECT count(*)::integer INTO v_event_count FROM commerce_fulfillment_events WHERE order_id=v_order;
+  IF v_event_count<>3 THEN RAISE EXCEPTION 'Expected three fulfillment events; got %',v_event_count; END IF;
+END
+$marketplace_fulfillment_checks$;
+
+SELECT 'ZUNO PostgreSQL migration + RLS + economy + moderation + messaging/community/call/search/fulfillment smoke checks passed' AS verification;

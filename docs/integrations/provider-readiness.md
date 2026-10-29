@@ -21,6 +21,11 @@
 - [ ] Verify real provider webhook delivery, refunds, reversals and reconciliation end to end.
 - [ ] Keep production payments and payouts disabled until reviewed.
 
+## Marketplace fulfillment
+- [x] Seller-authorized fulfillment state changes are mediated by a service-role-only transaction function.
+- [x] Buyer and seller read policies expose only their own shipment/tracking records.
+- [ ] Configure any shipping-carrier API only after choosing a supported carrier and account; current tracking numbers are seller-entered and not provider-verified.
+
 ## Render
 - [ ] Bind the app to the provided service port.
 - [ ] Configure required environment variables in the service dashboard.

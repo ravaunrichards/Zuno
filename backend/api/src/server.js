@@ -143,7 +143,7 @@ function applyCors(req, res) {
   res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Authorization,Content-Type,apikey,x-client-info');
+  res.setHeader('Access-Control-Allow-Headers', 'Authorization,Content-Type,apikey,x-client-info,Idempotency-Key');
   res.setHeader('Access-Control-Max-Age', '600');
   return { allowed: true, hasOrigin: true };
 }
@@ -2731,6 +2731,47 @@ const server = http.createServer(async (req, res) => {
       return json(res,200,{ok:true,listing:{id:listingId,status:typeof result.data==='string'?result.data.replace(/^"|"$/g,''):state}});
     }
 
+    if (req.method === 'GET' && url.pathname === '/api/marketplace/sales') {
+      const session=await requireSession(req,res);
+      if(!session.ok)return;
+      const itemResult=await selectAdminRows(config,'commerce_order_items',query({
+        select:'id,order_id,listing_id,seller_id,quantity,unit_price_minor,line_total_minor,created_at',
+        seller_id:'eq.'+session.profile.id,order:'created_at.desc',limit:'500'
+      }));
+      if(!itemResult.ok)return error(res,503,'MARKETPLACE_SALES_UNAVAILABLE');
+      const orderIds=[...new Set(itemResult.rows.map(item=>item.order_id).filter(uuid))];
+      if(!orderIds.length)return json(res,200,{ok:true,sales:[]});
+      const listingIds=[...new Set(itemResult.rows.map(item=>item.listing_id).filter(uuid))];
+      const [orderResult,shipmentResult,listingResult]=await Promise.all([
+        selectAdminRows(config,'commerce_orders',query({select:'id,buyer_id,currency,total_minor,status,created_at,updated_at',id:profileIdIn(orderIds),limit:'100'})),
+        selectAdminRows(config,'commerce_shipments',query({select:'id,order_id,seller_id,carrier,tracking_reference,state,shipped_at,delivered_at,created_at,updated_at',order_id:profileIdIn(orderIds),seller_id:'eq.'+session.profile.id,limit:'200'})),
+        selectAdminRows(config,'marketplace_listings',query({select:'id,title,category',id:profileIdIn(listingIds),limit:'500'}))
+      ]);
+      if(!orderResult.ok||!shipmentResult.ok||!listingResult.ok)return error(res,503,'MARKETPLACE_SALES_DETAILS_UNAVAILABLE');
+      const orderMap=new Map(orderResult.rows.map(order=>[order.id,order]));
+      const shipmentMap=new Map(shipmentResult.rows.map(shipment=>[shipment.order_id,shipment]));
+      const listingMap=new Map(listingResult.rows.map(listing=>[listing.id,listing]));
+      const salesMap=new Map();
+      for(const item of itemResult.rows){
+        const order=orderMap.get(item.order_id);if(!order)continue;
+        if(!salesMap.has(order.id)){
+          const shipment=shipmentMap.get(order.id)||null;
+          salesMap.set(order.id,{
+            orderId:order.id,status:order.status,currency:order.currency,totalMinor:Number(order.total_minor),createdAt:order.created_at,
+            updatedAt:order.updated_at,items:[],fulfillment:shipment?{
+              id:shipment.id,state:shipment.state,carrier:shipment.carrier||null,trackingReference:shipment.tracking_reference||null,
+              shippedAt:shipment.shipped_at||null,deliveredAt:shipment.delivered_at||null,updatedAt:shipment.updated_at
+            }:{id:null,state:'pending',carrier:null,trackingReference:null,shippedAt:null,deliveredAt:null,updatedAt:null}
+          });
+        }
+        const entry=salesMap.get(order.id);
+        entry.items.push({listingId:item.listing_id,title:listingMap.get(item.listing_id)?.title||'Marketplace item',
+          category:listingMap.get(item.listing_id)?.category||null,quantity:Number(item.quantity),
+          unitPriceMinor:Number(item.unit_price_minor),lineTotalMinor:Number(item.line_total_minor)});
+      }
+      return json(res,200,{ok:true,sales:[...salesMap.values()]});
+    }
+
     if (req.method === 'GET' && url.pathname === '/api/marketplace/orders') {
       const session=await requireSession(req,res);
       if(!session.ok)return;
@@ -2741,7 +2782,14 @@ const server = http.createServer(async (req, res) => {
       if(!lineItems.ok||!Array.isArray(lineItems.data))return badDatabase(res,lineItems,'COMMERCE_ORDER_ITEMS_UNAVAILABLE');
       const itemMap=new Map();
       lineItems.data.forEach(item=>{if(!itemMap.has(item.order_id))itemMap.set(item.order_id,[]);itemMap.get(item.order_id).push({id:item.id,listingId:item.listing_id,sellerId:item.seller_id,quantity:Number(item.quantity),unitPriceMinor:Number(item.unit_price_minor),lineTotalMinor:Number(item.line_total_minor)});});
-      return json(res,200,{ok:true,orders:result.data.map(item=>({id:item.id,status:item.status,currency:item.currency,subtotalMinor:Number(item.subtotal_minor),taxMinor:Number(item.tax_minor),shippingMinor:Number(item.shipping_minor),totalMinor:Number(item.total_minor),providerCaptureId:item.provider_capture_id||null,createdAt:item.created_at,items:itemMap.get(item.id)||[]}))});
+      const shipmentResult=ids.length?await rowsForUser(session,'commerce_shipments',{select:'id,order_id,seller_id,carrier,tracking_reference,state,shipped_at,delivered_at,updated_at',order_id:profileIdIn(ids),order:'created_at.desc',limit:'200'}):{ok:true,data:[]};
+      if(!shipmentResult.ok||!Array.isArray(shipmentResult.data))return badDatabase(res,shipmentResult,'COMMERCE_SHIPMENTS_UNAVAILABLE');
+      const shipmentMap=new Map();
+      shipmentResult.data.forEach(row=>{if(!shipmentMap.has(row.order_id))shipmentMap.set(row.order_id,[]);shipmentMap.get(row.order_id).push({
+        id:row.id,sellerId:row.seller_id||null,carrier:row.carrier||null,trackingReference:row.tracking_reference||null,
+        state:row.state,shippedAt:row.shipped_at||null,deliveredAt:row.delivered_at||null,updatedAt:row.updated_at||null
+      });});
+      return json(res,200,{ok:true,orders:result.data.map(item=>({id:item.id,status:item.status,currency:item.currency,subtotalMinor:Number(item.subtotal_minor),taxMinor:Number(item.tax_minor),shippingMinor:Number(item.shipping_minor),totalMinor:Number(item.total_minor),providerCaptureId:item.provider_capture_id||null,createdAt:item.created_at,items:itemMap.get(item.id)||[],shipments:shipmentMap.get(item.id)||[]}))});
     }
 
     if(req.method==='POST'&&url.pathname==='/api/marketplace/orders'){
@@ -2809,6 +2857,31 @@ const server = http.createServer(async (req, res) => {
       const cancelled=await adminRpc(config,'cancel_commerce_order',{p_order_id:orderId,p_buyer_profile_id:session.profile.id});
       if(!cancelled.ok)return badDatabase(res,cancelled,'COMMERCE_ORDER_CANCEL_FAILED');
       return json(res,200,{ok:true,order:{id:orderId,status:typeof cancelled.data==='string'?cancelled.data.replace(/^"|"$/g,''):'cancelled'}});
+    }
+
+    const commerceFulfillmentMatch=url.pathname.match(/^\\/api\\/marketplace\\/orders\\/([0-9a-f-]+)\\/fulfillment$/i);
+    if(req.method==='POST'&&commerceFulfillmentMatch){
+      const session=await requireSession(req,res);
+      if(!session.ok)return;
+      const orderId=commerceFulfillmentMatch[1];
+      if(!uuid(orderId))return error(res,400,'INVALID_COMMERCE_ORDER_ID');
+      const body=await readBody(req);
+      const nextState=String(body.state||'');
+      if(!['label_created','in_transit','delivered','lost','returned'].includes(nextState))return error(res,400,'COMMERCE_FULFILLMENT_STATE_INVALID');
+      const carrier=body.carrier==null?'':String(body.carrier).trim();
+      const trackingReference=body.trackingReference==null?'':String(body.trackingReference).trim();
+      if(carrier.length>100)return error(res,400,'COMMERCE_CARRIER_INVALID');
+      if(trackingReference.length>180)return error(res,400,'COMMERCE_TRACKING_REFERENCE_INVALID');
+      if(nextState==='in_transit'&&(!carrier||!trackingReference))return error(res,400,'COMMERCE_TRACKING_REQUIRED','Carrier and tracking reference are required before marking an order shipped.');
+      const saved=await adminRpc(config,'update_commerce_fulfillment',{
+        p_order_id:orderId,p_seller_profile_id:session.profile.id,p_state:nextState,
+        p_carrier:carrier||null,p_tracking_reference:trackingReference||null
+      });
+      if(!saved.ok)return badDatabase(res,saved,'COMMERCE_FULFILLMENT_UPDATE_FAILED');
+      const shipmentId=typeof saved.data==='string'?saved.data.replace(/^"|"$/g,''):
+        Array.isArray(saved.data)?saved.data[0]:saved.data&&saved.data.update_commerce_fulfillment;
+      if(!uuid(String(shipmentId||'')))return error(res,503,'COMMERCE_FULFILLMENT_RESULT_INVALID');
+      return json(res,200,{ok:true,shipment:{id:shipmentId,orderId,state:nextState}});
     }
 
     if (req.method === 'POST' && url.pathname === '/api/communities') {

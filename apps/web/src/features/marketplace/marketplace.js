@@ -88,6 +88,15 @@ async function loadOrders(){
   result.orders.forEach(order=>{
    const row=el('article','marketplace-order-card');row.append(el('strong','',money(order.totalMinor,order.currency)+' · '+order.status),el('small','',new Date(order.createdAt).toLocaleString()));
    (order.items||[]).forEach(item=>row.append(el('p','',item.quantity+' × '+item.listingId+' · '+money(item.lineTotalMinor,order.currency))));
+   (order.shipments||[]).forEach(shipment=>{
+    const shipmentBox=el('div','marketplace-shipment-tracking');
+    shipmentBox.append(el('strong','','Shipping · '+String(shipment.state||'pending').replaceAll('_',' ')));
+    if(shipment.carrier)shipmentBox.append(el('span','',shipment.carrier));
+    if(shipment.trackingReference)shipmentBox.append(el('code','',shipment.trackingReference));
+    if(shipment.shippedAt)shipmentBox.append(el('small','','Shipped '+new Date(shipment.shippedAt).toLocaleString()));
+    if(shipment.deliveredAt)shipmentBox.append(el('small','','Delivered '+new Date(shipment.deliveredAt).toLocaleString()));
+    row.append(shipmentBox);
+   });
    box.append(row);
   });
  }catch(error){box.replaceChildren(el('p','marketplace-empty',error.message||'Orders unavailable.'));}
@@ -124,6 +133,75 @@ async function handleReturn(){
   else status('The provider has not confirmed capture. Order remains pending; do not submit another order.',true);
  }catch(error){status(error.status===401?'Sign in to reconcile this order.':(error.message||'Payment reconciliation pending. Do not buy again.'),true);}
 }
+
+function renderSellerSale(sale){
+ const card=el('article','marketplace-sale-card');
+ const heading=el('div','marketplace-sale-heading');
+ heading.append(el('strong','','Order '+String(sale.orderId).slice(0,8).toUpperCase()),el('span','',String(sale.status||'').replaceAll('_',' ')));
+ card.append(heading);
+ (sale.items||[]).forEach(item=>card.append(el('p','marketplace-sale-item',(item.title||'Marketplace item')+' × '+item.quantity+' · '+money(item.lineTotalMinor,sale.currency))));
+ const state=sale.fulfillment?.state||'pending';
+ const tracking=el('div','marketplace-sale-tracking');
+ tracking.append(el('strong','','Fulfillment · '+state.replaceAll('_',' ')));
+ if(sale.fulfillment?.carrier)tracking.append(el('span','',sale.fulfillment.carrier));
+ if(sale.fulfillment?.trackingReference)tracking.append(el('code','',sale.fulfillment.trackingReference));
+ if(sale.fulfillment?.shippedAt)tracking.append(el('small','','Shipped '+new Date(sale.fulfillment.shippedAt).toLocaleString()));
+ if(sale.fulfillment?.deliveredAt)tracking.append(el('small','','Delivered '+new Date(sale.fulfillment.deliveredAt).toLocaleString()));
+ card.append(tracking);
+ if(!['paid','processing','fulfilled'].includes(sale.status)||['delivered','returned'].includes(state)||sale.status==='fulfilled')return card;
+ const form=el('form','marketplace-fulfillment-form');
+ const carrierLabel=el('label','','Carrier');
+ const carrier=document.createElement('input');carrier.maxLength=100;carrier.value=sale.fulfillment?.carrier||'';carrier.placeholder='e.g. Jamaica Post';carrier.setAttribute('aria-label','Shipping carrier');carrierLabel.append(carrier);
+ const trackingLabel=el('label','','Tracking reference');
+ const trackingInput=document.createElement('input');trackingInput.maxLength=180;trackingInput.value=sale.fulfillment?.trackingReference||'';trackingInput.placeholder='Tracking number';trackingInput.setAttribute('aria-label','Tracking reference');trackingLabel.append(trackingInput);
+ form.append(carrierLabel,trackingLabel);
+ const next=state==='pending'?'label_created':state==='label_created'||state==='lost'?'in_transit':'delivered';
+ const nextLabel=next==='label_created'?'Create shipping label':next==='in_transit'?'Mark shipped':'Mark delivered';
+ const submit=el('button','button button-primary button-small',nextLabel);submit.type='submit';
+ if(next==='in_transit'){carrier.required=true;trackingInput.required=true;}
+ form.append(submit);
+ const message=el('p','marketplace-fulfillment-status','');
+ form.addEventListener('submit',async event=>{
+  event.preventDefault();if(!requireAuth())return;
+  if(next==='in_transit'&&(!carrier.value.trim()||!trackingInput.value.trim())){status('Carrier and tracking reference are required before shipping.',true);return;}
+  submit.disabled=true;message.textContent='Saving verified fulfillment state…';
+  try{
+   await requestJson('/api/marketplace/orders/'+encodeURIComponent(sale.orderId)+'/fulfillment',{method:'POST',body:{state:next,carrier:carrier.value.trim()||null,trackingReference:trackingInput.value.trim()||null}});
+   status('Shipping state saved for order '+sale.orderId+'.');await Promise.all([loadSales(),loadOrders()]);
+  }catch(error){message.textContent=error.message||'Fulfillment update failed.';message.classList.add('is-error');}
+  finally{submit.disabled=false;}
+ });
+ card.append(form);
+ if(state==='in_transit'){
+  const sideActions=el('div','marketplace-fulfillment-side-actions');
+  for(const [nextState,labelText] of [['lost','Mark lost'],['returned','Mark returned']]){
+   const action=el('button','button button-secondary button-small',labelText);action.type='button';
+   action.addEventListener('click',async()=>{
+    action.disabled=true;try{
+     await requestJson('/api/marketplace/orders/'+encodeURIComponent(sale.orderId)+'/fulfillment',{method:'POST',body:{state:nextState,carrier:carrier.value.trim()||sale.fulfillment?.carrier||null,trackingReference:trackingInput.value.trim()||sale.fulfillment?.trackingReference||null}});
+     await Promise.all([loadSales(),loadOrders()]);status('Fulfillment updated: '+labelText.toLowerCase()+'.');
+    }catch(error){message.textContent=error.message||'Fulfillment update failed.';message.classList.add('is-error');}
+    finally{action.disabled=false;}
+   });sideActions.append(action);
+  }
+  card.append(sideActions);
+ }
+ card.append(message);
+ return card;
+}
+async function loadSales(){
+ const box=id('marketplace-sales-list');if(!box)return;
+ if(!getSession()){box.replaceChildren(el('p','marketplace-empty','Sign in to manage seller orders.'));return;}
+ box.replaceChildren(el('p','marketplace-empty','Loading your sales and shipping status…'));
+ try{
+  const result=await requestJson('/api/marketplace/sales');
+  const sales=Array.isArray(result.sales)?result.sales:[];
+  box.replaceChildren();
+  if(!sales.length){box.append(el('p','marketplace-empty','No orders to fulfill yet. Paid marketplace orders for your listings will appear here.'));return;}
+  sales.forEach(sale=>box.append(renderSellerSale(sale)));
+ }catch(error){box.replaceChildren(el('p','marketplace-empty',error.message||'Seller orders could not be loaded.'));}
+}
+
 export function mountMarketplace(){
  id('marketplace-refresh')?.addEventListener('click',loadListings);
  id('marketplace-search')?.addEventListener('click',loadListings);
@@ -132,6 +210,7 @@ export function mountMarketplace(){
  id('marketplace-checkout')?.addEventListener('click',checkout);
  id('marketplace-orders-refresh')?.addEventListener('click',loadOrders);
  id('marketplace-my-listings-refresh')?.addEventListener('click',loadMine);
+ id('marketplace-sales-refresh')?.addEventListener('click',loadSales);
  id('marketplace-listing-form')?.addEventListener('submit',async event=>{
   event.preventDefault();if(!requireAuth())return;
   const price=Number(id('marketplace-listing-price')?.value);
@@ -147,6 +226,6 @@ export function mountMarketplace(){
   }catch(error){status(error.message||'Listing creation failed.',true);}
   finally{submit.disabled=false;}
  });
- window.addEventListener('zuno:session-change',()=>{loadListings();loadMine();loadOrders();});
- loadListings();loadMine();loadOrders();renderCart();handleReturn();
+ window.addEventListener('zuno:session-change',()=>{loadListings();loadMine();loadOrders();loadSales();});
+ loadListings();loadMine();loadOrders();loadSales();renderCart();handleReturn();
 }

@@ -472,3 +472,19 @@ body.zuno-reduced-motion *,body.zuno-reduced-motion *::before,body.zuno-reduced-
 .notification-empty{padding:12px;border:1px dashed var(--line-strong);border-radius:10px;color:var(--muted);font-size:10px;line-height:1.65}
 .notification-card-footer{display:flex;justify-content:flex-start;margin-top:9px}
 @media(max-width:640px){.topbar-notifications{min-width:31px;width:31px;height:31px}.notification-item{padding:9px}}
+
+/* Transaction-backed marketplace fulfillment and buyer tracking */
+.marketplace-sales-panel{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.marketplace-sale-card{display:grid;gap:9px;padding:12px;margin:9px 0;border:1px solid var(--line);border-radius:13px;background:rgba(255,255,255,.025)}
+.marketplace-sale-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.marketplace-sale-heading strong,.marketplace-shipment-tracking strong,.marketplace-sale-tracking strong{font-size:10px}
+.marketplace-sale-heading span,.marketplace-sale-item,.marketplace-sale-tracking span,.marketplace-shipment-tracking span{font-size:10px;color:var(--muted)}
+.marketplace-sale-tracking,.marketplace-shipment-tracking{display:grid;gap:5px;padding:9px;border-radius:9px;background:rgba(118,97,255,.06);border:1px solid var(--line)}
+.marketplace-sale-tracking code,.marketplace-shipment-tracking code{font-size:10px;overflow-wrap:anywhere}
+.marketplace-sale-tracking small,.marketplace-shipment-tracking small{font-size:9px;color:var(--muted)}
+.marketplace-fulfillment-form{display:grid;grid-template-columns:1fr;gap:7px}
+.marketplace-fulfillment-form label{display:grid;gap:5px;font-size:9px;font-weight:700;color:var(--muted)}
+.marketplace-fulfillment-form input{width:100%;min-width:0;box-sizing:border-box;padding:10px;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface);color:var(--text)}
+.marketplace-fulfillment-side-actions{display:flex;gap:7px;flex-wrap:wrap}
+.marketplace-fulfillment-status{margin:0;font-size:10px;color:var(--muted)}
+.marketplace-fulfillment-status.is-error{color:#ff9bb0}
