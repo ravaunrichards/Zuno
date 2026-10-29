@@ -29,6 +29,10 @@ jobs:
         run: pnpm lint
       - name: Unit and integration tests
         run: pnpm test
+      - name: Platform entrypoint and placeholder audit
+        run: pnpm platforms:validate
+      - name: Web interaction checks
+        run: node scripts/test-web.js
       - name: Gift asset integrity
         run: pnpm assets:validate
       - name: Database static checks

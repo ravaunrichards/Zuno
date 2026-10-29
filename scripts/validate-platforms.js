@@ -5,7 +5,7 @@ const root=path.join(__dirname,'..');
 const required=[
  'apps/web/index.html','apps/web/app.js','apps/web/manifest.webmanifest',
  'apps/android/settings.gradle.kts','apps/android/app/build.gradle.kts','apps/android/app/src/main/AndroidManifest.xml',
- 'apps/ios/project.yml','apps/desktop/main.js','apps/desktop/preload.js',
+ 'apps/ios/project.yml','apps/desktop/main.cjs','apps/desktop/preload.cjs','apps/desktop/package.json',
  'apps/tv/index.html','apps/tv/app.js','apps/admin/index.html','apps/admin/app.js',
  'apps/creator-studio/index.html','apps/creator-studio/app.js',
  'backend/api/src/server.js','database/migrations/0001_core_schema.sql',
