@@ -255,7 +255,62 @@ const server = http.createServer(async (req, res) => {
       let errorCode = null;
       try {
         const resource = body.resource && typeof body.resource === 'object' ? body.resource : {};
-        if (body.event_type === 'CHECKOUT.ORDER.APPROVED') {
+        const creatorSubscriptionEvents = new Set([
+          'BILLING.SUBSCRIPTION.ACTIVATED','BILLING.SUBSCRIPTION.UPDATED',
+          'BILLING.SUBSCRIPTION.CANCELLED','BILLING.SUBSCRIPTION.EXPIRED',
+          'BILLING.SUBSCRIPTION.SUSPENDED','BILLING.SUBSCRIPTION.PAYMENT.FAILED'
+        ]);
+        if (creatorSubscriptionEvents.has(body.event_type)) {
+          const providerSubscriptionId = String(resource.id || resource.billing_agreement_id || resource.subscription_id || '');
+          if (!providerSubscriptionId) {
+            processing = 'failed'; errorCode = 'CREATOR_SUBSCRIPTION_WEBHOOK_ID_MISSING';
+          } else {
+            let subscriptionRow = await selectAdminRows(config, 'creator_subscriptions', query({
+              select: 'id,provider_subscription_id,state',
+              provider_subscription_id: 'eq.' + providerSubscriptionId, limit: '1'
+            }));
+            if ((!subscriptionRow.ok || !subscriptionRow.rows.length) && uuid(String(resource.custom_id || ''))) {
+              const localId = String(resource.custom_id);
+              const byLocalId = await selectAdminRows(config, 'creator_subscriptions', query({
+                select: 'id,provider_subscription_id,state',
+                id: 'eq.' + localId, limit: '1'
+              }));
+              if (byLocalId.ok && byLocalId.rows.length) {
+                const savedProvider = await adminRest(config, 'creator_subscriptions', query({ id: 'eq.' + localId }), 'PATCH', {
+                  provider_subscription_id: providerSubscriptionId, updated_at: new Date().toISOString()
+                });
+                if (!savedProvider.ok) {
+                  processing = 'failed'; errorCode = 'CREATOR_SUBSCRIPTION_PROVIDER_ID_PERSIST_FAILED';
+                } else subscriptionRow = byLocalId;
+              } else subscriptionRow = byLocalId;
+            }
+            if (processing !== 'failed') {
+              if (!subscriptionRow.ok || !subscriptionRow.rows.length) {
+                processing = 'failed'; errorCode = 'CREATOR_SUBSCRIPTION_NOT_FOUND';
+              } else {
+                let providerStatus = String(resource.status || '');
+                if (body.event_type === 'BILLING.SUBSCRIPTION.ACTIVATED') providerStatus = 'ACTIVE';
+                else if (body.event_type === 'BILLING.SUBSCRIPTION.CANCELLED') providerStatus = 'CANCELLED';
+                else if (body.event_type === 'BILLING.SUBSCRIPTION.EXPIRED') providerStatus = 'EXPIRED';
+                else if (body.event_type === 'BILLING.SUBSCRIPTION.SUSPENDED' || body.event_type === 'BILLING.SUBSCRIPTION.PAYMENT.FAILED') providerStatus = 'SUSPENDED';
+                if (!['APPROVAL_PENDING','APPROVED','ACTIVE','SUSPENDED','CANCELLED','EXPIRED'].includes(providerStatus)) {
+                  processing = 'failed'; errorCode = 'CREATOR_SUBSCRIPTION_STATUS_INVALID';
+                } else {
+                  const nextRaw = resource.billing_info && resource.billing_info.next_billing_time;
+                  const nextDate = nextRaw ? new Date(nextRaw) : null;
+                  const nextBillingTime = nextDate && Number.isFinite(nextDate.getTime()) ? nextDate.toISOString() : null;
+                  const synced = await adminRpc(config, 'sync_creator_subscription', {
+                    p_provider_subscription_id: providerSubscriptionId,
+                    p_provider_status: providerStatus,
+                    p_next_billing_time: nextBillingTime,
+                    p_provider_event_id: String(body.id)
+                  });
+                  if (!synced.ok) { processing = 'failed'; errorCode = 'CREATOR_SUBSCRIPTION_STATE_SYNC_FAILED'; }
+                }
+              }
+            }
+          }
+        } else         if (body.event_type === 'CHECKOUT.ORDER.APPROVED') {
           const providerOrderId = String(resource.id || '');
           if (providerOrderId) {
             const approvedCoin=await adminRest(config, 'payment_orders', query({
@@ -1177,6 +1232,287 @@ const server = http.createServer(async (req, res) => {
             url:asset.state==='ready'?byPath.get(asset.storage_path)||null:null}:null;
         }).filter(Boolean):[]
       }))});
+    }
+
+    const publicTierMatch = url.pathname.match(/^\/api\/creators\/([0-9a-f-]+)\/subscription-tiers$/i);
+    if (req.method === 'GET' && publicTierMatch) {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const creatorId = publicTierMatch[1];
+      if (!uuid(creatorId)) return error(res, 400, 'INVALID_CREATOR_ID');
+      const tiers = await rowsForUser(session, 'creator_subscription_tiers', {
+        select: 'id,creator_id,tier_key,title,monthly_price_minor,currency,benefits,enabled',
+        creator_id: 'eq.' + creatorId, enabled: 'eq.true', order: 'monthly_price_minor.asc', limit: '20'
+      });
+      if (!tiers.ok || !Array.isArray(tiers.data)) return badDatabase(res, tiers, 'CREATOR_TIERS_UNAVAILABLE');
+      const mine = creatorId === session.profile.id;
+      return json(res, 200, { ok: true, tiers: tiers.data.map(tier => ({
+        id: tier.id, creatorId: tier.creator_id, key: tier.tier_key, title: tier.title,
+        monthlyPriceMinor: Number(tier.monthly_price_minor), currency: tier.currency,
+        benefits: Array.isArray(tier.benefits) ? tier.benefits.map(item => typeof item === 'string' ? { key: item, label: item } : item) : [],
+        canManage: mine
+      })) });
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api/creator/subscription-tiers') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const tiers = await selectAdminRows(config, 'creator_subscription_tiers', query({
+        select: 'id,creator_id,tier_key,title,monthly_price_minor,currency,benefits,enabled,provider_product_id,provider_plan_id,creation_idempotency_key,created_at,updated_at',
+        creator_id: 'eq.' + session.profile.id, order: 'created_at.desc', limit: '50'
+      }));
+      if (!tiers.ok) return badDatabase(res, tiers, 'CREATOR_TIERS_UNAVAILABLE');
+      return json(res, 200, { ok: true, tiers: tiers.rows.map(tier => ({
+        id: tier.id, key: tier.tier_key, title: tier.title, monthlyPriceMinor: Number(tier.monthly_price_minor),
+        currency: tier.currency, benefits: Array.isArray(tier.benefits) ? tier.benefits : [],
+        enabled: Boolean(tier.enabled), providerReady: Boolean(tier.provider_plan_id), createdAt: tier.created_at
+      })) });
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/creator/subscription-tiers') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      if (!config.configured.paypal) return error(res, 503, 'PAYMENTS_NOT_CONFIGURED', 'PayPal Developer credentials are required to create recurring subscription plans.');
+      if (config.paypal.env === 'live' && (!config.features.productionPayments || !config.paypal.webhookId)) {
+        return error(res, 503, 'PRODUCTION_SUBSCRIPTIONS_DISABLED', 'Live recurring subscriptions require production payment and signed webhook safeguards.');
+      }
+      const body = await readBody(req);
+      const title = typeof body.title === 'string' ? body.title.trim() : '';
+      const titleKey = typeof body.tierKey === 'string' ? body.tierKey.trim().toLowerCase() : title.toLowerCase();
+      const tierKey = titleKey.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
+      const monthlyPriceMinor = Number(body.monthlyPriceMinor);
+      if (title.length < 2 || title.length > 80) return error(res, 400, 'CREATOR_TIER_TITLE_INVALID');
+      if (!/^[a-z0-9][a-z0-9-]{1,39}$/.test(tierKey)) return error(res, 400, 'CREATOR_TIER_KEY_INVALID');
+      if (!Number.isSafeInteger(monthlyPriceMinor) || monthlyPriceMinor < 100 || monthlyPriceMinor > 99999) return error(res, 400, 'CREATOR_TIER_PRICE_INVALID', 'Monthly subscription price must be USD 1.00–999.99.');
+      const rawKey = String(req.headers['idempotency-key'] || body.idempotencyKey || '');
+      if (!/^[A-Za-z0-9._:-]{16,180}$/.test(rawKey)) return error(res, 400, 'CREATOR_TIER_IDEMPOTENCY_INVALID');
+      const rawBenefits = Array.isArray(body.benefits) ? body.benefits : [];
+      if (rawBenefits.length > 10 || rawBenefits.some(item => typeof item !== 'string' || item.trim().length < 1 || item.trim().length > 160)) {
+        return error(res, 400, 'CREATOR_TIER_BENEFITS_INVALID', 'Provide up to 10 benefit descriptions, each 1–160 characters.');
+      }
+      const benefits = rawBenefits.map((label, index) => ({
+        key: 'benefit-' + String(index + 1).padStart(2, '0') + '-' + label.trim().toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60),
+        label: label.trim()
+      }));
+      const existing = await selectAdminRows(config, 'creator_subscription_tiers', query({
+        select: 'id,creator_id,tier_key,title,monthly_price_minor,currency,benefits,enabled,provider_product_id,provider_plan_id,creation_idempotency_key',
+        creator_id: 'eq.' + session.profile.id, creation_idempotency_key: 'eq.' + rawKey, limit: '1'
+      }));
+      if (!existing.ok) return badDatabase(res, existing, 'CREATOR_TIER_LOOKUP_FAILED');
+      let tier = existing.rows[0] || null;
+      if (tier && (tier.tier_key !== tierKey || Number(tier.monthly_price_minor) !== monthlyPriceMinor || tier.title !== title)) {
+        return error(res, 409, 'CREATOR_SUBSCRIPTION_IDEMPOTENCY_CONFLICT');
+      }
+      if (tier && tier.enabled && tier.provider_plan_id) {
+        return json(res, 200, { ok: true, idempotent: true, tier: {
+          id: tier.id, key: tier.tier_key, title: tier.title, monthlyPriceMinor: Number(tier.monthly_price_minor), currency: tier.currency, enabled: true
+        }});
+      }
+      if (!tier) {
+        const inserted = await adminRest(config, 'creator_subscription_tiers', new URLSearchParams(), 'POST', {
+          creator_id: session.profile.id, tier_key: tierKey, title,
+          monthly_price_minor: monthlyPriceMinor, currency: 'USD',
+          benefits, enabled: false, creation_idempotency_key: rawKey
+        });
+        if (!inserted.ok || !Array.isArray(inserted.data) || !inserted.data[0]) {
+          const retry = await selectAdminRows(config, 'creator_subscription_tiers', query({
+            select: 'id,creator_id,tier_key,title,monthly_price_minor,currency,benefits,enabled,provider_product_id,provider_plan_id,creation_idempotency_key',
+            creator_id: 'eq.' + session.profile.id, creation_idempotency_key: 'eq.' + rawKey, limit: '1'
+          }));
+          if (!retry.ok || !retry.rows[0]) return badDatabase(res, inserted, 'CREATOR_TIER_CREATE_FAILED');
+          tier = retry.rows[0];
+        } else tier = inserted.data[0];
+      }
+      const plan = await paypal.createSubscriptionPlan(config.paypal, {
+        creatorProfileId: session.profile.id, tierKey, title,
+        description: benefits.map(item => item.label).join(' · ').slice(0, 200),
+        amountUSD: monthlyPriceMinor / 100,
+        requestId: String(tier.id).replace(/-/g, '')
+      });
+      if (!plan.ok || !plan.planId) {
+        return error(res, plan.status === 400 ? 400 : 503, plan.code || 'PAYPAL_BILLING_PLAN_CREATE_FAILED',
+          'The tier is saved as a disabled draft because PayPal did not confirm a recurring plan.');
+      }
+      const updated = await adminRest(config, 'creator_subscription_tiers', query({
+        id: 'eq.' + tier.id, creator_id: 'eq.' + session.profile.id
+      }), 'PATCH', {
+        provider_product_id: plan.productId, provider_plan_id: plan.planId,
+        enabled: true, updated_at: new Date().toISOString()
+      });
+      if (!updated.ok) return error(res, 503, 'CREATOR_TIER_PROVIDER_RECONCILIATION_REQUIRED', 'PayPal created a plan but the tier is not enabled until its provider record is reconciled. Retry with the same idempotency key.');
+      const roleRows = await selectAdminRows(config, 'roles', query({ select: 'profile_id,role', profile_id: 'eq.' + session.profile.id, role: 'eq.creator', limit: '1' }));
+      if (roleRows.ok && !roleRows.rows.length) await adminRest(config, 'roles', new URLSearchParams(), 'POST', { profile_id: session.profile.id, role: 'creator' });
+      await adminRest(config, 'profiles', query({ id: 'eq.' + session.profile.id }), 'PATCH', { is_creator: true, updated_at: new Date().toISOString() });
+      return json(res, 201, { ok: true, tier: {
+        id: tier.id, key: tierKey, title, monthlyPriceMinor, currency: 'USD',
+        benefits, enabled: true, providerReady: true
+      }});
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/creator-subscriptions') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      if (!config.configured.paypal) return error(res, 503, 'PAYMENTS_NOT_CONFIGURED');
+      if (config.paypal.env === 'live' && (!config.features.productionPayments || !config.paypal.webhookId)) {
+        return error(res, 503, 'PRODUCTION_SUBSCRIPTIONS_DISABLED');
+      }
+      const body = await readBody(req);
+      const tierId = String(body.tierId || '');
+      if (!uuid(tierId)) return error(res, 400, 'INVALID_CREATOR_TIER_ID');
+      const rawKey = String(req.headers['idempotency-key'] || body.idempotencyKey || '');
+      if (!/^[A-Za-z0-9._:-]{16,180}$/.test(rawKey)) return error(res, 400, 'IDEMPOTENCY_KEY_REQUIRED');
+      const prior = await selectAdminRows(config, 'creator_subscriptions', query({
+        select: 'id,subscriber_id,creator_id,tier_id,tier,state,provider_subscription_id,provider_approval_url,billing_amount_minor,currency,current_period_end,idempotency_key',
+        subscriber_id: 'eq.' + session.profile.id, idempotency_key: 'eq.' + rawKey, limit: '1'
+      }));
+      if (!prior.ok) return badDatabase(res, prior, 'CREATOR_SUBSCRIPTION_LOOKUP_FAILED');
+      let subscription = prior.rows[0] || null;
+      if (subscription && subscription.tier_id !== tierId) return error(res, 409, 'CREATOR_SUBSCRIPTION_IDEMPOTENCY_CONFLICT');
+      if (subscription && subscription.state === 'active') return json(res, 200, {
+        ok: true, idempotent: true, subscription: { id: subscription.id, state: 'active', currentPeriodEnd: subscription.current_period_end }
+      });
+      if (subscription && subscription.provider_subscription_id && subscription.provider_approval_url) {
+        return json(res, 200, { ok: true, idempotent: true, subscription: {
+          id: subscription.id, state: subscription.state, approvalUrl: subscription.provider_approval_url,
+          providerSubscriptionId: subscription.provider_subscription_id, currentPeriodEnd: subscription.current_period_end
+        }});
+      }
+      if (subscription && subscription.state !== 'pending') return error(res, 409, 'CREATOR_SUBSCRIPTION_NOT_OPEN');
+      const tierRows = await selectAdminRows(config, 'creator_subscription_tiers', query({
+        select: 'id,creator_id,tier_key,title,monthly_price_minor,currency,benefits,enabled,provider_plan_id',
+        id: 'eq.' + tierId, enabled: 'eq.true', limit: '1'
+      }));
+      if (!tierRows.ok) return badDatabase(res, tierRows, 'CREATOR_TIER_LOOKUP_FAILED');
+      const tier = tierRows.rows[0];
+      if (!tier || !tier.provider_plan_id) return error(res, 404, 'CREATOR_SUBSCRIPTION_TIER_NOT_FOUND');
+      if (tier.creator_id === session.profile.id) return error(res, 400, 'SELF_SUBSCRIPTION_FORBIDDEN');
+      if (subscription) {
+        if (!subscription.provider_subscription_id) return error(res, 409, 'CREATOR_SUBSCRIPTION_INITIALIZATION_IN_PROGRESS');
+      } else {
+        const existingOpen = await selectAdminRows(config, 'creator_subscriptions', query({
+          select: 'id,state,provider_subscription_id,provider_approval_url,current_period_end',
+          subscriber_id: 'eq.' + session.profile.id, tier_id: 'eq.' + tier.id, state: 'in.(pending,active,grace)', limit: '1'
+        }));
+        if (!existingOpen.ok) return badDatabase(res, existingOpen, 'CREATOR_SUBSCRIPTION_LOOKUP_FAILED');
+        if (existingOpen.rows[0]) {
+          const other = existingOpen.rows[0];
+          if (other.state === 'active') return json(res, 200, { ok: true, idempotent: true, subscription: { id: other.id, state: 'active', currentPeriodEnd: other.current_period_end }});
+          if (other.provider_subscription_id && other.provider_approval_url) return json(res, 200, { ok: true, idempotent: true, subscription: { id: other.id, state: other.state, approvalUrl: other.provider_approval_url, providerSubscriptionId: other.provider_subscription_id }});
+          return error(res, 409, 'CREATOR_SUBSCRIPTION_INITIALIZATION_IN_PROGRESS');
+        }
+        const inserted = await adminRest(config, 'creator_subscriptions', new URLSearchParams(), 'POST', {
+          subscriber_id: session.profile.id, creator_id: tier.creator_id, tier: tier.tier_key, tier_id: tier.id,
+          state: 'pending', billing_amount_minor: Number(tier.monthly_price_minor), currency: tier.currency,
+          idempotency_key: rawKey, updated_at: new Date().toISOString()
+        });
+        if (!inserted.ok || !Array.isArray(inserted.data) || !inserted.data[0]) {
+          const retry = await selectAdminRows(config, 'creator_subscriptions', query({
+            select: 'id,subscriber_id,creator_id,tier_id,tier,state,provider_subscription_id,provider_approval_url,billing_amount_minor,currency,current_period_end,idempotency_key',
+            subscriber_id: 'eq.' + session.profile.id, idempotency_key: 'eq.' + rawKey, limit: '1'
+          }));
+          if (!retry.ok || !retry.rows[0]) return badDatabase(res, inserted, 'CREATOR_SUBSCRIPTION_CREATE_FAILED');
+          subscription = retry.rows[0];
+        } else subscription = inserted.data[0];
+      }
+      const returnUrl = new URL('/', config.appBaseUrl);
+      returnUrl.searchParams.set('subscription', 'return');
+      returnUrl.searchParams.set('subscriptionId', subscription.id);
+      const cancelUrl = new URL('/', config.appBaseUrl);
+      cancelUrl.searchParams.set('subscription', 'cancel');
+      cancelUrl.searchParams.set('subscriptionId', subscription.id);
+      const providerSub = await paypal.createBillingSubscription(config.paypal, {
+        planId: tier.provider_plan_id, customId: subscription.id, returnUrl: returnUrl.toString(),
+        cancelUrl: cancelUrl.toString(), requestId: String(subscription.id).replace(/-/g, '')
+      });
+      if (!providerSub.ok || !providerSub.subscriptionId || !providerSub.approvalUrl) {
+        return error(res, 503, providerSub.code || 'PAYPAL_SUBSCRIPTION_CREATE_FAILED', 'The subscription remains pending for reconciliation; no paid entitlement was enabled.');
+      }
+      const saved = await adminRest(config, 'creator_subscriptions', query({
+        id: 'eq.' + subscription.id, subscriber_id: 'eq.' + session.profile.id
+      }), 'PATCH', {
+        provider_subscription_id: providerSub.subscriptionId, provider_approval_url: providerSub.approvalUrl,
+        updated_at: new Date().toISOString()
+      });
+      if (!saved.ok) return error(res, 503, 'CREATOR_SUBSCRIPTION_PROVIDER_RECONCILIATION_REQUIRED', 'PayPal created the subscription but the local provider reference must be reconciled. Retry the same idempotency key.');
+      return json(res, 201, { ok: true, subscription: {
+        id: subscription.id, state: 'pending', creatorId: tier.creator_id, tierId: tier.id,
+        monthlyPriceMinor: Number(tier.monthly_price_minor), currency: tier.currency,
+        providerSubscriptionId: providerSub.subscriptionId, approvalUrl: providerSub.approvalUrl
+      }});
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api/creator-subscriptions/mine') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const result = await rowsForUser(session, 'creator_subscriptions', {
+        select: 'id,subscriber_id,creator_id,tier_id,tier,state,billing_amount_minor,currency,current_period_end,provider_subscription_id,created_at,updated_at',
+        subscriber_id: 'eq.' + session.profile.id, order: 'created_at.desc', limit: '100'
+      });
+      if (!result.ok || !Array.isArray(result.data)) return badDatabase(res, result, 'CREATOR_SUBSCRIPTIONS_UNAVAILABLE');
+      return json(res, 200, { ok: true, subscriptions: result.data.map(item => ({
+        id: item.id, creatorId: item.creator_id, tierId: item.tier_id, tier: item.tier, state: item.state,
+        monthlyPriceMinor: item.billing_amount_minor === null ? null : Number(item.billing_amount_minor),
+        currency: item.currency, currentPeriodEnd: item.current_period_end,
+        providerSubscriptionId: item.provider_subscription_id || null, createdAt: item.created_at, updatedAt: item.updated_at
+      })) });
+    }
+
+    const subscriptionRefreshMatch = url.pathname.match(/^\/api\/creator-subscriptions\/([0-9a-f-]+)\/refresh$/i);
+    if (req.method === 'GET' && subscriptionRefreshMatch) {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const id = subscriptionRefreshMatch[1];
+      if (!uuid(id)) return error(res, 400, 'INVALID_CREATOR_SUBSCRIPTION_ID');
+      const rowResult = await selectAdminRows(config, 'creator_subscriptions', query({
+        select: 'id,subscriber_id,creator_id,state,provider_subscription_id,current_period_end',
+        id: 'eq.' + id, limit: '1'
+      }));
+      if (!rowResult.ok) return badDatabase(res, rowResult, 'CREATOR_SUBSCRIPTION_LOOKUP_FAILED');
+      const row = rowResult.rows[0];
+      if (!row || row.subscriber_id !== session.profile.id) return error(res, 404, 'CREATOR_SUBSCRIPTION_NOT_FOUND');
+      if (!row.provider_subscription_id) return json(res, 202, { ok: true, subscription: { id: row.id, state: row.state, currentPeriodEnd: row.current_period_end } });
+      const provider = await paypal.getBillingSubscription(config.paypal, row.provider_subscription_id);
+      if (!provider.ok) return error(res, provider.status || 503, provider.code || 'PAYPAL_SUBSCRIPTION_LOOKUP_FAILED');
+      const next = provider.nextBillingTime && Number.isFinite(new Date(provider.nextBillingTime).getTime()) ? new Date(provider.nextBillingTime).toISOString() : null;
+      const sync = await adminRpc(config, 'sync_creator_subscription', {
+        p_provider_subscription_id: provider.subscriptionId,
+        p_provider_status: provider.status,
+        p_next_billing_time: next,
+        p_provider_event_id: 'return-sync:' + row.id + ':' + provider.status + ':' + (next || 'unknown')
+      });
+      if (!sync.ok) return badDatabase(res, sync, 'CREATOR_SUBSCRIPTION_RECONCILIATION_FAILED');
+      return json(res, 200, { ok: true, subscription: {
+        id: row.id, state: typeof sync.data === 'string' ? sync.data.replace(/^"|"$/g, '') : provider.status,
+        currentPeriodEnd: next, providerStatus: provider.status
+      }});
+    }
+
+    const subscriptionCancelMatch = url.pathname.match(/^\/api\/creator-subscriptions\/([0-9a-f-]+)\/cancel$/i);
+    if (req.method === 'POST' && subscriptionCancelMatch) {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const id = subscriptionCancelMatch[1];
+      if (!uuid(id)) return error(res, 400, 'INVALID_CREATOR_SUBSCRIPTION_ID');
+      const rowResult = await selectAdminRows(config, 'creator_subscriptions', query({
+        select: 'id,subscriber_id,state,provider_subscription_id,current_period_end',
+        id: 'eq.' + id, limit: '1'
+      }));
+      if (!rowResult.ok) return badDatabase(res, rowResult, 'CREATOR_SUBSCRIPTION_LOOKUP_FAILED');
+      const row = rowResult.rows[0];
+      if (!row || row.subscriber_id !== session.profile.id) return error(res, 404, 'CREATOR_SUBSCRIPTION_NOT_FOUND');
+      if (row.state === 'cancelled' || row.state === 'expired') return json(res, 200, { ok: true, idempotent: true, subscription: { id, state: row.state } });
+      if (row.provider_subscription_id) {
+        const cancelled = await paypal.cancelBillingSubscription(config.paypal, row.provider_subscription_id);
+        if (!cancelled.ok) return error(res, cancelled.status || 503, cancelled.code || 'PAYPAL_SUBSCRIPTION_CANCEL_FAILED', 'The provider did not confirm cancellation; the local status was not changed.');
+      }
+      const newState = row.provider_subscription_id ? await adminRpc(config, 'sync_creator_subscription', {
+        p_provider_subscription_id: row.provider_subscription_id,
+        p_provider_status: 'CANCELLED',
+        p_next_billing_time: row.current_period_end,
+        p_provider_event_id: 'user-cancel:' + row.id
+      }) : await adminRest(config, 'creator_subscriptions', query({ id: 'eq.' + row.id, subscriber_id: 'eq.' + session.profile.id }), 'PATCH', { state: 'cancelled', updated_at: new Date().toISOString() });
+      if (!newState.ok) return error(res, 503, 'CREATOR_SUBSCRIPTION_CANCELLATION_RECONCILIATION_REQUIRED');
+      return json(res, 200, { ok: true, subscription: { id, state: 'cancelled', currentPeriodEnd: row.current_period_end } });
     }
 
     if (req.method === 'GET' && url.pathname === '/api/creator/analytics') {

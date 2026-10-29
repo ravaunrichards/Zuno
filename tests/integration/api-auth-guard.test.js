@@ -90,6 +90,18 @@ test('community creation rejects unauthenticated requests',async()=>{
  const response=await post(await start(),'/api/communities');
  ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
 });
+test('creator tier creation rejects unauthenticated requests',async()=>{
+ const response=await post(await start(),'/api/creator/subscription-tiers');
+ ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
+});
+test('creator subscription creation rejects unauthenticated requests',async()=>{
+ const response=await post(await start(),'/api/creator-subscriptions');
+ ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
+});
+test('creator subscription cancellation rejects unauthenticated requests',async()=>{
+ const response=await post(await start(),'/api/creator-subscriptions/10000000-0000-4000-8000-000000000001/cancel');
+ ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
+});
 test('marketplace listing creation rejects unauthenticated requests',async()=>{
  const response=await post(await start(),'/api/marketplace/listings');
  ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
