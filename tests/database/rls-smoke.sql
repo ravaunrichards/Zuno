@@ -237,7 +237,7 @@ DO $conversation_community_checks$
 DECLARE
   v_creator uuid := '10000000-0000-4000-8000-000000000001';
   v_other uuid := '10000000-0000-4000-8000-000000000002';
-  v_third uuid := '20000000-0000-4000-8000-000000000003';
+  v_third uuid;
   v_direct_one uuid;
   v_direct_two uuid;
   v_group_one uuid;
@@ -250,6 +250,14 @@ BEGIN
   DELETE FROM blocks
   WHERE (blocker_id=v_creator AND blocked_id=v_other)
      OR (blocker_id=v_other AND blocked_id=v_creator);
+
+  -- Auth user IDs and ZUNO profile IDs are intentionally distinct.
+  INSERT INTO auth.users(id,email,raw_user_meta_data)
+  VALUES('30000000-0000-4000-8000-000000000001','zuno_ci_group_member@example.invalid','{"username":"ci_group_member","display_name":"CI Group Member"}'::jsonb)
+  ON CONFLICT(id) DO NOTHING;
+  SELECT id INTO v_third FROM profiles
+  WHERE auth_user_id='30000000-0000-4000-8000-000000000001';
+  IF v_third IS NULL THEN RAISE EXCEPTION 'Auth trigger did not provision group member profile'; END IF;
 
   SELECT public.create_conversation(
     v_creator, array[v_other], false, 'zuno-ci-direct-conversation-0001'
