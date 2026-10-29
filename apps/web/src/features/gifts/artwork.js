@@ -15,7 +15,7 @@ export function giftFamily(gift) {
   if (/luxury/.test(text)) return 'luxury';
   if (/animal/.test(text)) return 'animals';
   if (/music/.test(text)) return 'music';
-  if (/creator/.test(text)) return 'creator';
+  if (/creator/.test(text)) return 'creator_support';
   if (/seasonal/.test(text)) return 'seasonal';
   return 'premium';
 }
@@ -29,7 +29,7 @@ var PALETTES = {
   luxury: ['#ffe28a', '#d6a4ff', '#ff9fca'],
   animals: ['#65e4cb', '#bd9aff', '#ffb66b'],
   music: ['#ff72be', '#72d9ff', '#b4a0ff'],
-  creator: ['#ffbf69', '#ff78b7', '#8f87ff'],
+  creator_support: ['#ffbf69', '#ff78b7', '#8f87ff'],
   seasonal: ['#ffae67', '#75d9ff', '#d6a0ff'],
   premium: ['#bc8cff', '#67e5ff', '#ff86c8']
 };
