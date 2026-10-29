@@ -62,6 +62,26 @@ test('creator analytics endpoint rejects unauthenticated requests',async()=>{
  const response=await get(await start(),'/api/creator/analytics');
  ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
 });
+test('admin overview endpoint rejects unauthenticated requests',async()=>{
+ const response=await get(await start(),'/api/admin/overview');
+ ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
+});
+test('moderation queue endpoint rejects unauthenticated requests',async()=>{
+ const response=await get(await start(),'/api/admin/reports?state=open');
+ ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
+});
+test('moderation resolution endpoint rejects unauthenticated requests',async()=>{
+ const response=await post(await start(),'/api/admin/reports/10000000-0000-4000-8000-000000000001/resolve');
+ ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
+});
+test('admin audit endpoint rejects unauthenticated requests',async()=>{
+ const response=await get(await start(),'/api/admin/audit');
+ ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
+});
+test('admin provider readiness endpoint rejects unauthenticated requests',async()=>{
+ const response=await get(await start(),'/api/admin/integrations');
+ ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
+});
 test('payment endpoint rejects unauthenticated requests',async()=>{
  const response=await post(await start(),'/api/payments/order');
  ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
