@@ -331,7 +331,21 @@ async function loadDataRequests() {
     details.append(el('strong','',name));
     details.append(el('small','',String(item.state||'submitted')+' · '+new Date(item.requestedAt).toLocaleString()));
     if(item.resolutionCode)details.append(el('small','','Resolution: '+item.resolutionCode));
-    if(item.resultAvailable)details.append(el('small','','A result is recorded for this request. A downloadable link is not shown unless the server provides one.'));
+    if(item.resultAvailable&&item.requestType==='export'){
+      const download=el('button','button button-secondary button-small','Download data export');download.type='button';
+      download.addEventListener('click',async()=>{
+        download.disabled=true;
+        try{
+          const result=await requestJson('/api/privacy/data-requests/'+encodeURIComponent(item.id)+'/download');
+          const target=new URL(result.downloadUrl);
+          if(target.protocol!=='https:'||target.username||target.password)throw new Error('The server returned an untrusted download URL.');
+          const link=document.createElement('a');link.href=target.toString();link.rel='noopener noreferrer';link.download='zuno-data-export.json';document.body.append(link);link.click();link.remove();
+          showStatus('profile-settings-status','Data export download started. The signed download URL expires in '+result.expiresInSeconds+' seconds.');
+        }catch(error){showStatus('profile-settings-status',error.message||'Data export download is unavailable.',true);}
+        finally{download.disabled=false;}
+      });
+      details.append(download);
+    }else if(item.resultAvailable)details.append(el('small','','A result is available for this request.'));
     row.append(details);box.append(row);
   });
 }

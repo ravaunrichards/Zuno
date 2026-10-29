@@ -1193,11 +1193,34 @@ const server = http.createServer(async (req, res) => {
       }});
     }
 
+    const privacyDownloadMatch=url.pathname.match(/^\/api\/privacy\/data-requests\/([0-9a-f-]+)\/download$/i);
+    if(req.method==='GET'&&privacyDownloadMatch){
+      const session=await requireSession(req,res);
+      if(!session.ok)return;
+      const requestId=privacyDownloadMatch[1];
+      if(!uuid(requestId))return error(res,400,'INVALID_DATA_REQUEST_ID');
+      const found=await rowsForUser(session,'data_requests',{
+        select:'id,profile_id,request_type,state,result_storage_path,result_expires_at,result_byte_size,result_sha256',
+        id:'eq.'+requestId,profile_id:'eq.'+session.profile.id,limit:'1'
+      });
+      if(!found.ok||!Array.isArray(found.data))return badDatabase(res,found,'PRIVACY_EXPORT_LOOKUP_FAILED');
+      const request=found.data[0];
+      if(!request)return error(res,404,'DATA_REQUEST_NOT_FOUND');
+      if(request.request_type!=='export')return error(res,409,'DATA_REQUEST_NOT_DOWNLOADABLE');
+      if(request.state!=='completed'||!request.result_storage_path)return error(res,409,'DATA_EXPORT_NOT_READY','The export has not been completed. No download is available yet.');
+      if(!request.result_expires_at||new Date(request.result_expires_at).getTime()<=Date.now())return error(res,410,'DATA_EXPORT_EXPIRED','This export link has expired. Submit a new export request.');
+      const expectedPath='privacy-exports/'+session.profile.id+'/'+request.id+'.json';
+      if(request.result_storage_path!==expectedPath)return error(res,404,'DATA_EXPORT_NOT_FOUND');
+      const signed=await storage.createSignedDownloadUrl(config,config.storageBucket,expectedPath,Math.min(600,config.mediaSignedUrlTtlSeconds));
+      if(!signed.ok)return error(res,signed.status||503,signed.code||'DATA_EXPORT_DOWNLOAD_FAILED');
+      return json(res,200,{ok:true,requestId:request.id,downloadUrl:signed.signedUrl,expiresInSeconds:Math.min(600,config.mediaSignedUrlTtlSeconds),resultExpiresAt:request.result_expires_at,byteSize:Number(request.result_byte_size||0),sha256:request.result_sha256});
+    }
+
     if (req.method === 'GET' && url.pathname === '/api/privacy/data-requests') {
       const session = await requireSession(req, res);
       if (!session.ok) return;
       const rows=await rowsForUser(session,'data_requests',{
-        select:'id,request_type,state,requested_at,updated_at,completed_at,result_storage_path,resolution_code,request_reason',
+        select:'id,request_type,state,requested_at,updated_at,completed_at,result_storage_path,result_expires_at,resolution_code,request_reason',
         profile_id:'eq.'+session.profile.id,order:'requested_at.desc',limit:'100'
       });
       if(!rows.ok||!Array.isArray(rows.data))return badDatabase(res,rows,'DATA_REQUESTS_UNAVAILABLE');

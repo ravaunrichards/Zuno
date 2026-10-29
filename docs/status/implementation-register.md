@@ -64,3 +64,8 @@ The manifest contains 103 stable gift IDs. 57 have an audio file with a matching
 - `0026_notification_channel_retry_queue.sql`: retry scheduling/claim metadata, and per-profile timezone handling for quiet hours.
 
 These additions passed the clean PostgreSQL 16 migration and core smoke workflow on the inspected head. Email/push provider delivery and production Supabase policy behavior remain environment-dependent and are not claimed as verified by that workflow.
+
+
+## Privacy export processing update
+
+Migration `0027_privacy_data_export_processing.sql` adds a service-role-only claim/finish lease for export jobs. The worker creates a JSON export of account, social, content, messaging, community, LIVE, wallet, creator, commerce, moderation, consent and notification records in private Supabase Storage. It redacts credential-like fields and signed URL query credentials, paginates database reads, caps each export at 50,000 rows/100 MiB and expires the result after 7 days. The owner can request a short-lived signed download URL from the API. Deletion/correction/restriction requests remain visibly pending review; they are not silently declared complete by the export worker.
