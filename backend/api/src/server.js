@@ -4193,8 +4193,13 @@ async function verifySupabaseAdminCredentials() {
       : adminKey ? 'unknown-format' : 'missing';
   console.info('[auth-config] Supabase admin credential format=' + keyFormat);
   try {
-    // A tiny read-only Admin API request verifies the configured server secret
-    // without creating a test user or exposing user rows or the secret in logs.
+    // First verify the API key at the project gateway using the read-only
+    // PostgREST OpenAPI root. This separates an invalid/wrong-project key from
+    // any issue specific to Auth Admin. Never log the key or response body.
+    const dataApi = await authProviderRequest(config, '/rest/v1/', { bearer: false, timeoutMs: 5000 });
+    console.info('[auth-config] Supabase Data API key check ' + (dataApi.ok ? 'passed' : 'failed') + ' (HTTP ' + dataApi.status + ')');
+
+    // Then verify the Auth Admin endpoint without creating a test user.
     const result = await authProviderRequest(config, '/auth/v1/admin/users?page=1&per_page=1', { timeoutMs: 5000 });
     if (result.ok) {
       console.info('[auth-config] Supabase Auth Admin API credential check passed (HTTP ' + result.status + ')');
