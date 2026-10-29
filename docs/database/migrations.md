@@ -4,8 +4,8 @@ The canonical schema-change history is `database/migrations/NNNN_*.sql`. Apply f
 
 1. Back up data and test recovery before destructive changes.
 2. Never edit an applied migration; add the next migration.
-3. Keep constraints, indexes and RLS policy changes in ordered migration files.
-4. Client roles must not write ledger postings, payment webhook records, payouts or audit records.
+3. Keep constraints, indexes and row-level security policy changes in ordered migration files.
+4. Client roles must not write ledger postings, payment webhook records, payout reconciliation or audit records.
 5. Webhook processing and ledger effects must be idempotent and reconcilable.
 6. Static checks are not proof that SQL executed successfully; run the chain against an actual database.
 
