@@ -171,6 +171,18 @@ const server = http.createServer(async (req, res) => {
         return error(res, 400, 'INVALID_WEBHOOK_PAYLOAD');
       }
       const verified = await paypal.verifyWebhook(config.paypal, req.headers, body).catch(() => ({ ok: false, verified: false, code: 'WEBHOOK_VERIFICATION_UNAVAILABLE' }));
+      if (!(verified.ok && verified.verified)) {
+        const priorAttempts = await selectAdminRows(config, 'provider_webhook_attempts', query({
+          select: 'attempt_number', provider: 'eq.paypal', provider_event_id: 'eq.' + body.id,
+          order: 'attempt_number.desc', limit: '1'
+        }));
+        const attemptNumber = priorAttempts.ok && priorAttempts.rows[0] ? Number(priorAttempts.rows[0].attempt_number) + 1 : 1;
+        await adminRest(config, 'provider_webhook_attempts', new URLSearchParams(), 'POST', {
+          provider: 'paypal', provider_event_id: body.id, attempt_number: attemptNumber,
+          state: 'signature_failed', error_code: verified.code || 'WEBHOOK_SIGNATURE_INVALID'
+        });
+        return error(res, 400, 'WEBHOOK_SIGNATURE_INVALID');
+      }
       const eventRow = {
         provider: 'paypal',
         provider_event_id: body.id,
@@ -191,8 +203,12 @@ const server = http.createServer(async (req, res) => {
           return json(res, 200, { ok: true, duplicate: true, processed: true });
         }
         if (!prior.ok || !prior.rows[0]) return error(res, 503, 'WEBHOOK_EVENT_STORE_FAILED');
-        if (!prior.rows[0].signature_verified && !(verified.ok && verified.verified)) {
-          return error(res, 400, 'WEBHOOK_SIGNATURE_INVALID');
+        if (!prior.rows[0].signature_verified) {
+          const repaired = await adminRest(config, 'payment_webhook_events', query({ id: 'eq.' + prior.rows[0].id }), 'PATCH', {
+            event_type: body.event_type, signature_verified: true, processing_state: 'received',
+            payload: body, last_error_code: null, attempt_count: 0
+          });
+          if (!repaired.ok) return error(res, 503, 'WEBHOOK_EVENT_REPAIR_FAILED');
         }
       }
       const eventLookup = await selectAdminRows(config, 'payment_webhook_events', query({
@@ -940,6 +956,13 @@ const server = http.createServer(async (req, res) => {
         const sameQuote = order.profile_id === session.profile.id && order.package_id === (selectedPackage ? selectedPackage.id : null)
           && Number(order.custom_coins || 0) === Number(customCoins || 0) && Number(order.amount_usd) === amountUSD;
         if (!sameQuote) return error(res, 409, 'IDEMPOTENCY_KEY_REUSED');
+        if (order.state === 'credited') {
+          return json(res, 200, { ok: true, idempotent: true, order: {
+            id: order.id, state: 'credited', amountUSD: Number(order.amount_usd), coins,
+            captureId: order.provider_capture_id || null, ledgerEntryId: order.credited_ledger_entry || null
+          } });
+        }
+        if (!['created','approved'].includes(order.state)) return error(res, 409, 'PAYMENT_ORDER_NOT_OPEN', 'This idempotency key belongs to a payment order that is no longer open.');
         if (order.provider_order_id && order.provider_approval_url) {
           return json(res, 200, { ok: true, idempotent: true, order: {
             id: order.id, state: order.state, amountUSD: Number(order.amount_usd),

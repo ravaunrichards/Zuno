@@ -18,7 +18,7 @@ const USER_TABLES = new Set([
   'recommendation_feedback','search_events'
 ]);
 const ADMIN_TABLES = new Set([
-  'coin_packages',
+  'coin_packages','provider_webhook_attempts',
   'wallet_restrictions','live_rooms','live_participants','profiles','wallet_accounts','ledger_postings',
   'ranking_aggregates','notifications','live_room_events','guest_requests','gift_definitions',
   'media_assets','posts','follows','blocks','recommendation_events','event_outbox',

@@ -6,6 +6,7 @@ import { mountLivePreview } from './src/features/livestreaming/live-preview.js';
 import { mountActions } from './src/features/actions.js';
 import { mountAuth } from './src/features/auth/auth-ui.js';
 import { mountFeed } from './src/features/feed/feed.js';
+import { mountWallet } from './src/features/auth/wallet.js';
 
 mountNavigation();
 mountSearch();
@@ -13,6 +14,7 @@ mountComposer();
 mountActions();
 mountAuth();
 mountFeed();
+mountWallet();
 mountGiftCatalog();
 mountLivePreview();
 

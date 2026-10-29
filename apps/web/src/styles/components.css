@@ -131,3 +131,21 @@
 
 .composer-form input[type="file"]{display:block;width:100%;max-width:100%;margin:0 0 12px;padding:12px;border:1px dashed var(--line-strong);border-radius:12px;background:rgba(255,255,255,.025);color:var(--muted);font-size:10px}
 .composer-form input[type="file"]::file-selector-button{margin-right:10px;padding:7px 10px;border:0;border-radius:8px;background:rgba(154,124,255,.2);color:#e0d7ff;font-size:10px;font-weight:750}
+
+.wallet-balance-panel{display:grid;gap:6px;padding:14px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(145deg,rgba(245,205,120,.08),rgba(255,255,255,.015));margin:14px 0}
+.wallet-balance-panel>span,.wallet-balance-panel>small{font-size:9px;color:var(--muted)}
+.wallet-balance-panel>strong{font-size:23px;letter-spacing:-.03em;color:var(--gold)}
+.wallet-section-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:12px 0}
+.wallet-section-heading h4{margin:0;font-size:12px}
+.recharge-package-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.recharge-package{display:grid;gap:5px;text-align:left;min-width:0;padding:12px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.025);color:var(--text)}
+.recharge-package strong{font-size:11px;line-height:1.45}.recharge-package span{color:var(--gold);font-weight:850;font-size:15px}.recharge-package small{color:var(--muted);font-size:9px}
+.recharge-package:hover:not(:disabled){border-color:rgba(245,205,120,.5);background:rgba(245,205,120,.06)}
+.recharge-package:disabled{opacity:.5;cursor:not-allowed}
+.custom-recharge-form{display:grid;gap:8px;margin-top:15px;padding-top:14px;border-top:1px solid var(--line)}
+.custom-recharge-form label{font-size:10px;font-weight:750}.custom-recharge-row{display:flex;gap:8px;align-items:center}
+.custom-recharge-row input{flex:1;min-width:0;width:50%;padding:10px;border:1px solid var(--line-strong);border-radius:9px;background:#11111b;color:var(--text)}
+.custom-recharge-form small,.wallet-inline-status{font-size:9px;line-height:1.6;color:var(--muted)}
+.wallet-message{margin-top:12px;padding:11px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.02);font-size:10px;line-height:1.6;color:var(--muted)}
+.wallet-message.is-error{border-color:rgba(255,120,150,.4);color:#ff9bb0}
+.wallet-recent{margin-top:8px;font-size:9px;line-height:1.6;color:var(--muted);overflow-wrap:anywhere}
