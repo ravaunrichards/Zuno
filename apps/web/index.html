@@ -274,7 +274,7 @@
     <div class="messaging-layout">
       <aside class="messaging-sidebar">
         <div class="messaging-sidebar-heading"><h3>Your conversations</h3><button class="button button-secondary button-small" id="messaging-refresh" type="button">Refresh</button></div>
-        <form id="conversation-create-form" class="conversation-create-form"><label for="conversation-recipient">Start chat — recipient profile ID</label><input id="conversation-recipient" autocomplete="off" inputmode="text" placeholder="Profile UUID from search" required><button class="button button-primary button-small" type="submit">Start direct chat</button><small>Find creators by search, then use their profile ID to start a conversation. IDs are validated by the server.</small></form>
+        <form id="conversation-create-form" class="conversation-create-form"><label for="conversation-recipient">Start chat — recipient username</label><input id="conversation-recipient" autocomplete="off" inputmode="text" placeholder="@unique_username" required><button class="button button-primary button-small" type="submit">Start direct chat</button><small>Use the recipient’s unique ZUNO username. The server resolves the profile and enforces block and membership rules.</small></form>
         <div id="incoming-call-list" class="incoming-call-list"></div>
         <div id="conversation-list" class="conversation-list" aria-label="Conversation list"><p class="message-empty">Sign in to load conversations.</p></div>
       </aside>

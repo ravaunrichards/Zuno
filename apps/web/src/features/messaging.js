@@ -27,7 +27,7 @@ function renderConversation(c){
 }
 function renderConversations(){
  const list=id('conversation-list');if(!list)return;list.replaceChildren();
- if(!conversations.length){list.append(el('p','message-empty','No conversations yet. Start one using a profile ID, or use Message from a creator search result.'));return;}
+ if(!conversations.length){list.append(el('p','message-empty','No conversations yet. Start a direct chat by unique username, or open Message from a creator profile.'));return;}
  conversations.forEach(c=>list.append(renderConversation(c)));
 }
 async function loadConversations(){
@@ -111,14 +111,15 @@ async function deleteMessage(message){
 }
 async function createConversation(event){
  event.preventDefault();if(!requireAuth())return;
- const input=id('conversation-recipient');const profileId=input?.value.trim()||'';
- if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(profileId)){setStatus('Enter a valid recipient profile UUID. Search results can open a chat directly.',true);return;}
- if(profileId===myProfileId){setStatus('You cannot start a direct conversation with yourself.',true);return;}
+ const input=id('conversation-recipient');const username=input?.value.trim().replace(/^@/,'').toLowerCase()||'';
+ if(!/^[a-z0-9_.]{3,30}$/.test(username)){setStatus('Enter the recipient’s unique ZUNO username (3–30 letters, numbers, periods or underscores).',true);return;}
  try{
-  const result=await requestJson('/api/conversations',{method:'POST',headers:{'Idempotency-Key':uuid()||String(Date.now())+'-'+Math.random().toString(16).slice(2)},body:{memberProfileIds:[profileId],isGroup:false}});
+  const key=uuid();
+  if(!key){setStatus('Secure request IDs require a current browser context.',true);return;}
+  const result=await requestJson('/api/conversations',{method:'POST',headers:{'Idempotency-Key':key},body:{recipientUsername:username,isGroup:false}});
   input.value='';await loadConversations();const c=conversations.find(item=>item.id===result.conversation.id);
   if(c)await selectConversation(c);else setStatus('Conversation created. Refresh the inbox to load it.');
- }catch(error){setStatus(error.message||'Conversation could not be created.',true);}
+ }catch(error){setStatus(error.code==='CONVERSATION_RECIPIENT_NOT_FOUND'?'No ZUNO member uses that username.':(error.message||'Conversation could not be created.'),true);}
 }
 function cleanLiveRoom(){
  const stage=id('messaging-call-stage');if(stage)stage.hidden=true;

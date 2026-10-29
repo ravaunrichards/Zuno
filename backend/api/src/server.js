@@ -3038,9 +3038,21 @@ const server = http.createServer(async (req, res) => {
       const session = await requireSession(req, res);
       if (!session.ok) return;
       const body = await readBody(req);
-      const memberIds = Array.isArray(body.memberProfileIds) ? body.memberProfileIds : [];
-      if (memberIds.length > 249 || memberIds.some((value) => !uuid(value))) return error(res, 400, 'INVALID_CONVERSATION_MEMBERS');
+      let memberIds = Array.isArray(body.memberProfileIds) ? body.memberProfileIds : [];
       const isGroup = body.isGroup === true;
+      const recipientUsername = typeof body.recipientUsername === 'string' ? body.recipientUsername.trim().toLowerCase() : '';
+      if (recipientUsername && memberIds.length) return error(res, 400, 'CHOOSE_ONE_RECIPIENT_FORMAT');
+      if (recipientUsername) {
+        if (isGroup) return error(res, 400, 'USERNAME_RECIPIENT_IS_DIRECT_ONLY');
+        if (!/^[a-z0-9_.]{3,30}$/.test(recipientUsername)) return error(res, 400, 'INVALID_CONVERSATION_RECIPIENT_USERNAME');
+        const found = await selectAdminRows(config, 'profiles', query({
+          select: 'id,username', username: 'eq.' + recipientUsername, limit: '1'
+        }));
+        if (!found.ok) return error(res, 503, 'CONVERSATION_RECIPIENT_LOOKUP_FAILED');
+        if (!found.rows[0]) return error(res, 404, 'CONVERSATION_RECIPIENT_NOT_FOUND', 'No ZUNO account was found with that username.');
+        memberIds = [found.rows[0].id];
+      }
+      if (memberIds.length > 249 || memberIds.some((value) => !uuid(value))) return error(res, 400, 'INVALID_CONVERSATION_MEMBERS');
       if (!isGroup && memberIds.length !== 1) return error(res, 400, 'DIRECT_CONVERSATION_REQUIRES_ONE_OTHER_MEMBER');
       if (isGroup && memberIds.length < 1) return error(res, 400, 'GROUP_REQUIRES_MEMBERS');
       const rawKey = String(req.headers['idempotency-key'] || body.idempotencyKey || '');
