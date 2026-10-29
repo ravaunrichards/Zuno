@@ -181,4 +181,55 @@ BEGIN
 END
 $economy_checks$;
 
-SELECT 'ZUNO PostgreSQL migration + RLS + gift/payment/refund smoke checks passed' AS verification;
+
+-- Moderator actions are single-transaction, role-gated and audit logged.
+DO $moderation_checks$
+DECLARE
+  v_moderator uuid := '10000000-0000-4000-8000-000000000001';
+  v_report_review uuid := '60000000-0000-4000-8000-000000000001';
+  v_report_remove uuid := '60000000-0000-4000-8000-000000000002';
+  v_state text;
+  v_action uuid;
+  v_overview record;
+BEGIN
+  INSERT INTO roles(profile_id,role) VALUES(v_moderator,'moderator') ON CONFLICT DO NOTHING;
+  INSERT INTO reports(id,reporter_id,target_type,target_id,reason,state)
+    VALUES(v_report_review,'10000000-0000-4000-8000-000000000002','post','30000000-0000-4000-8000-000000000001','Synthetic review workflow test','open')
+    ON CONFLICT(id) DO NOTHING;
+  SELECT new_state,moderation_action_id INTO v_state,v_action
+    FROM public.resolve_moderation_report(v_report_review,v_moderator,'mark_reviewing','ci_review','Synthetic review note');
+  IF v_state<>'reviewing' OR v_action IS NULL THEN
+    RAISE EXCEPTION 'Moderator review decision did not return the persisted transition';
+  END IF;
+  IF NOT EXISTS(SELECT 1 FROM reports WHERE id=v_report_review AND state='reviewing' AND resolution_code='ci_review') THEN
+    RAISE EXCEPTION 'Report state or resolution reason was not persisted';
+  END IF;
+  IF NOT EXISTS(SELECT 1 FROM moderation_actions WHERE id=v_action AND report_id=v_report_review AND moderator_id=v_moderator AND action='mark_reviewing') THEN
+    RAISE EXCEPTION 'Moderation action audit row was not persisted';
+  END IF;
+  SELECT new_state INTO v_state
+    FROM public.resolve_moderation_report(v_report_review,v_moderator,'dismiss','ci_dismiss','Synthetic final decision');
+  IF v_state<>'dismissed' OR NOT EXISTS(SELECT 1 FROM reports WHERE id=v_report_review AND state='dismissed' AND resolved_at IS NOT NULL) THEN
+    RAISE EXCEPTION 'Dismiss action did not resolve report';
+  END IF;
+
+  INSERT INTO reports(id,reporter_id,target_type,target_id,reason,state)
+    VALUES(v_report_remove,'10000000-0000-4000-8000-000000000002','post','30000000-0000-4000-8000-000000000002','Synthetic removal workflow test','open')
+    ON CONFLICT(id) DO NOTHING;
+  SELECT new_state INTO v_state
+    FROM public.resolve_moderation_report(v_report_remove,v_moderator,'remove_content','ci_remove','Synthetic removal action');
+  IF v_state<>'actioned' OR NOT EXISTS(SELECT 1 FROM posts WHERE id='30000000-0000-4000-8000-000000000002' AND deleted_at IS NOT NULL) THEN
+    RAISE EXCEPTION 'Post removal decision did not soft-delete target and action report';
+  END IF;
+  IF NOT EXISTS(SELECT 1 FROM audit_events WHERE actor_id=v_moderator AND action='moderation.report.remove_content' AND detail->>'reportId'=v_report_remove::text) THEN
+    RAISE EXCEPTION 'Removal was not written to the append-only audit trail';
+  END IF;
+
+  SELECT * INTO v_overview FROM public.get_admin_overview();
+  IF v_overview.profile_count<2 OR v_overview.post_count<1 THEN
+    RAISE EXCEPTION 'Protected admin overview returned inconsistent fixture counts';
+  END IF;
+END
+$moderation_checks$;
+
+SELECT 'ZUNO PostgreSQL migration + RLS + economy + moderation smoke checks passed' AS verification;
