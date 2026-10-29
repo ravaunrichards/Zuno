@@ -16,6 +16,7 @@ const paypal = require('../../../integrations/paypal');
 const { Ledger } = require('../../../packages/shared/src/ledger');
 const { sendGift } = require('../../../packages/gift-engine/src/delivery');
 const { getPackage } = require('../../../packages/payments/src/coins');
+const { loadGifts } = require('../../../packages/gift-engine/src/catalog');
 
 const config = load();
 const envCheck = validateRequired(config);
@@ -43,6 +44,30 @@ function readBody(req, limit = 1_000_000) {
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://localhost:${config.apiPort}`);
   try {
+    if (req.method === 'GET' && url.pathname === '/api/catalog/gifts') {
+      const gifts = loadGifts();
+      const category = url.searchParams.get('category');
+      const filtered = category ? gifts.filter((gift) => String(gift.category || '').toLowerCase().includes(category.toLowerCase())) : gifts;
+      return json(res, 200, { ok: true, count: filtered.length, gifts: filtered });
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api/meta/readiness') {
+      return json(res, 200, {
+        ok: true,
+        integrations: {
+          supabase: config.configured.supabase ? 'configured' : 'not_configured',
+          livekit: config.configured.livekit ? 'configured' : 'not_configured',
+          paypal: config.configured.paypal ? 'configured' : 'not_configured'
+        },
+        featureFlags: {
+          productionPayments: config.features.productionPayments,
+          payouts: config.features.payouts,
+          liveRecording: config.features.liveRecording
+        },
+        note: 'Configured means required environment values exist; it does not prove provider authentication or production readiness.'
+      });
+    }
+
     if (req.method === 'GET' && url.pathname === '/health') {
       return json(res, 200, { status: 'ok', configured: config.configured, ts: new Date().toISOString() });
     }
@@ -84,6 +109,6 @@ const server = http.createServer(async (req, res) => {
 });
 
 if (require.main === module) {
-  server.listen(config.apiPort, '127.0.0.1', () => console.log(`ZUNO API on 127.0.0.1:${config.apiPort}`));
+  server.listen(config.apiPort, '0.0.0.0', () => console.log(`ZUNO API on 127.0.0.1:${config.apiPort}`));
 }
 module.exports = { server, config };

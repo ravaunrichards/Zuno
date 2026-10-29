@@ -1,21 +1,16 @@
 # Security and financial integrity
 
-## Z Coins and ledger
-
-Z Coins are a platform-specific stored unit, not cash. The database ledger is authoritative. Client-visible balances are derived views; the client cannot supply the amount to credit, alter ledger postings or decide payout eligibility.
+## Z Coins
+The server-side ledger is authoritative. A client cannot supply an amount to credit, modify ledger postings or determine payout eligibility.
 
 ## PayPal lifecycle
+A payment flow needs server-side order creation, verified provider capture, signed webhook verification, durable event idempotency, atomic coin credit, reconciliation and auditable refund/reversal handling. A browser return or successful order creation is not enough to credit coins.
 
-A real payment lifecycle needs an order created server-side, an approved provider capture, verified signed webhook delivery, durable event idempotency, atomic coin credit, reconciliation and auditable refund/reversal handling. An order being created or a browser returning from checkout is not enough to credit coins.
-
-## Creator earnings and payouts
-
-Creator/platform shares are determined from a versioned server-side policy. A 50/50 starting split requires a defined policy version and a clear basis for fees, refunds and reversals. Payouts remain disabled until provider access, recipient eligibility, legal/business requirements and verified webhook state are configured.
+## Creator earnings
+A versioned policy defines the initial creator/platform split, treatment of provider fees, refunds and reversals. Keep payout initiation disabled until provider access, recipient eligibility, legal/business requirements and verified webhook state are in place.
 
 ## LiveKit
-
-Room tokens are server-issued with the smallest required permissions and short expiry. A production route must authenticate the caller, verify room membership/host permissions and enforce the room capacity before minting credentials. Do not expose LiveKit API secrets or allow callers to choose privileged claims.
+Room tokens are server-issued with short expiry and least-privilege permissions. Authenticate callers, verify host/viewer/guest permissions, enforce capacity and verify signed webhooks before changing persistent room state.
 
 ## Data access
-
-Enable row-level security for exposed tables, explicitly scope policies to the current profile, and keep financial, moderation and audit operations server-managed. Test cross-user access denial as well as successful owner access. Logs must not include passwords, access tokens, service keys or full payment credentials.
+Use row-level security on exposed tables and server-only writes for financial, moderation and audit operations. Logs must not contain passwords, provider secrets, tokens or full payment credentials.
