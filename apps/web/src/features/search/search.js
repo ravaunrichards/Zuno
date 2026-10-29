@@ -106,6 +106,10 @@ export function mountSearch() {
                     showPanel(error.message || 'Follow request failed.', true);
                   }
                 }),
+                resultButton('Message', () => {
+                  results.hidden = true;
+                  window.dispatchEvent(new CustomEvent('zuno:profile-message', { detail: { profileId: item.id, username: item.username, displayName: item.displayName } }));
+                }),
                 resultButton('View memberships', () => {
                   results.hidden = true;
                   window.dispatchEvent(new CustomEvent('zuno:view-creator-tiers', { detail: {

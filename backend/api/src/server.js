@@ -2210,6 +2210,77 @@ const server = http.createServer(async (req, res) => {
       return json(res, 201, { ok: true, communityId, role: joined.data[0].role, idempotent: false });
     }
 
+    const communityChannelsMatch=url.pathname.match(/^\/api\/communities\/([0-9a-f-]+)\/channels$/i);
+    if(communityChannelsMatch&&(req.method==='GET'||req.method==='POST')){
+      const session=await requireSession(req,res);if(!session.ok)return;
+      const communityId=communityChannelsMatch[1];if(!uuid(communityId))return error(res,400,'INVALID_COMMUNITY_ID');
+      if(req.method==='GET'){
+        const channels=await rowsForUser(session,'community_channels',{
+          select:'id,community_id,slug,name,description,channel_type,created_by,created_at',
+          community_id:'eq.'+communityId,order:'created_at.asc',limit:'100'
+        });
+        if(!channels.ok||!Array.isArray(channels.data))return badDatabase(res,channels,'COMMUNITY_CHANNELS_UNAVAILABLE');
+        return json(res,200,{ok:true,channels:channels.data.map(ch=>({
+          id:ch.id,communityId:ch.community_id,slug:ch.slug,name:ch.name,
+          description:ch.description||'',channelType:ch.channel_type,createdBy:ch.created_by,createdAt:ch.created_at
+        }))});
+      }
+      const body=await readBody(req);
+      const name=typeof body.name==='string'?body.name.trim():'';
+      const channelType=['chat','announcement','media','voice','event'].includes(body.channelType)?body.channelType:'chat';
+      if(name.length<2||name.length>80)return error(res,400,'INVALID_CHANNEL_NAME');
+      const communityRow=await rowsForUser(session,'communities',{select:'id,owner_id',id:'eq.'+communityId,limit:'1'});
+      if(!communityRow.ok)return badDatabase(res,communityRow,'COMMUNITY_LOOKUP_FAILED');
+      if(!communityRow.data[0])return error(res,404,'COMMUNITY_NOT_FOUND');
+      const memberships=await rowsForUser(session,'community_members',{select:'role',community_id:'eq.'+communityId,profile_id:'eq.'+session.profile.id,limit:'1'});
+      if(!memberships.ok)return badDatabase(res,memberships,'COMMUNITY_MEMBERSHIP_LOOKUP_FAILED');
+      const role=memberships.data[0]?.role||null;
+      if(communityRow.data[0].owner_id!==session.profile.id&&!['owner','moderator'].includes(role))return error(res,403,'COMMUNITY_CHANNEL_MANAGER_REQUIRED');
+      const slugInput=typeof body.slug==='string'?body.slug:name;
+      const slug=slugInput.toLowerCase().trim().replace(/[^a-z0-9_-]+/g,'-').replace(/^-+|-+$/g,'').slice(0,80);
+      if(!/^[a-z0-9_-]{1,80}$/.test(slug))return error(res,400,'INVALID_CHANNEL_SLUG');
+      const created=await rowsForUser(session,'community_channels',{select:'id,community_id,slug,name,description,channel_type,created_by,created_at'},{
+        method:'POST',body:{community_id:communityId,slug,name,description:typeof body.description==='string'?body.description.trim().slice(0,500):null,channel_type:channelType,created_by:session.profile.id}
+      });
+      if(!created.ok||!Array.isArray(created.data)||!created.data[0])return badDatabase(res,created,'COMMUNITY_CHANNEL_CREATE_FAILED');
+      const ch=created.data[0];
+      return json(res,201,{ok:true,channel:{id:ch.id,communityId:ch.community_id,slug:ch.slug,name:ch.name,description:ch.description||'',channelType:ch.channel_type,createdBy:ch.created_by,createdAt:ch.created_at}});
+    }
+
+    const communityChannelPostsMatch=url.pathname.match(/^\/api\/communities\/([0-9a-f-]+)\/channels\/([0-9a-f-]+)\/posts$/i);
+    if(communityChannelPostsMatch&&(req.method==='GET'||req.method==='POST')){
+      const session=await requireSession(req,res);if(!session.ok)return;
+      const communityId=communityChannelPostsMatch[1],channelId=communityChannelPostsMatch[2];
+      if(!uuid(communityId)||!uuid(channelId))return error(res,400,'INVALID_COMMUNITY_CHANNEL_ID');
+      const channel=await rowsForUser(session,'community_channels',{select:'id,community_id,name,channel_type',id:'eq.'+channelId,community_id:'eq.'+communityId,limit:'1'});
+      if(!channel.ok)return badDatabase(res,channel,'COMMUNITY_CHANNEL_LOOKUP_FAILED');
+      if(!channel.data[0])return error(res,404,'COMMUNITY_CHANNEL_NOT_FOUND');
+      if(req.method==='POST'){
+        const body=await readBody(req);const text=typeof body.body==='string'?body.body.trim():'';
+        if(text.length<1||text.length>4000)return error(res,400,'INVALID_COMMUNITY_POST');
+        const created=await rowsForUser(session,'community_posts',{select:'id,community_id,channel_id,author_id,body,attachments,pinned_at,created_at'},{
+          method:'POST',body:{community_id:communityId,channel_id:channelId,author_id:session.profile.id,body:text,attachments:[]}
+        });
+        if(!created.ok||!Array.isArray(created.data)||!created.data[0])return badDatabase(res,created,'COMMUNITY_CHANNEL_POST_CREATE_FAILED');
+        const post=created.data[0];
+        return json(res,201,{ok:true,post:{id:post.id,communityId,channelId,authorId:session.profile.id,body:post.body,attachments:post.attachments||[],createdAt:post.created_at}});
+      }
+      const posts=await rowsForUser(session,'community_posts',{
+        select:'id,community_id,channel_id,author_id,body,attachments,pinned_at,created_at',
+        community_id:'eq.'+communityId,channel_id:'eq.'+channelId,deleted_at:'is.null',
+        order:'created_at.desc',limit:String(asSafeInt(url.searchParams.get('limit'),30,1,100))
+      });
+      if(!posts.ok||!Array.isArray(posts.data))return badDatabase(res,posts,'COMMUNITY_CHANNEL_POSTS_UNAVAILABLE');
+      const authorIds=[...new Set(posts.data.map(post=>post.author_id).filter(uuid))];
+      const authors=authorIds.length?await rowsForUser(session,'profiles',{select:'id,username,display_name,avatar_url,is_verified',id:profileIdIn(authorIds)}):{ok:true,data:[]};
+      if(!authors.ok)return badDatabase(res,authors,'COMMUNITY_POST_AUTHORS_UNAVAILABLE');
+      const authorMap=new Map((authors.data||[]).map(profile=>[profile.id,profile]));
+      return json(res,200,{ok:true,channel:{id:channelId,name:channel.data[0].name,channelType:channel.data[0].channel_type},posts:posts.data.reverse().map(post=>({
+        id:post.id,communityId,channelId,author:profileProjection(authorMap.get(post.author_id)),
+        body:post.body||'',attachments:Array.isArray(post.attachments)?post.attachments:[],pinnedAt:post.pinned_at||null,createdAt:post.created_at
+      }))});
+    }
+
     const communityPostsMatch = url.pathname.match(/^\/api\/communities\/([0-9a-f-]+)\/posts$/i);
     if (communityPostsMatch && req.method === 'GET') {
       const session = await requireSession(req, res);
