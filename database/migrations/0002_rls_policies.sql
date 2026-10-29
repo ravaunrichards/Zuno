@@ -25,13 +25,29 @@ language sql stable security definer set search_path = public, pg_temp as $$
   select exists (select 1 from public.roles r where r.profile_id = public.current_profile_id() and r.role in ('moderator','admin','support'))
 $$;
 create or replace function can_view_post(p_post_id uuid) returns boolean
-language sql stable security definer set search_path = public, pg_temp as $$
-  select exists (select 1 from public.posts p where p.id = p_post_id and p.deleted_at is null and
-    (p.audience = 'public' or p.author_id = public.current_profile_id() or
-    (p.audience = 'followers' and exists (select 1 from public.follows f where f.follower_id = public.current_profile_id() and f.followee_id = p.author_id)))
-    and not exists (select 1 from public.blocks b where
-      (b.blocker_id = public.current_profile_id() and b.blocked_id = (select p2.author_id from public.posts p2 where p2.id=p_post_id)) or
-      (b.blocked_id = public.current_profile_id() and b.blocker_id = (select p3.author_id from public.posts p3 where p3.id=p_post_id)))
+language sql stable security definer set search_path=public,pg_temp as $$
+ select exists (
+   select 1 from public.posts p
+   join public.profiles author_profile on author_profile.id=p.author_id
+   where p.id=p_post_id and p.deleted_at is null
+     and (
+       p.author_id=public.current_profile_id()
+       or author_profile.visibility='public'
+       or (author_profile.visibility='restricted' and exists(
+         select 1 from public.follows f where f.follower_id=public.current_profile_id() and f.followee_id=p.author_id
+       ))
+     )
+     and (
+       p.audience='public'
+       or p.author_id=public.current_profile_id()
+       or (p.audience='followers' and exists(
+         select 1 from public.follows f where f.follower_id=public.current_profile_id() and f.followee_id=p.author_id
+       ))
+     )
+     and not exists(select 1 from public.blocks b where
+       (b.blocker_id=public.current_profile_id() and b.blocked_id=p.author_id)
+       or (b.blocked_id=public.current_profile_id() and b.blocker_id=p.author_id))
+ )
 $$;
 -- profiles --------------------------------------------------------------
 alter table profiles enable row level security;
@@ -73,8 +89,9 @@ create policy messages_insert on messages for insert
 -- notifications: owner only --------------------------------------------
 alter table notifications enable row level security;
 drop policy if exists notifications_owner on notifications;
-create policy notifications_owner on notifications for all
-  using (profile_id = current_profile_id()) with check (profile_id = current_profile_id());
+drop policy if exists notifications_owner on notifications;
+create policy notifications_select_owner on notifications for select using (profile_id=current_profile_id());
+create policy notifications_update_owner on notifications for update using (profile_id=current_profile_id()) with check (profile_id=current_profile_id());
 
 -- wallet/ledger: NO client access. Only service role (which bypasses RLS)
 -- may read/write. Enabling RLS with no permissive policy denies all anon/user access.
@@ -123,7 +140,7 @@ alter table audit_events enable row level security;
 
 create policy roles_owner_read on roles for select using (profile_id = current_profile_id());
 create policy follows_participant_read on follows for select using (follower_id = current_profile_id() or followee_id = current_profile_id());
-create policy follows_self_insert on follows for insert with check (follower_id = current_profile_id() and follower_id <> followee_id);
+create policy follows_self_insert on follows for insert with check (follower_id = current_profile_id() and follower_id <> followee_id and not exists (select 1 from blocks b where (b.blocker_id=follower_id and b.blocked_id=followee_id) or (b.blocker_id=followee_id and b.blocked_id=follower_id)));
 create policy follows_self_delete on follows for delete using (follower_id = current_profile_id());
 create policy blocks_owner_read on blocks for select using (blocker_id = current_profile_id());
 create policy blocks_owner_insert on blocks for insert with check (blocker_id = current_profile_id() and blocker_id <> blocked_id);

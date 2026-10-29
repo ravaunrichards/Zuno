@@ -5,7 +5,7 @@ const DB=path.join(__dirname,'..','database');
 const migrationDir=path.join(DB,'migrations');
 const problems=[];
 const migrations=fs.existsSync(migrationDir)?fs.readdirSync(migrationDir).filter((name)=>/^\d{4}_[a-z0-9_-]+\.sql$/i.test(name)).sort():[];
-const expected=['0001_core_schema.sql','0002_rls_policies.sql','0003_economy_functions.sql','0004_content_and_discovery.sql','0005_messaging_communities_and_calls.sql','0006_livestreaming_interactions.sql','0007_payments_gifts_and_creator_economy.sql','0008_commerce_ads_and_privacy.sql','0009_operational_jobs_and_delivery.sql','0010_close_friends_gifter_progression_and_earnings.sql'];
+const expected=['0001_core_schema.sql','0002_rls_policies.sql','0003_economy_functions.sql','0004_content_and_discovery.sql','0005_messaging_communities_and_calls.sql','0006_livestreaming_interactions.sql','0007_payments_gifts_and_creator_economy.sql','0008_commerce_ads_and_privacy.sql','0009_operational_jobs_and_delivery.sql','0010_close_friends_gifter_progression_and_earnings.sql','0011_auth_profile_privileges_and_block_guards.sql'];
 for(const name of expected)if(!migrations.includes(name))problems.push('missing migration '+name);
 const sqlFiles=migrations.map((name)=>path.join(migrationDir,name));
 const seedsDir=path.join(DB,'seeds');
