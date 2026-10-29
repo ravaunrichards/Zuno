@@ -139,11 +139,70 @@
   </form>
   <div class="wallet-message" id="wallet-status" role="status" aria-live="polite">Sign in to view your wallet. Provider checkout status will be verified when connected.</div>
   <div class="wallet-recent" id="wallet-order-status" aria-live="polite"></div>
-</article><article class="utility-card" id="notifications"><div class="utility-icon utility-icon-pink">♧</div><span class="section-kicker">YOUR UPDATES</span><h3>Stay in the loop.</h3><p>Notifications, privacy settings and account updates should be scoped to the signed-in account.</p><span class="honest-status"><span class="status-dot"></span><span>Sign-in flow required</span></span></article><article class="utility-card" id="profile"><div class="utility-icon utility-icon-violet">○</div><span class="section-kicker">YOUR IDENTITY</span><h3>Your profile, your rules.</h3><p>Personalise your page, manage visibility and control follows, blocks, restrictions and account data.</p><button class="button button-secondary button-small" type="button" data-action="profile-info">Profile readiness</button><span class="honest-status"><span class="status-dot"></span><span>Authentication required</span></span></article></section>
+</article><article class="utility-card" id="notifications"><div class="utility-icon utility-icon-pink">♧</div><span class="section-kicker">YOUR UPDATES</span><h3>Stay in the loop.</h3><p>Notifications, privacy settings and account updates should be scoped to the signed-in account.</p><span class="honest-status"><span class="status-dot"></span><span>Sign-in flow required</span></span></article><article class="utility-card" id="profile"><div class="utility-icon utility-icon-violet">○</div><span class="section-kicker">YOUR IDENTITY</span><h3>Your profile, your rules.</h3><p>Personalise your page, manage visibility and control follows, blocks, restrictions and account data.</p><button class="button button-secondary button-small" type="button" data-action="profile-info">Edit profile &amp; privacy</button><span class="honest-status"><span class="status-dot"></span><span>Authentication required</span></span></article></section>
       <footer class="site-footer"><a class="brand brand-footer" href="#home"><span class="brand-mark">Z</span><span>ZUNO<span class="brand-period">.</span></span></a><p>A world of connection, creation and entertainment.</p><div class="footer-links"><a href="#discover">Discover</a><a href="#live">LIVE</a><a href="#creator">Creators</a><a href="#gifts">Gifts</a></div><small>Concept UI and bundled catalogue. Provider-connected data is identified only when it is actually returned by the backend.</small></footer>
     </main>
   </div>
   <nav class="mobile-nav" aria-label="Mobile navigation"><a class="is-active" href="#home" data-nav="home"><span>⌂</span><small>Home</small></a><a href="#discover" data-nav="discover"><span>⌕</span><small>Discover</small></a><button type="button" data-action="compose" aria-label="Create"><span>＋</span><small>Create</small></button><a href="#live" data-nav="live"><span>◉</span><small>LIVE</small></a><a href="#messages" data-nav="messages"><span>▤</span><small>Inbox</small></a><a href="#profile" data-nav="profile"><span>○</span><small>Profile</small></a></nav>
+  <dialog class="app-dialog profile-settings-dialog" id="profile-settings-dialog" aria-labelledby="profile-settings-title">
+    <div class="settings-dialog-header"><div><span class="section-kicker">ACCOUNT CONTROL CENTRE</span><h2 id="profile-settings-title">Your profile. Your rules.</h2><p>Profile edits, privacy choices and safety controls are saved to your ZUNO account.</p></div><button type="button" class="icon-button" data-close-profile-settings aria-label="Close profile settings">×</button></div>
+    <div class="settings-section">
+      <div class="settings-section-heading"><h3>Profile details</h3><span>Visible according to your privacy setting</span></div>
+      <form id="profile-settings-form" class="settings-form">
+        <label for="settings-display-name">Display name</label><input id="settings-display-name" name="displayName" maxlength="80" required>
+        <label for="settings-bio">Bio</label><textarea id="settings-bio" name="bio" rows="3" maxlength="1000" placeholder="Tell people a little about yourself."></textarea>
+        <label for="settings-visibility">Profile visibility</label><select id="settings-visibility" name="visibility"><option value="public">Public</option><option value="private">Private</option><option value="restricted">Restricted to followers</option></select>
+        <div class="settings-actions"><button class="button button-primary button-small" type="submit" id="profile-settings-save">Save profile</button><span id="profile-settings-status" class="settings-inline-status" role="status"></span></div>
+      </form>
+    </div>
+    <div class="settings-section">
+      <div class="settings-section-heading"><h3>Notification preferences</h3><span>Save delivery choices and quiet hours</span></div>
+      <form id="notification-settings-form" class="settings-form">
+        <div class="settings-check-grid">
+          <label><input type="checkbox" data-notification-flag="push"> Push alerts</label>
+          <label><input type="checkbox" data-notification-flag="email"> Email alerts</label>
+          <label><input type="checkbox" data-notification-flag="messages"> Messages</label>
+          <label><input type="checkbox" data-notification-flag="live"> LIVE activity</label>
+          <label><input type="checkbox" data-notification-flag="creator"> Creator updates</label>
+          <label><input type="checkbox" data-notification-flag="communities"> Communities</label>
+          <label><input type="checkbox" data-notification-flag="events"> Events</label>
+          <label><input type="checkbox" data-notification-flag="marketing"> Marketing</label>
+        </div>
+        <div class="settings-time-grid"><label for="settings-quiet-start">Quiet hours start<input id="settings-quiet-start" type="time"></label><label for="settings-quiet-end">Quiet hours end<input id="settings-quiet-end" type="time"></label></div>
+        <div class="settings-actions"><button class="button button-secondary button-small" type="submit" id="notification-settings-save">Save notifications</button><span id="notification-settings-status" class="settings-inline-status" role="status"></span></div>
+      </form>
+    </div>
+    <div class="settings-section">
+      <div class="settings-section-heading"><h3>Privacy consent history</h3><span>Record grants, denials or withdrawals</span></div>
+      <p class="settings-help">Choices are appended to your consent history with the current policy version. A saved preference does not claim that a third-party analytics or advertising provider is connected.</p>
+      <div id="privacy-consent-list" class="privacy-consent-list"><p class="settings-inline-status">Load consent history after signing in.</p></div>
+      <div id="privacy-consent-status" class="settings-inline-status" role="status"></div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-section-heading"><h3>Block, mute and restrict</h3><span>Manage who can interact with you</span></div>
+      <form id="relationship-settings-form" class="settings-form">
+        <label for="relationship-profile-id">Target ZUNO profile ID</label><input id="relationship-profile-id" name="profileId" autocomplete="off" placeholder="Profile UUID" required>
+        <label for="relationship-kind">Safety action</label><select id="relationship-kind" name="kind"><option value="blocks">Block</option><option value="mutes">Mute</option><option value="restrictions">Restrict</option></select>
+        <label for="relationship-reason">Optional reason code (for restrictions)</label><input id="relationship-reason" name="reasonCode" maxlength="80" pattern="[A-Za-z0-9_.:-]{2,80}" placeholder="e.g. unwanted_contact">
+        <div class="settings-actions"><button class="button button-primary button-small" id="relationship-add" type="submit">Apply action</button><span id="relationship-settings-status" class="settings-inline-status" role="status"></span></div>
+      </form>
+      <div class="relationship-lists">
+        <section><h4>Blocked</h4><div id="relationship-list-blocks" class="relationship-list"></div></section>
+        <section><h4>Muted</h4><div id="relationship-list-mutes" class="relationship-list"></div></section>
+        <section><h4>Restricted</h4><div id="relationship-list-restrictions" class="relationship-list"></div></section>
+      </div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-section-heading"><h3>Data rights requests</h3><span>Export, correction, restriction or deletion request</span></div>
+      <p class="settings-help">Submitting a deletion request does not delete your account instantly. Your request is recorded for the verified privacy workflow; the state shown below comes from the server.</p>
+      <form id="data-request-form" class="settings-form">
+        <label for="data-request-type">Request type</label><select id="data-request-type" name="requestType"><option value="export">Export my data</option><option value="correction">Correct my data</option><option value="restriction">Restrict processing</option><option value="deletion">Request account deletion</option></select>
+        <label for="data-request-reason">Details (optional)</label><textarea id="data-request-reason" name="reason" rows="2" maxlength="2000" placeholder="Describe what you are requesting."></textarea>
+        <div class="settings-actions"><button class="button button-secondary button-small" type="submit" id="data-request-submit">Submit request</button><span id="data-request-status" class="settings-inline-status" role="status"></span></div>
+      </form>
+      <div id="data-request-history" class="data-request-history"><p class="settings-inline-status">Your privacy request history will appear here.</p></div>
+    </div>
+  </dialog>
   <dialog class="app-dialog live-room-dialog" id="live-room-dialog" aria-labelledby="live-active-title">
     <div class="live-dialog-header"><div><span class="section-kicker">ZUNO LIVE</span><h2 id="live-active-title">Live room</h2><p id="live-room-subtitle">Connecting to the room…</p></div><button type="button" class="icon-button" id="live-room-close" aria-label="Leave LIVE room">×</button></div>
     <div id="live-room-status" class="live-room-status" role="status" aria-live="polite">Connecting to LiveKit…</div>

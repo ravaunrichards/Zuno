@@ -42,6 +42,26 @@ test('block, mute and restrict mutations reject unauthenticated access',async()=
   ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
  }
 });
+test('profile settings endpoint rejects unauthenticated reads and updates',async()=>{
+ const read=await get(await start(),'/api/profile/me');
+ ok(read.status===401);ok(read.body.code==='AUTH_REQUIRED');
+ const update=await post(await start(),'/api/profile/me');
+ ok(update.status===401);ok(update.body.code==='AUTH_REQUIRED');
+});
+test('privacy consent and data-rights endpoints reject unauthenticated access',async()=>{
+ const port=await start();
+ const consent=await post(port,'/api/privacy/consents');
+ ok(consent.status===401);ok(consent.body.code==='AUTH_REQUIRED');
+ const requests=await get(port,'/api/privacy/data-requests');
+ ok(requests.status===401);ok(requests.body.code==='AUTH_REQUIRED');
+});
+test('notification preference endpoints reject unauthenticated access',async()=>{
+ const port=await start();
+ const read=await get(port,'/api/notifications/preferences');
+ ok(read.status===401);ok(read.body.code==='AUTH_REQUIRED');
+ const update=await post(port,'/api/notifications/preferences');
+ ok(update.status===401);ok(update.body.code==='AUTH_REQUIRED');
+});
 test('LIVE token endpoint rejects unauthenticated requests',async()=>{
  const response=await post(await start(),'/api/livekit/token');
  ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');

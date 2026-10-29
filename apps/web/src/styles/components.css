@@ -371,3 +371,42 @@
 .community-channel-create-form .button{grid-column:1/-1;justify-self:start}
 .community-post-form[hidden]{display:none!important}
 @media(max-width:520px){.community-channel-create-form{grid-template-columns:1fr}.community-channel-create-form .button{grid-column:auto}}
+
+.profile-settings-dialog{width:min(850px,calc(100% - 20px));max-width:850px;max-height:min(93vh,1050px);overflow:auto;background:#11111b;color:var(--text)}
+.settings-dialog-header{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;margin-bottom:10px}
+.settings-dialog-header h2{font-size:22px;margin:4px 0 6px;letter-spacing:-.03em}
+.settings-dialog-header p,.settings-help{font-size:10px;line-height:1.7;color:var(--muted);max-width:650px}
+.settings-section{padding:17px 0;border-top:1px solid var(--line)}
+.settings-section-heading{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:12px}
+.settings-section-heading h3{font-size:13px;margin:0}
+.settings-section-heading>span{font-size:9px;color:var(--muted);text-align:right}
+.settings-form{display:grid;gap:8px}
+.settings-form>label{font-size:10px;font-weight:750;color:#d4cee7;margin-top:3px}
+.settings-form input:not([type="checkbox"]),.settings-form textarea,.settings-form select,.privacy-consent-control select{min-width:0;width:100%;padding:10px 11px;border:1px solid var(--line-strong);border-radius:10px;background:#0e0e17;color:var(--text);font-size:10px}
+.settings-form input:focus,.settings-form textarea:focus,.settings-form select:focus,.privacy-consent-control select:focus{outline:2px solid rgba(154,124,255,.35);outline-offset:1px}
+.settings-form textarea{resize:vertical}
+.settings-actions{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-top:5px}
+.settings-inline-status{font-size:9px;line-height:1.65;color:var(--muted);overflow-wrap:anywhere}
+.settings-inline-status.is-error{color:#ff9db2}
+.settings-check-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.settings-check-grid label{display:flex;align-items:center;gap:7px;padding:8px;border:1px solid var(--line);border-radius:9px;font-size:9px;color:#d3cde5}
+.settings-check-grid input{accent-color:var(--violet);margin:0;flex-shrink:0}
+.settings-time-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px}
+.settings-time-grid label{display:grid;gap:6px;font-size:9px;color:var(--muted)}
+.privacy-consent-list{display:grid;gap:7px}
+.privacy-consent-row,.relationship-row,.data-request-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;border:1px solid var(--line);border-radius:11px;background:rgba(255,255,255,.02)}
+.privacy-consent-copy,.relationship-row-copy,.data-request-row-copy{display:grid;gap:4px;min-width:0}
+.privacy-consent-copy strong,.relationship-row-copy strong,.data-request-row-copy strong{font-size:10px}
+.privacy-consent-copy small,.relationship-row-copy small,.data-request-row-copy small{font-size:8px;color:var(--muted);overflow-wrap:anywhere}
+.privacy-consent-control{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.privacy-consent-control select{width:auto;max-width:115px;padding:8px}
+.relationship-lists{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:16px}
+.relationship-lists section{min-width:0}
+.relationship-lists h4{font-size:10px;margin:0 0 7px}
+.relationship-list{display:grid;gap:6px}
+.relationship-row{align-items:flex-start;padding:8px}
+.relationship-row-copy{overflow-wrap:anywhere}
+.relationship-row .button{flex-shrink:0}
+.data-request-history{display:grid;gap:7px;margin-top:12px}
+.data-request-row{align-items:flex-start}
+@media(max-width:650px){.profile-settings-dialog{padding:12px}.settings-section-heading{display:block}.settings-section-heading>span{display:block;text-align:left;margin-top:4px}.settings-check-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.relationship-lists{grid-template-columns:1fr}.privacy-consent-row{align-items:flex-start;flex-direction:column}.privacy-consent-control{width:100%}.privacy-consent-control select{flex:1}.settings-dialog-header h2{font-size:18px}.settings-time-grid{grid-template-columns:1fr}}
