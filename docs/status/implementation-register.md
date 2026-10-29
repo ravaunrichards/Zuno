@@ -80,3 +80,8 @@ Migration `0028_privacy_deletion_processing.sql` adds a service-role-only deleti
 
 
 Privacy deletion now also removes call-participant/session records, blocks direct Supabase profile reads/updates after deletion begins, and cleans up an uploaded export object if deletion wins a race with export finalization.
+
+
+## Search indexing update
+
+Migration `0029_search_index_and_indexing_queue.sql` adds a GIN-backed PostgreSQL full-text index for public profiles, posts, communities and events. Source changes enqueue indexing/deindexing jobs transactionally; the worker claims jobs with leases/retries, and query results are re-read through the authenticated RLS API before serialization. The query RPC excludes deleted and mutually blocked profiles. The index starts with queued backfill entries, so initial search coverage fills as the worker drains the queue.

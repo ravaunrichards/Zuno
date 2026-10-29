@@ -1387,63 +1387,80 @@ const server = http.createServer(async (req, res) => {
       const type = String(url.searchParams.get('type') || 'all');
       if (term.length < 2 || term.length > 80 || !/^[\p{L}\p{N}\p{Zs}._@'-]{2,80}$/u.test(term)) return error(res, 400, 'INVALID_SEARCH_QUERY');
       if (!['all','profiles','posts','communities','events'].includes(type)) return error(res, 400, 'INVALID_SEARCH_TYPE');
+
+      const indexed = await adminRpc(config, 'search_public_documents', {
+        p_query: term, p_type: type, p_viewer_id: session.profile.id, p_limit: 50, p_offset: 0
+      });
+      const indexedRows = indexed.ok && Array.isArray(indexed.data) ? indexed.data : [];
+      const ranked = (kind) => indexedRows.filter(row => row.entity_type === kind).map(row => row.entity_id).filter(uuid);
       const pattern = 'ilike.*' + term.replace(/[.*]/g, '') + '*';
-      const jobs = [];
-      if (type === 'all' || type === 'profiles') jobs.push(['profiles', rowsForUser(session, 'profiles', {
-        select: 'id,username,display_name,avatar_url,is_verified,visibility',
-        or: '(username.' + pattern + ',display_name.' + pattern + ')',
-        limit: '10'
+      const fallbackJobs = [];
+      if (type === 'all' || type === 'profiles') fallbackJobs.push(['profiles', rowsForUser(session, 'profiles', {
+        select:'id,username,display_name,avatar_url,is_verified,visibility',or:'(username.'+pattern+',display_name.'+pattern+')',limit:'10'
       })]);
-      if (type === 'all' || type === 'posts') jobs.push(['posts', rowsForUser(session, 'posts', {
-        select: 'id,author_id,kind,caption,audience,created_at',
-        caption: pattern, deleted_at: 'is.null', order: 'created_at.desc', limit: '10'
+      if (type === 'all' || type === 'posts') fallbackJobs.push(['posts', rowsForUser(session, 'posts', {
+        select:'id,author_id,kind,caption,audience,created_at',caption:pattern,deleted_at:'is.null',order:'created_at.desc',limit:'10'
       })]);
-      if (type === 'all' || type === 'communities') jobs.push(['communities', rowsForUser(session, 'communities', {
-        select: 'id,owner_id,name,access,created_at', name: pattern, limit: '10'
+      if (type === 'all' || type === 'communities') fallbackJobs.push(['communities', rowsForUser(session, 'communities', {
+        select:'id,owner_id,name,access,created_at',name:pattern,limit:'10'
       })]);
-      if (type === 'all' || type === 'events') jobs.push(['events', rowsForUser(session, 'events', {
-        select: 'id,host_id,title,description,starts_at,ends_at,tz,created_at',
-        title: pattern, order: 'starts_at.asc', limit: '10'
+      if (type === 'all' || type === 'events') fallbackJobs.push(['events', rowsForUser(session, 'events', {
+        select:'id,host_id,title,description,starts_at,ends_at,tz,created_at',title:pattern,order:'starts_at.asc',limit:'10'
       })]);
-      const settled = await Promise.all(jobs.map(async ([name, promise]) => [name, await promise]));
-      const failures = settled.filter(([, result]) => !result.ok || !Array.isArray(result.data)).map(([name]) => name);
-      if (failures.length === settled.length) return error(res, 503, 'SEARCH_UNAVAILABLE');
-      const data = Object.fromEntries(settled.map(([name, result]) => [name, {
-        ok: Boolean(result.ok && Array.isArray(result.data)),
-        rows: result.ok && Array.isArray(result.data) ? result.data : []
-      }]));
-      const profileIds = [...new Set([
-        ...(data.posts?.rows || []).map(row => row.author_id),
-        ...(data.communities?.rows || []).map(row => row.owner_id),
-        ...(data.events?.rows || []).map(row => row.host_id)
+      const fallbacks=await Promise.all(fallbackJobs.map(async ([name,promise])=>[name,await promise]));
+      const failNames=fallbacks.filter(([,result])=>!result.ok||!Array.isArray(result.data)).map(([name])=>name);
+      const fallbackData=Object.fromEntries(fallbacks.map(([name,result])=>[name,result.ok&&Array.isArray(result.data)?result.data:[]]));
+
+      async function loadOrdered(table,select,ids,fallbackRows) {
+        const validIds=[...new Set(ids.filter(uuid))].slice(0,50);
+        let indexedSource=[];
+        if(validIds.length) {
+          const rows=await rowsForUser(session,table,{select,id:'in.('+validIds.join(',')+')',limit:String(validIds.length)});
+          if(rows.ok&&Array.isArray(rows.data)) {
+            const map=new Map(rows.data.map(row=>[row.id,row]));
+            indexedSource=validIds.map(id=>map.get(id)).filter(Boolean);
+          }
+        }
+        const seen=new Set(indexedSource.map(row=>row.id));
+        return indexedSource.concat((fallbackRows||[]).filter(row=>!seen.has(row.id)));
+      }
+      const [profileRows,postRows,communityRows,eventRows]=await Promise.all([
+        (type==='all'||type==='profiles')?loadOrdered('profiles','id,username,display_name,avatar_url,is_verified,visibility',ranked('profile'),fallbackData.profiles):[],
+        (type==='all'||type==='posts')?loadOrdered('posts','id,author_id,kind,caption,audience,created_at',ranked('post'),fallbackData.posts):[],
+        (type==='all'||type==='communities')?loadOrdered('communities','id,owner_id,name,access,created_at',ranked('community'),fallbackData.communities):[],
+        (type==='all'||type==='events')?loadOrdered('events','id,host_id,title,description,starts_at,ends_at,tz,created_at',ranked('event'),fallbackData.events):[]
+      ]);
+      const profileIds=[...new Set([
+        ...postRows.map(row=>row.author_id),
+        ...communityRows.map(row=>row.owner_id),
+        ...eventRows.map(row=>row.host_id)
       ].filter(uuid))];
-      const authors = profileIds.length ? await rowsForUser(session, 'profiles', {
-        select: 'id,username,display_name,avatar_url,is_verified', id: profileIdIn(profileIds)
-      }) : { ok: true, data: [] };
-      const authorById = new Map((authors.data || []).map(profile => [profile.id, profile]));
-      return json(res, 200, {
-        ok: true, query: term, partial: failures.length > 0, unavailableTypes: failures,
-        results: {
-          profiles: (data.profiles?.rows || []).map(profile => ({
-            id: profile.id, username: profile.username, displayName: profile.display_name || profile.username,
-            avatarUrl: profile.avatar_url || null, isVerified: Boolean(profile.is_verified)
+      const authors=profileIds.length?await rowsForUser(session,'profiles',{
+        select:'id,username,display_name,avatar_url,is_verified',id:profileIdIn(profileIds)
+      }):{ok:true,data:[]};
+      const byId=new Map((authors.data||[]).map(profile=>[profile.id,profile]));
+      return json(res,200,{
+        ok:true,query:term,indexed:Boolean(indexed.ok&&Array.isArray(indexed.data)),
+        partial:failNames.length>0,unavailableTypes:failNames,
+        results:{
+          profiles:profileRows.slice(0,10).map(profile=>({
+            id:profile.id,username:profile.username,displayName:profile.display_name||profile.username,
+            avatarUrl:profile.avatar_url||null,isVerified:Boolean(profile.is_verified)
           })),
-          posts: (data.posts?.rows || []).map(post => ({
-            id: post.id, kind: post.kind, caption: post.caption || '', audience: post.audience,
-            createdAt: post.created_at, author: profileProjection(authorById.get(post.author_id))
+          posts:postRows.slice(0,10).map(post=>({
+            id:post.id,kind:post.kind,caption:post.caption||'',audience:post.audience,createdAt:post.created_at,
+            author:profileProjection(byId.get(post.author_id))
           })),
-          communities: (data.communities?.rows || []).map(item => ({
-            id: item.id, name: item.name, access: item.access, owner: profileProjection(authorById.get(item.owner_id))
+          communities:communityRows.slice(0,10).map(item=>({
+            id:item.id,name:item.name,access:item.access,owner:profileProjection(byId.get(item.owner_id))
           })),
-          events: (data.events?.rows || []).map(item => ({
-            id: item.id, title: item.title, description: item.description || '',
-            startsAt: item.starts_at, endsAt: item.ends_at, timezone: item.tz,
-            host: profileProjection(authorById.get(item.host_id))
+          events:eventRows.slice(0,10).map(item=>({
+            id:item.id,title:item.title,description:item.description||'',startsAt:item.starts_at,endsAt:item.ends_at,
+            timezone:item.tz,host:profileProjection(byId.get(item.host_id))
           }))
         }
       });
     }
-
 
     if (req.method === 'GET' && url.pathname === '/api/stories') {
       const session = await requireSession(req, res);
