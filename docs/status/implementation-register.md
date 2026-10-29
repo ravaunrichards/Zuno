@@ -44,3 +44,8 @@ Record each test as **passed**, **failed**, **blocked**, or **not run** with its
 ## Feed contract update
 
 The API now accepts `offset` and `limit` for feed pagination. Following feeds use PostgREST range pagination under the current session's RLS. The deterministic For You baseline ranks the first 300 accessible candidates and pages the ranked results; this is an explicit bounded baseline rather than a claim of infinite-scale recommendation serving.
+
+
+## Gift audio inventory — 2026-10-29
+
+The manifest contains 103 stable gift IDs. 57 have an audio file with a matching SHA-256 checksum. The remaining 46 entries are marked `unresolved` with an explicit reason and no audio path; they are not represented by generic substitute sounds. A gift can be called audio-complete only when its authored effect exists, is mapped to the correct ID, and validates against the manifest.

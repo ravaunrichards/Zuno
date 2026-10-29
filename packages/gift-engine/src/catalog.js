@@ -45,7 +45,7 @@ function validateGeometry(repoRoot, gift, manifestEntry, errors) {
   }
 }
 function validateAudio(repoRoot, gift, manifestEntry, errors) {
-  if (!['resolved','not_required','unresolved'].includes(gift.audioStatus)) {
+  if (!['resolved','unresolved'].includes(gift.audioStatus)) {
     errors.push('invalid audio status for ' + gift.id);
     return;
   }
@@ -59,6 +59,8 @@ function validateAudio(repoRoot, gift, manifestEntry, errors) {
     const actual = checksum(audioPath);
     if (manifestEntry.audioChecksum !== actual) errors.push('audio checksum mismatch for ' + gift.id);
   } else {
+    if (typeof gift.audioReason !== 'string' || gift.audioReason.trim().length < 20) errors.push('unresolved audio lacks a specific reason for ' + gift.id);
+    if (manifestEntry.audioReason !== gift.audioReason) errors.push('manifest audio reason mismatch for ' + gift.id);
     if (gift.audioPath !== null && gift.audioPath !== undefined) errors.push('non-resolved audio has an asset path for ' + gift.id);
     if (manifestEntry.audioPath !== null && manifestEntry.audioPath !== undefined) errors.push('manifest contains audio path for non-resolved gift ' + gift.id);
     if (manifestEntry.audioChecksum !== null && manifestEntry.audioChecksum !== undefined) errors.push('manifest contains audio checksum for non-resolved gift ' + gift.id);
@@ -76,6 +78,7 @@ function validateCatalog(repoRoot) {
     else manifestById.set(entry.giftId, entry);
   }
   if (manifest.count !== gifts.length) errors.push('manifest count does not equal catalogue length');
+  if (gifts.some(g => g.audioStatus === 'not_required')) errors.push('every gift must have a resolved sound or a documented unresolved sound');
   if (manifestEntries.length !== gifts.length) errors.push('manifest entries do not equal catalogue length');
 
   for (const gift of gifts) {
