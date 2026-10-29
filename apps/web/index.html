@@ -315,10 +315,10 @@
     <form method="dialog" class="dialog-top"><div><span class="section-kicker">YOUR ZUNO ACCOUNT</span><h2 id="auth-title">Welcome back.</h2></div><button class="icon-button" value="cancel" aria-label="Close">×</button></form>
     <div class="auth-mode-tabs" role="group" aria-label="Authentication mode"><button type="button" class="auth-mode is-active" data-auth-mode="signin">Sign in</button><button type="button" class="auth-mode" data-auth-mode="signup">Create account</button></div>
     <form id="auth-form" class="composer-form">
-      <label for="auth-email">Email address</label><input id="auth-email" name="email" type="email" autocomplete="email" maxlength="254" required>
+      <div id="auth-email-field"><label for="auth-email">Email address</label><input id="auth-email" name="email" type="email" autocomplete="email" maxlength="254" required></div>
       <div id="auth-signup-fields" hidden><label for="auth-username">Username</label><input id="auth-username" name="username" type="text" minlength="3" maxlength="30" pattern="[A-Za-z0-9_.]{3,30}" autocomplete="username"><label for="auth-display-name">Display name</label><input id="auth-display-name" name="displayName" type="text" maxlength="80" autocomplete="name"></div>
-      <label for="auth-password">Password</label><input id="auth-password" name="password" type="password" minlength="8" autocomplete="current-password" required>
-      <p class="fine-print">Supabase verifies your credentials. ZUNO does not store your password.</p>
+      <div id="auth-password-field"><label for="auth-password">Password</label><input id="auth-password" name="password" type="password" minlength="8" autocomplete="current-password" required></div><div id="auth-recovery-fields" hidden><label for="auth-confirm-password">Confirm new password</label><input id="auth-confirm-password" name="confirmPassword" type="password" minlength="8" autocomplete="new-password"></div>
+      <p class="fine-print">Supabase verifies your credentials. ZUNO does not store your password.</p><div class="auth-extra-actions" id="auth-extra-actions"><button class="button button-secondary button-small" type="button" id="auth-forgot-password">Forgot password?</button><button class="button button-secondary button-small" type="button" id="auth-resend-confirmation" hidden>Resend confirmation email</button></div>
       <div id="auth-status" class="form-status" role="status"></div>
       <div class="dialog-actions"><button class="button button-secondary" type="button" data-action="cancel-auth">Cancel</button><button class="button button-primary" type="submit" id="auth-submit">Sign in</button></div>
     </form>
