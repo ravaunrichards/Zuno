@@ -1304,11 +1304,127 @@ const server = http.createServer(async (req, res) => {
       if (!session.ok) return;
       const body = await readBody(req);
       const name = typeof body.name === 'string' ? body.name.trim() : '';
-      const access = ['public','private','invite'].includes(body.access) ? body.access : 'public';
+      const access = ['public','private','invite'].includes(body.access) ? body.access : null;
       if (name.length < 2 || name.length > 120) return error(res, 400, 'INVALID_COMMUNITY_NAME');
-      const result = await rowsForUser(session, 'communities', { select: 'id,owner_id,name,access,created_at' }, { method: 'POST', body: { owner_id: session.profile.id, name, access } });
-      if (!result.ok || !Array.isArray(result.data) || !result.data[0]) return badDatabase(res, result, 'COMMUNITY_CREATE_FAILED');
-      return json(res, 201, { ok: true, community: result.data[0] });
+      if (!access) return error(res, 400, 'INVALID_COMMUNITY_ACCESS');
+      const rawKey = String(req.headers['idempotency-key'] || body.idempotencyKey || '');
+      if (!/^[A-Za-z0-9._:-]{16,180}$/.test(rawKey)) return error(res, 400, 'IDEMPOTENCY_KEY_REQUIRED');
+      const communityId = randomUUID();
+      const created = await adminRpc(config, 'create_community_with_owner', {
+        p_community_id: communityId,
+        p_owner_profile_id: session.profile.id,
+        p_name: name,
+        p_access: access,
+        p_idempotency_key: rawKey
+      });
+      if (!created.ok) return badDatabase(res, created, 'COMMUNITY_CREATE_FAILED');
+      const returnedId = typeof created.data === 'string' ? created.data.replace(/^"|"$/g, '') :
+        Array.isArray(created.data) ? created.data[0] : created.data && created.data.create_community_with_owner;
+      if (!uuid(String(returnedId || ''))) return error(res, 503, 'COMMUNITY_CREATE_RESULT_INVALID');
+      const found = await rowsForUser(session, 'communities', { select: 'id,owner_id,name,access,created_at', id: 'eq.' + returnedId, limit: '1' });
+      if (!found.ok || !Array.isArray(found.data) || !found.data[0]) return error(res, 503, 'COMMUNITY_CREATE_READBACK_FAILED');
+      return json(res, 201, { ok: true, community: found.data[0] });
+    }
+
+    const communityJoinMatch = url.pathname.match(/^\/api\/communities\/([0-9a-f-]+)\/join$/i);
+    if (req.method === 'POST' && communityJoinMatch) {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const communityId = communityJoinMatch[1];
+      if (!uuid(communityId)) return error(res, 400, 'INVALID_COMMUNITY_ID');
+      const existing = await rowsForUser(session, 'community_members', {
+        select: 'community_id,profile_id,role', community_id: 'eq.' + communityId,
+        profile_id: 'eq.' + session.profile.id, limit: '1'
+      });
+      if (!existing.ok) return badDatabase(res, existing, 'COMMUNITY_MEMBERSHIP_LOOKUP_FAILED');
+      if (existing.data.length) return json(res, 200, { ok: true, communityId, role: existing.data[0].role, idempotent: true });
+      const joined = await rowsForUser(session, 'community_members', { select: 'community_id,profile_id,role' }, {
+        method: 'POST', body: { community_id: communityId, profile_id: session.profile.id, role: 'member' }
+      });
+      if (!joined.ok || !Array.isArray(joined.data) || !joined.data[0]) return badDatabase(res, joined, 'COMMUNITY_JOIN_FAILED');
+      return json(res, 201, { ok: true, communityId, role: joined.data[0].role, idempotent: false });
+    }
+
+    const communityPostsMatch = url.pathname.match(/^\/api\/communities\/([0-9a-f-]+)\/posts$/i);
+    if (communityPostsMatch && req.method === 'GET') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const communityId = communityPostsMatch[1];
+      if (!uuid(communityId)) return error(res, 400, 'INVALID_COMMUNITY_ID');
+      const posts = await rowsForUser(session, 'community_posts', {
+        select: 'id,community_id,channel_id,author_id,body,attachments,pinned_at,created_at',
+        community_id: 'eq.' + communityId, deleted_at: 'is.null', order: 'created_at.desc',
+        limit: String(asSafeInt(url.searchParams.get('limit'), 30, 1, 100))
+      });
+      if (!posts.ok || !Array.isArray(posts.data)) return badDatabase(res, posts, 'COMMUNITY_POSTS_UNAVAILABLE');
+      const authorsIds = [...new Set(posts.data.map((post) => post.author_id).filter(uuid))];
+      const authors = authorsIds.length ? await rowsForUser(session, 'profiles', {
+        select: 'id,username,display_name,avatar_url,is_verified', id: profileIdIn(authorsIds)
+      }) : { ok: true, data: [] };
+      const byId = new Map((authors.data || []).map((profile) => [profile.id, profile]));
+      return json(res, 200, { ok: true, posts: posts.data.map((post) => ({
+        id: post.id, communityId: post.community_id, channelId: post.channel_id,
+        author: profileProjection(byId.get(post.author_id)), body: post.body || '',
+        attachments: Array.isArray(post.attachments) ? post.attachments : [],
+        pinnedAt: post.pinned_at || null, createdAt: post.created_at
+      })) });
+    }
+    if (communityPostsMatch && req.method === 'POST') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const communityId = communityPostsMatch[1];
+      if (!uuid(communityId)) return error(res, 400, 'INVALID_COMMUNITY_ID');
+      const body = await readBody(req);
+      const text = typeof body.body === 'string' ? body.body.trim() : '';
+      if (text.length < 1 || text.length > 4000) return error(res, 400, 'INVALID_COMMUNITY_POST');
+      const created = await rowsForUser(session, 'community_posts', {
+        select: 'id,community_id,channel_id,author_id,body,attachments,pinned_at,created_at'
+      }, { method: 'POST', body: {
+        community_id: communityId, channel_id: null, author_id: session.profile.id, body: text, attachments: []
+      }});
+      if (!created.ok || !Array.isArray(created.data) || !created.data[0]) return badDatabase(res, created, 'COMMUNITY_POST_CREATE_FAILED');
+      return json(res, 201, { ok: true, post: {
+        id: created.data[0].id, communityId, authorId: session.profile.id,
+        body: created.data[0].body, attachments: [], createdAt: created.data[0].created_at
+      }});
+    }
+
+    const eventRsvpMatch = url.pathname.match(/^\/api\/events\/([0-9a-f-]+)\/rsvp$/i);
+    if (eventRsvpMatch && (req.method === 'GET' || req.method === 'POST')) {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const eventId = eventRsvpMatch[1];
+      if (!uuid(eventId)) return error(res, 400, 'INVALID_EVENT_ID');
+      const lookup = await rowsForUser(session, 'community_event_rsvps', {
+        select: 'event_id,profile_id,response,created_at,updated_at',
+        event_id: 'eq.' + eventId, profile_id: 'eq.' + session.profile.id, limit: '1'
+      });
+      if (!lookup.ok || !Array.isArray(lookup.data)) return badDatabase(res, lookup, 'EVENT_RSVP_LOOKUP_FAILED');
+      if (req.method === 'GET') return json(res, 200, {
+        ok: true, rsvp: lookup.data[0] ? {
+          eventId, response: lookup.data[0].response,
+          createdAt: lookup.data[0].created_at, updatedAt: lookup.data[0].updated_at
+        } : null
+      });
+      const body = await readBody(req);
+      const responseValue = ['going','interested','not_going'].includes(body.response) ? body.response : null;
+      if (!responseValue) return error(res, 400, 'INVALID_RSVP_RESPONSE');
+      let saved;
+      if (lookup.data[0]) {
+        saved = await rowsForUser(session, 'community_event_rsvps', {
+          select: 'event_id,profile_id,response,created_at,updated_at',
+          event_id: 'eq.' + eventId, profile_id: 'eq.' + session.profile.id
+        }, { method: 'PATCH', body: { response: responseValue, updated_at: new Date().toISOString() } });
+      } else {
+        saved = await rowsForUser(session, 'community_event_rsvps', {
+          select: 'event_id,profile_id,response,created_at,updated_at'
+        }, { method: 'POST', body: { event_id: eventId, profile_id: session.profile.id, response: responseValue } });
+      }
+      if (!saved.ok || !Array.isArray(saved.data) || !saved.data[0]) return badDatabase(res, saved, 'EVENT_RSVP_SAVE_FAILED');
+      return json(res, lookup.data[0] ? 200 : 201, { ok: true, rsvp: {
+        eventId, response: saved.data[0].response,
+        createdAt: saved.data[0].created_at, updatedAt: saved.data[0].updated_at
+      }});
     }
 
     if (req.method === 'GET' && url.pathname === '/api/events') {
@@ -1333,6 +1449,30 @@ const server = http.createServer(async (req, res) => {
       });
       if (!result.ok || !Array.isArray(result.data) || !result.data[0]) return badDatabase(res, result, 'EVENT_CREATE_FAILED');
       return json(res, 201, { ok: true, event: result.data[0] });
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/conversations') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const body = await readBody(req);
+      const memberIds = Array.isArray(body.memberProfileIds) ? body.memberProfileIds : [];
+      if (memberIds.length > 249 || memberIds.some((value) => !uuid(value))) return error(res, 400, 'INVALID_CONVERSATION_MEMBERS');
+      const isGroup = body.isGroup === true;
+      if (!isGroup && memberIds.length !== 1) return error(res, 400, 'DIRECT_CONVERSATION_REQUIRES_ONE_OTHER_MEMBER');
+      if (isGroup && memberIds.length < 1) return error(res, 400, 'GROUP_REQUIRES_MEMBERS');
+      const rawKey = String(req.headers['idempotency-key'] || body.idempotencyKey || '');
+      if (!/^[A-Za-z0-9._:-]{16,180}$/.test(rawKey)) return error(res, 400, 'IDEMPOTENCY_KEY_REQUIRED');
+      const created = await adminRpc(config, 'create_conversation', {
+        p_creator_profile_id: session.profile.id,
+        p_member_profile_ids: [...new Set([...memberIds, session.profile.id])],
+        p_is_group: isGroup,
+        p_idempotency_key: rawKey
+      });
+      if (!created.ok) return badDatabase(res, created, 'CONVERSATION_CREATE_FAILED');
+      const conversationId = typeof created.data === 'string' ? created.data.replace(/^"|"$/g, '') :
+        Array.isArray(created.data) ? created.data[0] : created.data && created.data.create_conversation;
+      if (!uuid(String(conversationId || ''))) return error(res, 503, 'CONVERSATION_CREATE_RESULT_INVALID');
+      return json(res, 201, { ok: true, conversation: { id: conversationId, isGroup, createdBy: session.profile.id } });
     }
 
     if (req.method === 'GET' && url.pathname === '/api/conversations') {
