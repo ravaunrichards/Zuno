@@ -12,19 +12,19 @@ This file differentiates committed code from production-verified capability. A s
 - LiveKit token authorization using verified identity, room ownership/participant membership and server-derived publishing capability.
 - Authenticated gift delivery and PayPal order, capture and refund routes use database transaction functions and idempotency keys. PayPal webhook signatures are verified before an event is allowed to update payment state; provider uncertainty stays pending rather than being called paid. Production payment switching remains gated.
 - Full-refund reservation and finalization SQL tracks coin debit/release; verified external reversals can create wallet restrictions pending reconciliation.
-- Versioned SQL migrations `0001`–`0017` cover core schema/policies, content/discovery, messaging/calls, communities/events, LIVE interactions, creator economy/payment metadata, commerce/ads/privacy, operational jobs, media processing, transactional coin/gift/payment/refund functions, LIVE lifecycle, creator analytics and moderation/admin overview.
-- Static migration, asset, web, platform-entrypoint and CI checks. Latest recorded CI at `41ee1320e7a4734670493485ae0576f52836e678`: 77 tests passed; 10/10 web checks passed; PostgreSQL 16 clean database applied migrations `0001`–`0017`, then passed RLS, gift/capture/refund ledger and moderation/audit smoke checks. Android build, security and accessibility/bundle-budget workflows passed on that head.
+- Versioned SQL migrations `0001`–`0026` cover core schema/policies, content/discovery, messaging/calls, communities/events, LIVE interactions, creator economy/payments, commerce/ads/privacy, operational jobs, media processing, atomic gift/capture/refund functions, LIVE lifecycle, creator analytics, moderation/admin overview, message/call lifecycle, atomic social relationship controls, feed interaction idempotency, notification outbox/push subscriptions and retryable delivery with profile timezones.
+- Static migration, asset, web, platform-entrypoint and CI checks. Latest inspected CI on `92bc0412a7595dc984dc600c7f2d3cf3a9659be1` (2026-10-29): 117 automated tests passed; 10/10 web checks passed; the PostgreSQL 16 clean-database workflow applied all 26 migrations and passed RLS, economy, moderation, messaging, community and call smoke checks. Security and accessibility/bundle-budget workflows passed on that head. Android was in progress and iOS queued at the time of this inspection; later platform status is linked from the Actions page.
 
 ## Not yet production-verified
 
 - Applying the migration chain to a real disposable PostgreSQL/Supabase project and running its actual Storage/Auth policies remain unverified. CI does pass the migration chain and RLS/economy/moderation smoke tests on disposable PostgreSQL 16.
 - Full Supabase signup/provisioning, storage upload policies, profile settings, deletion/export processing and privacy workflows.
-- LiveKit room lifecycle APIs, server-side signed webhook receiver and web UI are implemented, but deployed-provider webhook reconciliation and concurrent guest capacity must still be tested against a LiveKit sandbox.
+- LiveKit room lifecycle APIs, signed webhook receiver and web UI are in the repository. Clean-source CI covers the adapter’s missing/forged signature cases, but deployed-provider webhook reconciliation, real audio/video tracks and concurrent guest capacity still require a LiveKit sandbox test.
 - Transactional gift delivery, atomic capture-credit, full-refund reservation/finalization, provider-webhook handling and coin-package pricing are implemented and exercised in synthetic PostgreSQL smoke tests. Actual PayPal sandbox account/payment/refund/webhook evidence and production reconciliation remain outstanding. Creator earnings cash conversion remains unavailable until a real conversion policy is configured.
 - Payout execution and country/account eligibility, which must remain disabled until provider and compliance readiness are proven.
 - Server-side private signed upload URLs, metadata/size checks, byte-signature validation, queueing, media processing and creator upload UI are implemented; production Supabase Storage policies/configuration, antivirus scanning and derivative-path behavior still require provider validation.
 - Durable production queue workers, search index, recommendation evaluation, actual push/email delivery, advertising delivery and marketplace order fulfillment.
-- Desktop/TV release packaging, app-wide cross-platform feature parity and external provider sandbox tests still need direct end-to-end evidence. Android build passed on `41ee1320e7a4734670493485ae0576f52836e678`; current iOS workflow was queued at the time of the last status check, so no result is claimed here.
+- Desktop/TV release packaging, app-wide cross-platform feature parity and external provider sandbox tests still need direct end-to-end evidence. Android and iOS status must be read from the most recent workflow runs; this register does not claim a release artifact or device-level validation without a completed green build.
 - Completed original 3D gift assets and every required distinct sound mapped against a validated manifest.
 
 ## Reporting standard
@@ -49,3 +49,18 @@ The API now accepts `offset` and `limit` for feed pagination. Following feeds us
 ## Gift audio inventory — 2026-10-29
 
 The manifest contains 103 stable gift IDs. 57 have an audio file with a matching SHA-256 checksum. The remaining 46 entries are marked `unresolved` with an explicit reason and no audio path; they are not represented by generic substitute sounds. A gift can be called audio-complete only when its authored effect exists, is mapped to the correct ID, and validates against the manifest.
+
+
+## Additional migrations 0018–0026
+
+- `0018_conversation_and_community_transactions.sql`: database-backed conversation/community transaction boundaries and membership/content controls.
+- `0019_marketplace_inventory_and_orders.sql`: inventory constraints and transactional order mutations.
+- `0020_creator_subscription_provider_lifecycle.sql`: creator membership and provider lifecycle state.
+- `0021_privacy_data_rights_and_notification_history.sql`: profile data-rights workflow, consent and notification history.
+- `0022_messaging_call_lifecycle_and_message_mutations.sql`: message mutation restrictions and persisted call lifecycle.
+- `0023_atomic_social_relationship_controls.sql`: atomic follows, blocks, mutes and restrictions.
+- `0024_feed_interaction_idempotency.sql`: request idempotency for feed reactions, reposts, bookmarks and views.
+- `0025_notification_outbox_delivery_and_push.sql`: server-generated notification outbox events, in-app delivery, and push-subscription policy.
+- `0026_notification_channel_retry_queue.sql`: retry scheduling/claim metadata, and per-profile timezone handling for quiet hours.
+
+These additions passed the clean PostgreSQL 16 migration and core smoke workflow on the inspected head. Email/push provider delivery and production Supabase policy behavior remain environment-dependent and are not claimed as verified by that workflow.

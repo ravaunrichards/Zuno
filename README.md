@@ -2,7 +2,7 @@
 
 **ZUNO** is an independent, multi-platform social, entertainment, communication and creator ecosystem. The repository is organized as a pnpm/Turborepo-style workspace with separate applications, backend services, shared packages, database migrations, integrations, assets, infrastructure, tests and verification tools.
 
-> **Current status: PARTIALLY IMPLEMENTED — core backend flows are in the codebase, but the full product is not production-ready.** The current branch includes persisted gift delivery, PayPal checkout/capture/refund paths, verified webhook ingestion, private media upload/processing, LIVE room workflows, protected operations tooling, and migrations through `0017`. CI has exercised the ordered migration chain, RLS, wallet/gift/payment/refund transactions, moderation/audit transitions, the web build, and automated source tests. External-provider sandbox and production deployment verification remain outstanding.
+> **Current status: PARTIALLY IMPLEMENTED — core backend flows are in the codebase, but the full product is not production-ready.** The current branch includes persisted gift delivery, PayPal checkout/capture/refund paths, verified webhook ingestion, private media upload/processing, LIVE room workflows, protected operations tooling, and migrations through `0026`. Latest inspected CI (2026-10-29, commit `92bc0412a7595dc984dc600c7f2d3cf3a9659be1`) reported 117 automated tests passed, 10/10 web checks passed, and all 26 migrations applied on clean PostgreSQL 16 with RLS/economy/moderation/messaging/community/call smoke checks. Security and accessibility/bundle-budget workflows passed; platform builds were still running/queued at that inspection. External-provider sandbox and production deployment verification remain outstanding.
 
 ## Repository map
 
@@ -48,7 +48,7 @@ Review `.env.example` before configuring local services. Never commit actual key
 
 ZUNO is intended to combine social networking, video and photo publishing, discovery, messaging and calls, communities, events, livestreaming, original 3D gifts and audio, Z Coins, subscriptions, creator monetization, commerce, ads, moderation, privacy and administrative tools into one coordinated experience. Each capability must have real implementation, schema/policies where persistent, tests and documentation.
 
-Latest documented CI evidence (commit `41ee1320e7a4734670493485ae0576f52836e678`, 2026-10-29): 77 automated tests passed, 10/10 web checks passed, and the disposable PostgreSQL 16 run successfully applied migrations `0001`–`0017` and passed RLS, economy and moderation smoke checks. Android build, security checks and web accessibility/bundle budget also passed on that commit. Check the current Actions page for results after later commits. These checks do not substitute for provider sandbox or production verification.
+Latest documented CI evidence (commit `41ee1320e7a4734670493485ae0576f52836e678`, 2026-10-29): 77 automated tests passed, 10/10 web checks passed, and the disposable PostgreSQL 16 run successfully applied migrations `0001`–`0026` and passed RLS, economy and moderation smoke checks. Android build, security checks and web accessibility/bundle budget also passed on that commit. Check the current Actions page for results after later commits. These checks do not substitute for provider sandbox or production verification.
 
 See `docs/status/implementation-register.md`, `docs/architecture/repository-map.md`, `docs/database/migrations.md`, and `docs/integrations/provider-readiness.md`.
 

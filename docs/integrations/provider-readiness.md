@@ -2,7 +2,7 @@
 
 ## Supabase
 - [ ] Verify project URL and server-only credentials.
-- [x] Apply migrations 0001–0017 to disposable PostgreSQL 16 in GitHub Actions.
+- [x] Apply migrations 0001–0026 to disposable PostgreSQL 16 in GitHub Actions.
 - [x] Test positive/negative RLS access plus synthetic gift, capture-credit, refund-release/finalization and moderation/audit transitions in CI.
 - [ ] Apply to an actual disposable Supabase project and verify Supabase-specific Auth, Storage and Realtime behavior.
 - [ ] Verify private storage bucket policies.
