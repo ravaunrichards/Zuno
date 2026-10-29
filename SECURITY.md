@@ -1,7 +1,15 @@
 # Security policy
 
-Do not report vulnerabilities in public issues. Contact the repository owner through a private GitHub security advisory or another private channel configured by the owner.
+## Reporting a vulnerability
 
-Never include credentials, access tokens, payment data or private personal information in a report. Include affected path, reproduction steps, impact, and a safe mitigation if known.
+Please do not publish sensitive details in a public issue. Contact the repository owner through the private security-reporting channel configured for this repository.
 
-Security-sensitive changes require tests for both permitted access and denied cross-user/unauthenticated access. Payment, wallet, payout, moderation and webhook changes require explicit idempotency and audit review.
+## Security expectations
+
+- Never commit passwords, tokens, service-role keys, certificates or production data.
+- Sensitive operations must require trusted authentication and server-side role/ownership checks.
+- Supabase Row Level Security must be enabled and tested for every client-accessible table.
+- Ledger writes, payout operations, provider webhooks and audit records are server-managed.
+- Verify provider webhook signatures, enforce idempotency and reconcile provider state before changing financial balances.
+- Treat uploads, user text, URLs, search input and external provider payloads as untrusted.
+- Security-sensitive configuration changes require tests and a documented rollback plan.

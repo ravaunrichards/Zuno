@@ -1,31 +1,13 @@
 ## Summary
+Describe the concrete functionality changed.
 
-<!-- What behavior or repository organization changes? -->
+## Verification
+- [ ] Relevant tests added or updated.
+- [ ] Migration chain and RLS policies reviewed, where applicable.
+- [ ] Accessibility and responsive behavior reviewed, where applicable.
+- [ ] Secrets and user data are not committed.
+- [ ] Implementation register and docs updated.
+- [ ] Results are reported truthfully; unrun checks are marked as not run.
 
-## Changed areas
-
-- [ ] Web
-- [ ] Android / iOS / Desktop / TV
-- [ ] Admin / Creator Studio
-- [ ] Backend / integrations
-- [ ] Database migrations / RLS
-- [ ] Assets / manifests
-- [ ] Tests / documentation / CI
-
-## Verification evidence
-
-- [ ] Lint
-- [ ] Unit/integration tests
-- [ ] Database migration validation
-- [ ] Gift/asset validation
-- [ ] Build for affected platforms
-- [ ] Accessibility/security checks
-
-List exact commands and results. Mark unavailable checks as not run with the reason.
-
-## Safety and operations
-
-- [ ] No secrets added
-- [ ] No client-authoritative financial changes
-- [ ] Migration order and rollback/recovery reviewed
-- [ ] Provider or deployment changes explicitly authorized
+## Limitations / rollout
+Document provider access, deployment, migration, compatibility or rollout constraints.

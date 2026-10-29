@@ -1,65 +1,50 @@
 # ZUNO
 
-**Unified global social, entertainment, communication, livestreaming, commerce and creator ecosystem.**
+**ZUNO** is an independent, multi-platform social, entertainment, communication and creator ecosystem. The repository is organized as a pnpm/Turborepo-style workspace with separate applications, backend services, shared packages, database migrations, integrations, assets, infrastructure, tests and verification tools.
 
-ZUNO is being developed as one connected platform across web, Android, iOS, desktop, TV, administration and Creator Studio. Its product scope includes social publishing and discovery, video and audio, messaging and calls, communities and events, LIVE experiences, original virtual gifts, Z Coins, creator monetization, commerce, ads and platform operations.
-
-## Product principles
-
-- A rich, useful homepage—not a thin landing page or gift-only catalogue.
-- One coherent account, shared design language and common API contracts across applications.
-- Real functionality, persistent data and server-authoritative financial state; no pretend payments, live attendance, gifts or payouts.
-- Explicit capability status when a provider, credential or deployment is not configured.
-- Comprehensive ordered migrations, least-privilege authorization, auditability and repeatable verification.
-- Honest reporting: visual previews and local drafts must never be described as production-backed features.
+> **Current status: PARTIALLY IMPLEMENTED.** This branch establishes the rich web experience, application foundations, API safety boundaries, domain-policy modules and a versioned database migration chain. It is not yet a completed production product. Several provider-connected flows are deliberately disabled until their persistent transactional implementation and end-to-end verification are complete.
 
 ## Repository map
 
-| Path | Responsibility |
-| --- | --- |
-| `apps/` | Platform clients: web, Android, iOS, desktop, TV, admin and Creator Studio |
-| `backend/` | API, realtime, media processing, notifications, payments, payouts, recommendations, moderation, search and workers |
-| `frontend/` | Reusable frontend elements, layouts, navigation, page registry and themes |
-| `assets/` | Original visual assets, gift assets, 3D geometry, audio and manifests |
-| `config/` | Validated runtime configuration and feature gates |
-| `database/` | Ordered PostgreSQL migrations, policies, functions, schemas and seed data |
-| `integrations/` | Supabase, LiveKit, PayPal Developer and external-service adapters |
-| `packages/` | Shared UI, design system, API contracts, validation, auth, database, payments, media, gift engine and utilities |
-| `infrastructure/` | Docker, Render, deployment and monitoring |
-| `localization/` | Locale dictionaries and translation utilities |
-| `models/` | Typed domain and event models |
-| `scripts/` and `tools/` | Build, test, packaging, validation and development tooling |
-| `tests/` | Unit, integration, end-to-end, security, accessibility, performance, payments and cross-platform tests |
-| `.github/` | Continuous integration, templates and repository security guidance |
-| `docs/` and `verification/` | Architecture, operation, integration setup, evidence and outstanding work |
-
-The canonical root structure is kept intact. Domain code belongs in a clearly named subfolder; shared behavior should not be copied into each client.
+- `apps/`: Web/PWA, Android, iOS, Desktop, TV, Admin and Creator Studio.
+- `backend/`: API, realtime, media processing, notifications, payments, payouts, recommendations, moderation, search and worker services.
+- `frontend/`: shared page shell, navigation, reusable components and theme primitives.
+- `database/migrations/`: the canonical ordered SQL schema and policy history.
+- `integrations/`: Supabase, LiveKit, PayPal Developer and external service adapters.
+- `packages/`: shared design system, API contracts, validation, auth, database, payment, media and gift primitives.
+- `assets/`: original visual, audio, animation and 3D resources plus manifests.
+- `infrastructure/`: local container, Render, deployment and monitoring definitions.
+- `tests/`: unit, integration, accessibility, security, performance and cross-platform checks.
+- `.github/workflows/`: CI and platform/security workflows.
 
 ## Local development
 
-Requirements: Node.js 20 or newer and pnpm. Install dependencies with `pnpm install`, copy `.env.example` to `.env`, then run:
+Prerequisites: Node.js 20 or later and Corepack/pnpm. PostgreSQL/Supabase, LiveKit and PayPal credentials are only required for their corresponding integration paths.
 
-```sh
-pnpm dev
-pnpm test
-pnpm lint
-pnpm assets:validate
-pnpm db:validate
-pnpm build
-pnpm verify
+```bash
+corepack enable
+pnpm install --no-frozen-lockfile
+pnpm run typecheck
+pnpm run platforms:validate
+pnpm run validate:assets
+pnpm run validate:db
+pnpm run test
+pnpm run build:web
 ```
 
-The static web client can be served by any static HTTP server from `apps/web/`. The API listens on `127.0.0.1:4000` in local development. Do not expose service-role keys or provider secrets to client applications.
+Review `.env.example` before configuring local services. Never commit actual keys or production data. Database changes must be applied in numeric order to a disposable PostgreSQL/Supabase project before a shared environment.
 
-## Provider setup
+## Safety and production readiness
 
-- **Supabase:** create/configure the project and apply every ordered migration in `database/migrations/`. See [database setup](docs/database/migrations.md).
-- **LiveKit:** configure server-only room credentials and webhook verification before enabling live-room actions.
-- **PayPal Developer:** use sandbox credentials first. Payment creation, capture, webhook verification, idempotency and reconciliation must pass before enabling production payment flags.
-- **Render:** use the configuration in `infrastructure/render/`; do not deploy without explicit authorization and production readiness review.
+- Authentication-sensitive endpoints require a provider-verified Supabase session and a provisioned ZUNO profile.
+- LiveKit publish permission is determined server-side from room ownership or participant role, not the request body.
+- Gift sending and checkout currently return an explicit not-ready response until atomic persistent delivery/payment lifecycle handling is connected. No demo balance or fake payment is represented as production.
+- Payouts remain gated until recipient eligibility, compliance, provider readiness and reconciliation have been verified.
+- A configured environment value is not proof that a provider call or deployment works.
+- The current deterministic recommendation code is a baseline, not a machine-learned system. Metadata validation is not file-signature validation or transcoding.
 
-Missing provider settings must produce a clear unavailable response. Local UI previews and tests are not proof of provider connectivity.
+## Product direction
 
-## Current implementation status
+ZUNO is intended to combine social networking, video and photo publishing, discovery, messaging and calls, communities, events, livestreaming, original 3D gifts and audio, Z Coins, subscriptions, creator monetization, commerce, ads, moderation, privacy and administrative tools into one coordinated experience. Each capability must have real implementation, schema/policies where persistent, tests and documentation.
 
-This repository is an actively evolving codebase. Read [the platform matrix](docs/platforms.md) and [implementation status](docs/implementation/status.md) before assuming a feature or deployment is complete. A source file, configuration, or UI surface alone does not establish a working production integration.
+See `docs/status/implementation-register.md`, `docs/architecture/repository-map.md`, `docs/database/migrations.md`, and `docs/integrations/provider-readiness.md`.

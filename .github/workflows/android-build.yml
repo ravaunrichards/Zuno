@@ -1,0 +1,37 @@
+name: Android build
+on:
+  pull_request:
+    paths:
+      - "apps/android/**"
+      - "packages/**"
+      - ".github/workflows/android-build.yml"
+  push:
+    branches: [main, "zuno-foundation-implementation-*"]
+    paths:
+      - "apps/android/**"
+      - "packages/**"
+      - ".github/workflows/android-build.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.7"
+      - name: Build APK and run Android unit tests
+        run: gradle -p apps/android :app:assembleDebug :app:testDebugUnitTest
+      - name: Upload debug APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zuno-android-debug
+          path: apps/android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error

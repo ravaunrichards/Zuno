@@ -21,6 +21,7 @@ const checks = [
   run('automated tests', 'node scripts/run-tests.js'),
   run('asset + gift-catalog validation', 'node scripts/validate-assets.js'),
   run('database migration validation', 'node scripts/validate-db.js'),
+  run('platform entrypoint validation', 'node scripts/validate-platforms.js'),
   run('environment check', 'node scripts/check-env.js'),
 ];
 

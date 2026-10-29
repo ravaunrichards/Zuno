@@ -1,0 +1,32 @@
+name: Security checks
+on:
+  pull_request:
+  push:
+    branches: [main, "zuno-foundation-implementation-*"]
+  schedule:
+    - cron: "23 6 * * 1"
+  workflow_dispatch:
+permissions:
+  contents: read
+  pull-requests: read
+jobs:
+  dependency-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: corepack enable
+      - run: pnpm install --no-frozen-lockfile
+      - name: Audit JavaScript dependencies
+        run: pnpm audit --audit-level high
+  dependency-review:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4
