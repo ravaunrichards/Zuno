@@ -154,12 +154,40 @@ export async function signUp({ email, password, username, displayName }) {
 }
 
 
+const DEFAULT_PUBLIC_WEB_URL = 'https://zuno-web-corrected.onrender.com';
+
+function isLocalHostname(hostname) {
+  const host = String(hostname || '').toLowerCase();
+  return host === 'localhost' || host === '::1' || host === '[::1]'
+    || host.endsWith('.localhost') || /^127(?:\.\d{1,3}){3}$/.test(host);
+}
+
 function authRedirectUrl(state) {
-  const url = new URL(window.location.href);
-  url.search = '';
-  url.hash = '';
-  url.searchParams.set('auth', state);
-  return url.toString();
+  const current = new URL(window.location.href);
+  const runtime = window.ZUNO_CONFIG || {};
+  const configuredBase = runtime.publicWebBaseUrl || runtime.webBaseUrl || '';
+  let targetOrigin = '';
+
+  // Never send real signup/confirmation/recovery emails to a developer's
+  // localhost address. Prefer an explicitly configured HTTPS public URL.
+  if (configuredBase) {
+    try {
+      const configured = new URL(configuredBase);
+      if (configured.protocol === 'https:' && !isLocalHostname(configured.hostname)) {
+        targetOrigin = configured.origin;
+      }
+    } catch (_) {}
+  }
+
+  if (!targetOrigin) {
+    targetOrigin = isLocalHostname(current.hostname)
+      ? DEFAULT_PUBLIC_WEB_URL
+      : current.origin;
+  }
+
+  const redirect = new URL('/', targetOrigin);
+  redirect.searchParams.set('auth', state);
+  return redirect.toString();
 }
 
 export async function requestPasswordReset(email) {
