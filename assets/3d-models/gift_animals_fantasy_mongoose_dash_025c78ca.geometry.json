@@ -1,0 +1,54 @@
+{
+  "giftId": "gift_animals_fantasy_mongoose_dash_025c78ca",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "icosahedron",
+      "scale": 1.156,
+      "color": "#c5a394",
+      "metalness": 0.4,
+      "roughness": 0.7,
+      "position": [
+        0.826,
+        0.279,
+        0.02
+      ]
+    },
+    {
+      "shape": "cylinder",
+      "scale": 0.716,
+      "color": "#3becea",
+      "metalness": 0.4,
+      "roughness": 0.7,
+      "position": [
+        -0.215,
+        0.818,
+        -0.78
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 1.704,
+      "color": "#eaf433",
+      "metalness": 0.4,
+      "roughness": 0.7,
+      "position": [
+        -0.271,
+        -0.796,
+        0.316
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": false,
+    "particles": false,
+    "durationMs": 2300
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.5
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "giftId": "gift_animals_fantasy_hummingbird_a40fd17c",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "tetrahedron",
+      "scale": 1.136,
+      "color": "#2e5eef",
+      "metalness": 0.4,
+      "roughness": 0.7,
+      "position": [
+        -0.475,
+        0.438,
+        -0.721
+      ]
+    },
+    {
+      "shape": "sphere",
+      "scale": 0.804,
+      "color": "#a2eb16",
+      "metalness": 0.4,
+      "roughness": 0.7,
+      "position": [
+        -0.484,
+        -0.0,
+        -0.325
+      ]
+    },
+    {
+      "shape": "sphere",
+      "scale": 1.401,
+      "color": "#a3f444",
+      "metalness": 0.4,
+      "roughness": 0.7,
+      "position": [
+        -0.977,
+        0.986,
+        -0.799
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": false,
+    "particles": false,
+    "durationMs": 2300
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.5
+  }
+}

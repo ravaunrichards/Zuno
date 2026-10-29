@@ -1,0 +1,54 @@
+{
+  "giftId": "gift_jamaica_parish_st__elizabeth_7be7d502",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "sphere",
+      "scale": 1.247,
+      "color": "#6c765b",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        0.318,
+        -0.989,
+        -0.091
+      ]
+    },
+    {
+      "shape": "cylinder",
+      "scale": 1.397,
+      "color": "#eebecd",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        0.627,
+        0.071,
+        -0.807
+      ]
+    },
+    {
+      "shape": "torus",
+      "scale": 1.721,
+      "color": "#fa0807",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        -0.593,
+        0.756,
+        0.947
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": false,
+    "durationMs": 2700
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.55
+  }
+}

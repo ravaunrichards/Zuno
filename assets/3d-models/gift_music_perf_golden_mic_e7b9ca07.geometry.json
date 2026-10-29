@@ -1,0 +1,78 @@
+{
+  "giftId": "gift_music_perf_golden_mic_e7b9ca07",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "box",
+      "scale": 0.722,
+      "color": "#4d02f8",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        -0.432,
+        -0.045,
+        0.571
+      ]
+    },
+    {
+      "shape": "sphere",
+      "scale": 1.302,
+      "color": "#75f0f0",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        0.33,
+        0.889,
+        0.1
+      ]
+    },
+    {
+      "shape": "cylinder",
+      "scale": 1.467,
+      "color": "#b2734f",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        -0.68,
+        0.034,
+        -0.868
+      ]
+    },
+    {
+      "shape": "torus",
+      "scale": 1.682,
+      "color": "#4d02f8",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        -0.223,
+        0.424,
+        -0.806
+      ]
+    },
+    {
+      "shape": "torus",
+      "scale": 1.321,
+      "color": "#75f0f0",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        0.743,
+        -0.171,
+        0.518
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 4300
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.75
+  }
+}

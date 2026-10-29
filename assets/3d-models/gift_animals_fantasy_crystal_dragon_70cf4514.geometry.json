@@ -1,0 +1,78 @@
+{
+  "giftId": "gift_animals_fantasy_crystal_dragon_70cf4514",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "icosahedron",
+      "scale": 0.711,
+      "color": "#850d6b",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        0.223,
+        0.166,
+        0.106
+      ]
+    },
+    {
+      "shape": "box",
+      "scale": 1.116,
+      "color": "#e09305",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        0.0,
+        -0.068,
+        0.987
+      ]
+    },
+    {
+      "shape": "cylinder",
+      "scale": 0.484,
+      "color": "#a43d73",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        -0.263,
+        -0.916,
+        0.711
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 1.394,
+      "color": "#850d6b",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        0.383,
+        -0.715,
+        -0.746
+      ]
+    },
+    {
+      "shape": "box",
+      "scale": 1.409,
+      "color": "#e09305",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        0.62,
+        0.691,
+        0.014
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 4300
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.75
+  }
+}

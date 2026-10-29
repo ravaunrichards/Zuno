@@ -1,0 +1,78 @@
+{
+  "giftId": "gift_celebration_grand_parade_34fc3dbe",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "sphere",
+      "scale": 1.042,
+      "color": "#3df304",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        0.937,
+        0.174,
+        0.82
+      ]
+    },
+    {
+      "shape": "box",
+      "scale": 1.258,
+      "color": "#46b1f4",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        0.979,
+        0.001,
+        0.058
+      ]
+    },
+    {
+      "shape": "cylinder",
+      "scale": 1.526,
+      "color": "#bbf26f",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        0.193,
+        -0.903,
+        -0.218
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 0.527,
+      "color": "#3df304",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        0.485,
+        -0.013,
+        -0.283
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 1.505,
+      "color": "#46b1f4",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        -0.21,
+        0.423,
+        -0.75
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 4300
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.75
+  }
+}

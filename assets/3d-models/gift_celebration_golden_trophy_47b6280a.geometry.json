@@ -1,0 +1,66 @@
+{
+  "giftId": "gift_celebration_golden_trophy_47b6280a",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "cylinder",
+      "scale": 1.288,
+      "color": "#975f7f",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        0.605,
+        0.881,
+        -0.974
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 1.601,
+      "color": "#fbbd00",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        0.733,
+        0.93,
+        -0.668
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 0.713,
+      "color": "#a3ee5e",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        -0.42,
+        0.571,
+        0.918
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 0.869,
+      "color": "#975f7f",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        0.342,
+        -0.904,
+        -0.625
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 3500
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.65
+  }
+}

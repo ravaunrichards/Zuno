@@ -1,0 +1,54 @@
+{
+  "giftId": "gift_celebration_balloon_bunch_522b7789",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "box",
+      "scale": 1.013,
+      "color": "#b86815",
+      "metalness": 0.4,
+      "roughness": 0.7,
+      "position": [
+        -0.979,
+        0.551,
+        -0.862
+      ]
+    },
+    {
+      "shape": "torus",
+      "scale": 1.242,
+      "color": "#5d5762",
+      "metalness": 0.4,
+      "roughness": 0.7,
+      "position": [
+        0.482,
+        -0.745,
+        -0.74
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 0.918,
+      "color": "#35671b",
+      "metalness": 0.4,
+      "roughness": 0.7,
+      "position": [
+        0.919,
+        0.115,
+        -0.896
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": false,
+    "particles": false,
+    "durationMs": 2300
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.5
+  }
+}

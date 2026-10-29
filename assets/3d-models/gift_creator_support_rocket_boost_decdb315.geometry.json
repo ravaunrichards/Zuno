@@ -1,0 +1,54 @@
+{
+  "giftId": "gift_creator_support_rocket_boost_decdb315",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "cylinder",
+      "scale": 0.554,
+      "color": "#d00bd1",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        -0.846,
+        -0.892,
+        0.338
+      ]
+    },
+    {
+      "shape": "icosahedron",
+      "scale": 1.162,
+      "color": "#b5b4ba",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        -0.117,
+        -0.619,
+        -0.054
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 0.501,
+      "color": "#d7355c",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        -0.246,
+        -0.682,
+        -0.158
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": false,
+    "durationMs": 2700
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.55
+  }
+}

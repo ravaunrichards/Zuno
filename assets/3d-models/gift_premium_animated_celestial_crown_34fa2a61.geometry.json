@@ -1,0 +1,90 @@
+{
+  "giftId": "gift_premium_animated_celestial_crown_34fa2a61",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "cone",
+      "scale": 1.185,
+      "color": "#e4c8b5",
+      "metalness": 1.0,
+      "roughness": 0.1,
+      "position": [
+        0.886,
+        -0.083,
+        0.37
+      ]
+    },
+    {
+      "shape": "icosahedron",
+      "scale": 1.026,
+      "color": "#c71842",
+      "metalness": 1.0,
+      "roughness": 0.1,
+      "position": [
+        -0.813,
+        -0.197,
+        -0.669
+      ]
+    },
+    {
+      "shape": "sphere",
+      "scale": 0.965,
+      "color": "#e96107",
+      "metalness": 1.0,
+      "roughness": 0.1,
+      "position": [
+        0.802,
+        -0.092,
+        -0.89
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 1.631,
+      "color": "#e4c8b5",
+      "metalness": 1.0,
+      "roughness": 0.1,
+      "position": [
+        0.839,
+        -0.768,
+        0.908
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 1.516,
+      "color": "#c71842",
+      "metalness": 1.0,
+      "roughness": 0.1,
+      "position": [
+        -0.349,
+        0.644,
+        0.081
+      ]
+    },
+    {
+      "shape": "icosahedron",
+      "scale": 1.084,
+      "color": "#e96107",
+      "metalness": 1.0,
+      "roughness": 0.1,
+      "position": [
+        0.863,
+        0.335,
+        -0.819
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 4700
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.8
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "giftId": "gift_cosmic_black_hole_b2112d82",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "icosahedron",
+      "scale": 0.543,
+      "color": "#c141dc",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        0.785,
+        0.53,
+        -0.303
+      ]
+    },
+    {
+      "shape": "sphere",
+      "scale": 0.748,
+      "color": "#5267d4",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        -0.095,
+        -0.786,
+        -0.848
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 1.328,
+      "color": "#7a9495",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        0.384,
+        -0.983,
+        -0.823
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 0.532,
+      "color": "#c141dc",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        0.285,
+        0.075,
+        -0.601
+      ]
+    },
+    {
+      "shape": "box",
+      "scale": 1.741,
+      "color": "#5267d4",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        0.651,
+        -0.088,
+        -0.331
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 4300
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.75
+  }
+}

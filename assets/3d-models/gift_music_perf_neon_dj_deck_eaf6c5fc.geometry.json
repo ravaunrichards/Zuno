@@ -1,0 +1,66 @@
+{
+  "giftId": "gift_music_perf_neon_dj_deck_eaf6c5fc",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "cylinder",
+      "scale": 1.723,
+      "color": "#6cfd9d",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        0.867,
+        -0.72,
+        0.911
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 1.13,
+      "color": "#c5625d",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        -0.149,
+        -0.766,
+        -0.874
+      ]
+    },
+    {
+      "shape": "cylinder",
+      "scale": 0.483,
+      "color": "#53500b",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        0.343,
+        -0.971,
+        -0.218
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 1.74,
+      "color": "#6cfd9d",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        0.088,
+        -0.153,
+        -0.809
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 3500
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.65
+  }
+}

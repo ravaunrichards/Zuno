@@ -1,0 +1,78 @@
+{
+  "giftId": "gift_creator_support_hall_of_fame_e88255fa",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "icosahedron",
+      "scale": 1.216,
+      "color": "#89d9c1",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        0.766,
+        0.024,
+        -0.778
+      ]
+    },
+    {
+      "shape": "torus",
+      "scale": 1.78,
+      "color": "#ded415",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        -0.13,
+        0.189,
+        0.337
+      ]
+    },
+    {
+      "shape": "cylinder",
+      "scale": 0.699,
+      "color": "#40501c",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        -0.211,
+        -0.573,
+        -0.486
+      ]
+    },
+    {
+      "shape": "icosahedron",
+      "scale": 1.105,
+      "color": "#89d9c1",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        -0.098,
+        0.011,
+        -0.068
+      ]
+    },
+    {
+      "shape": "icosahedron",
+      "scale": 1.376,
+      "color": "#ded415",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        0.036,
+        0.237,
+        -0.355
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 3900
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.7000000000000001
+  }
+}

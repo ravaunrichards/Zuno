@@ -1,0 +1,54 @@
+{
+  "giftId": "gift_jamaica_culture_festival_kite_8c03afe7",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "tetrahedron",
+      "scale": 0.512,
+      "color": "#a00aa7",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        -0.633,
+        0.897,
+        0.687
+      ]
+    },
+    {
+      "shape": "torus",
+      "scale": 1.259,
+      "color": "#392573",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        0.04,
+        -0.853,
+        -0.789
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 1.48,
+      "color": "#c6ab60",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        -0.822,
+        -0.293,
+        0.65
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": false,
+    "durationMs": 2700
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.55
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "giftId": "gift_jamaica_culture_reggae_sunsplash_c385d11a",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "icosahedron",
+      "scale": 0.704,
+      "color": "#9f9748",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        -0.435,
+        -0.038,
+        -0.615
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 0.767,
+      "color": "#23b5c6",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        -0.041,
+        0.389,
+        0.419
+      ]
+    },
+    {
+      "shape": "icosahedron",
+      "scale": 1.198,
+      "color": "#e93375",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        -0.789,
+        0.925,
+        -0.646
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 1.687,
+      "color": "#9f9748",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        0.036,
+        -0.337,
+        -0.108
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 3500
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.65
+  }
+}

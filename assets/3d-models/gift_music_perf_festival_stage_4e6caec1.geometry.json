@@ -1,0 +1,78 @@
+{
+  "giftId": "gift_music_perf_festival_stage_4e6caec1",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "torus",
+      "scale": 1.384,
+      "color": "#bed601",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        -0.353,
+        -0.787,
+        0.491
+      ]
+    },
+    {
+      "shape": "icosahedron",
+      "scale": 1.474,
+      "color": "#a86f62",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        -0.156,
+        0.816,
+        -0.436
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 0.801,
+      "color": "#572c1a",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        -0.785,
+        -0.776,
+        0.735
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 0.769,
+      "color": "#bed601",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        -0.027,
+        -0.556,
+        0.786
+      ]
+    },
+    {
+      "shape": "sphere",
+      "scale": 1.679,
+      "color": "#a86f62",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        0.116,
+        -0.785,
+        -0.78
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 3900
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.7000000000000001
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "giftId": "gift_flowers_romance_orchid_spray_5b15a262",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "cylinder",
+      "scale": 1.172,
+      "color": "#acbeb4",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        -0.932,
+        -0.926,
+        -0.987
+      ]
+    },
+    {
+      "shape": "torus",
+      "scale": 1.709,
+      "color": "#9f500f",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        0.976,
+        0.36,
+        0.454
+      ]
+    },
+    {
+      "shape": "cylinder",
+      "scale": 1.401,
+      "color": "#805d64",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        -0.013,
+        0.281,
+        0.422
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": false,
+    "durationMs": 2700
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.55
+  }
+}

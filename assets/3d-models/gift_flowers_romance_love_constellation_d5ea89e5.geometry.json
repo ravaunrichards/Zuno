@@ -1,0 +1,78 @@
+{
+  "giftId": "gift_flowers_romance_love_constellation_d5ea89e5",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "box",
+      "scale": 0.702,
+      "color": "#c886a1",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        -0.612,
+        0.59,
+        -0.191
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 0.849,
+      "color": "#8a01ba",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        0.735,
+        -0.469,
+        -0.546
+      ]
+    },
+    {
+      "shape": "sphere",
+      "scale": 1.212,
+      "color": "#23767d",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        0.153,
+        -0.368,
+        -0.267
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 1.334,
+      "color": "#c886a1",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        -0.855,
+        0.524,
+        0.954
+      ]
+    },
+    {
+      "shape": "cylinder",
+      "scale": 1.338,
+      "color": "#8a01ba",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        0.933,
+        -0.079,
+        0.089
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 3900
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.7000000000000001
+  }
+}

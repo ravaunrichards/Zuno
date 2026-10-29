@@ -1,0 +1,78 @@
+{
+  "giftId": "gift_luxury_royal_crown_dcdbdf7c",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "tetrahedron",
+      "scale": 0.683,
+      "color": "#4acf64",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        0.348,
+        -0.809,
+        -0.503
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 0.502,
+      "color": "#dc4510",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        -0.314,
+        -0.629,
+        -0.659
+      ]
+    },
+    {
+      "shape": "torus",
+      "scale": 0.565,
+      "color": "#461819",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        0.671,
+        0.038,
+        -0.13
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 1.216,
+      "color": "#4acf64",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        0.827,
+        0.956,
+        -0.149
+      ]
+    },
+    {
+      "shape": "sphere",
+      "scale": 1.163,
+      "color": "#dc4510",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        -0.182,
+        0.2,
+        -0.936
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 4300
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.75
+  }
+}

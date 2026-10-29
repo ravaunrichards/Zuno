@@ -1,0 +1,78 @@
+{
+  "giftId": "gift_cosmic_galaxy_swirl_0bead6e5",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "cylinder",
+      "scale": 1.641,
+      "color": "#ca9ad1",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        -0.585,
+        0.144,
+        -0.099
+      ]
+    },
+    {
+      "shape": "sphere",
+      "scale": 1.554,
+      "color": "#c987da",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        -0.159,
+        0.665,
+        -0.512
+      ]
+    },
+    {
+      "shape": "icosahedron",
+      "scale": 1.24,
+      "color": "#4044eb",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        -0.406,
+        -0.049,
+        0.075
+      ]
+    },
+    {
+      "shape": "sphere",
+      "scale": 1.506,
+      "color": "#ca9ad1",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        0.2,
+        -0.734,
+        -0.712
+      ]
+    },
+    {
+      "shape": "torus",
+      "scale": 1.131,
+      "color": "#c987da",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        0.653,
+        0.478,
+        -0.402
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 3900
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.7000000000000001
+  }
+}

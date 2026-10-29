@@ -1,0 +1,54 @@
+{
+  "giftId": "gift_animals_fantasy_sea_turtle_726e149c",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "torus",
+      "scale": 1.654,
+      "color": "#94a87b",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        0.025,
+        -0.624,
+        -0.505
+      ]
+    },
+    {
+      "shape": "box",
+      "scale": 0.482,
+      "color": "#b47712",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        0.428,
+        0.903,
+        -0.989
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 1.243,
+      "color": "#b2ee78",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        0.722,
+        0.15,
+        -0.429
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": false,
+    "durationMs": 2700
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.55
+  }
+}

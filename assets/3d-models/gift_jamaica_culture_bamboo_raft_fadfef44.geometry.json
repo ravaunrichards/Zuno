@@ -1,0 +1,54 @@
+{
+  "giftId": "gift_jamaica_culture_bamboo_raft_fadfef44",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "cylinder",
+      "scale": 0.98,
+      "color": "#c6e72c",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        -0.519,
+        0.564,
+        -0.784
+      ]
+    },
+    {
+      "shape": "sphere",
+      "scale": 1.626,
+      "color": "#cff4aa",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        0.148,
+        -0.705,
+        0.399
+      ]
+    },
+    {
+      "shape": "cylinder",
+      "scale": 0.543,
+      "color": "#39f95a",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        0.322,
+        0.334,
+        0.646
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": false,
+    "durationMs": 2700
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.55
+  }
+}

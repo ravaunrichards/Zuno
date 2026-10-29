@@ -1,0 +1,66 @@
+{
+  "giftId": "gift_flowers_romance_eternal_rose_605fe3b5",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "torus",
+      "scale": 0.535,
+      "color": "#76aa4e",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        0.492,
+        0.879,
+        0.081
+      ]
+    },
+    {
+      "shape": "icosahedron",
+      "scale": 0.637,
+      "color": "#70fd50",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        -0.976,
+        -0.515,
+        -0.727
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 0.522,
+      "color": "#832235",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        -0.121,
+        -0.843,
+        0.581
+      ]
+    },
+    {
+      "shape": "sphere",
+      "scale": 1.32,
+      "color": "#76aa4e",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        0.489,
+        0.878,
+        -0.128
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 3500
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.65
+  }
+}

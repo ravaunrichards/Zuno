@@ -1,0 +1,66 @@
+{
+  "giftId": "gift_jamaica_parish_montego_bay_57ae24d0",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "cone",
+      "scale": 0.831,
+      "color": "#78873a",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        -0.743,
+        0.382,
+        0.356
+      ]
+    },
+    {
+      "shape": "box",
+      "scale": 1.256,
+      "color": "#bc9077",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        0.432,
+        0.744,
+        -0.843
+      ]
+    },
+    {
+      "shape": "box",
+      "scale": 1.582,
+      "color": "#2160ca",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        -0.354,
+        -0.84,
+        0.938
+      ]
+    },
+    {
+      "shape": "box",
+      "scale": 1.09,
+      "color": "#78873a",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        0.316,
+        -0.407,
+        -0.767
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": false,
+    "durationMs": 3100
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.6000000000000001
+  }
+}

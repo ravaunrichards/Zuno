@@ -1,0 +1,66 @@
+{
+  "giftId": "gift_creator_support_patron_medal_a7c7c20d",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "sphere",
+      "scale": 1.267,
+      "color": "#6c6c3c",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        -0.39,
+        -0.596,
+        0.771
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 1.623,
+      "color": "#4271a2",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        -0.301,
+        0.444,
+        0.053
+      ]
+    },
+    {
+      "shape": "sphere",
+      "scale": 1.451,
+      "color": "#72116e",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        -0.38,
+        -0.57,
+        -0.32
+      ]
+    },
+    {
+      "shape": "cylinder",
+      "scale": 1.719,
+      "color": "#6c6c3c",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        -0.953,
+        -0.545,
+        -0.208
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 3500
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.65
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "giftId": "gift_flowers_romance_sunflower_field_40667f7c",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "icosahedron",
+      "scale": 1.748,
+      "color": "#29be30",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        -0.978,
+        0.016,
+        0.662
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 1.773,
+      "color": "#a1c2a2",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        -0.641,
+        0.336,
+        -0.432
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 0.597,
+      "color": "#a3f9f0",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        -0.591,
+        0.347,
+        -0.405
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": false,
+    "durationMs": 2700
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.55
+  }
+}

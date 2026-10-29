@@ -1,0 +1,66 @@
+{
+  "giftId": "gift_cosmic_saturn_ring_333f9881",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "torus",
+      "scale": 1.514,
+      "color": "#a59dec",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        0.211,
+        0.235,
+        -0.426
+      ]
+    },
+    {
+      "shape": "torus",
+      "scale": 0.991,
+      "color": "#9fb659",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        0.573,
+        0.189,
+        0.929
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 0.869,
+      "color": "#2a0ccc",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        -0.813,
+        -0.253,
+        -0.425
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 1.118,
+      "color": "#a59dec",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        -0.266,
+        -0.437,
+        0.706
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 3500
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.65
+  }
+}

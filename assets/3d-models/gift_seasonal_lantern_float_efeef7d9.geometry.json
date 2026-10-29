@@ -1,0 +1,66 @@
+{
+  "giftId": "gift_seasonal_lantern_float_efeef7d9",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "cone",
+      "scale": 1.036,
+      "color": "#da2e1f",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        -0.533,
+        0.967,
+        -0.26
+      ]
+    },
+    {
+      "shape": "sphere",
+      "scale": 0.587,
+      "color": "#c57c63",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        -0.897,
+        -0.611,
+        0.277
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 1.474,
+      "color": "#37e548",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        0.239,
+        -0.088,
+        0.546
+      ]
+    },
+    {
+      "shape": "sphere",
+      "scale": 0.665,
+      "color": "#da2e1f",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        0.661,
+        -0.235,
+        -0.835
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": false,
+    "durationMs": 3100
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.6000000000000001
+  }
+}

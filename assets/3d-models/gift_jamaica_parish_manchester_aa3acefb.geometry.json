@@ -1,0 +1,54 @@
+{
+  "giftId": "gift_jamaica_parish_manchester_aa3acefb",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "torus",
+      "scale": 1.038,
+      "color": "#46b8bb",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        -0.475,
+        0.581,
+        0.955
+      ]
+    },
+    {
+      "shape": "cylinder",
+      "scale": 0.862,
+      "color": "#7a1bab",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        -0.596,
+        0.72,
+        -0.06
+      ]
+    },
+    {
+      "shape": "box",
+      "scale": 1.287,
+      "color": "#fb2501",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        0.021,
+        -0.83,
+        0.759
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": false,
+    "durationMs": 2700
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.55
+  }
+}

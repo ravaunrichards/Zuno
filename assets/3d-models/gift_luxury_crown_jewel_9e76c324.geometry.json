@@ -1,0 +1,78 @@
+{
+  "giftId": "gift_luxury_crown_jewel_9e76c324",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "tetrahedron",
+      "scale": 1.469,
+      "color": "#b207fb",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        -0.744,
+        -0.491,
+        -0.469
+      ]
+    },
+    {
+      "shape": "icosahedron",
+      "scale": 1.451,
+      "color": "#2a52e8",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        -0.684,
+        0.33,
+        -0.776
+      ]
+    },
+    {
+      "shape": "sphere",
+      "scale": 1.284,
+      "color": "#de2de6",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        -0.646,
+        0.24,
+        0.412
+      ]
+    },
+    {
+      "shape": "icosahedron",
+      "scale": 1.558,
+      "color": "#b207fb",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        0.108,
+        -0.693,
+        0.459
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 1.351,
+      "color": "#2a52e8",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        -0.906,
+        -0.897,
+        0.559
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 3900
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.7000000000000001
+  }
+}

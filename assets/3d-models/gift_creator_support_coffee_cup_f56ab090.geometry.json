@@ -1,0 +1,42 @@
+{
+  "giftId": "gift_creator_support_coffee_cup_f56ab090",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "icosahedron",
+      "scale": 0.947,
+      "color": "#78ddde",
+      "metalness": 0.3,
+      "roughness": 0.8,
+      "position": [
+        0.754,
+        0.213,
+        0.344
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 1.557,
+      "color": "#e23c0b",
+      "metalness": 0.3,
+      "roughness": 0.8,
+      "position": [
+        0.939,
+        0.634,
+        -0.072
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": false,
+    "particles": false,
+    "durationMs": 1900
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.45
+  }
+}

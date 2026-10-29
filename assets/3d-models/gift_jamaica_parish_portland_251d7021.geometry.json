@@ -1,0 +1,54 @@
+{
+  "giftId": "gift_jamaica_parish_portland_251d7021",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "cone",
+      "scale": 1.151,
+      "color": "#752eae",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        0.426,
+        0.255,
+        0.526
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 0.744,
+      "color": "#a6e1ad",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        -0.932,
+        0.146,
+        0.513
+      ]
+    },
+    {
+      "shape": "box",
+      "scale": 0.449,
+      "color": "#cb94df",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        0.847,
+        -0.91,
+        0.551
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": false,
+    "durationMs": 2700
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.55
+  }
+}

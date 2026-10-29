@@ -1,0 +1,78 @@
+{
+  "giftId": "gift_cosmic_wormhole_9ea475eb",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "cylinder",
+      "scale": 1.501,
+      "color": "#421ffa",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        -0.03,
+        -0.58,
+        -0.177
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 1.123,
+      "color": "#43760d",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        -0.861,
+        -0.958,
+        -0.008
+      ]
+    },
+    {
+      "shape": "sphere",
+      "scale": 1.344,
+      "color": "#ffe776",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        0.258,
+        -0.791,
+        -0.704
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 0.615,
+      "color": "#421ffa",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        -0.298,
+        0.055,
+        0.701
+      ]
+    },
+    {
+      "shape": "sphere",
+      "scale": 1.615,
+      "color": "#43760d",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        0.212,
+        0.193,
+        -0.699
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 3900
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.7000000000000001
+  }
+}

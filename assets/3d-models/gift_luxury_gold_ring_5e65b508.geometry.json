@@ -1,0 +1,66 @@
+{
+  "giftId": "gift_luxury_gold_ring_5e65b508",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "torus",
+      "scale": 1.396,
+      "color": "#5fb177",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        -0.178,
+        0.809,
+        -0.135
+      ]
+    },
+    {
+      "shape": "icosahedron",
+      "scale": 1.196,
+      "color": "#fe7a81",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        0.679,
+        -0.908,
+        -0.571
+      ]
+    },
+    {
+      "shape": "torus",
+      "scale": 0.819,
+      "color": "#4565c5",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        -0.875,
+        -0.133,
+        -0.625
+      ]
+    },
+    {
+      "shape": "box",
+      "scale": 1.336,
+      "color": "#5fb177",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        0.391,
+        -0.491,
+        -0.987
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": false,
+    "durationMs": 3100
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.6000000000000001
+  }
+}

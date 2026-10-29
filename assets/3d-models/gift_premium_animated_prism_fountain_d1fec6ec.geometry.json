@@ -1,0 +1,78 @@
+{
+  "giftId": "gift_premium_animated_prism_fountain_d1fec6ec",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "icosahedron",
+      "scale": 0.757,
+      "color": "#907d8e",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        -0.364,
+        0.824,
+        -0.463
+      ]
+    },
+    {
+      "shape": "box",
+      "scale": 1.084,
+      "color": "#e1ab56",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        0.206,
+        0.497,
+        0.05
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 1.412,
+      "color": "#b20898",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        0.455,
+        -0.521,
+        0.586
+      ]
+    },
+    {
+      "shape": "torus",
+      "scale": 0.812,
+      "color": "#907d8e",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        0.88,
+        0.832,
+        0.774
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 1.737,
+      "color": "#e1ab56",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        -0.905,
+        0.188,
+        -0.12
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 3900
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.7000000000000001
+  }
+}

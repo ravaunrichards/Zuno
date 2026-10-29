@@ -1,0 +1,54 @@
+{
+  "giftId": "gift_jamaica_parish_st__mary_02960d83",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "box",
+      "scale": 0.93,
+      "color": "#fb7c3a",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        0.793,
+        0.759,
+        -0.63
+      ]
+    },
+    {
+      "shape": "sphere",
+      "scale": 1.016,
+      "color": "#79c7b1",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        -0.658,
+        -0.991,
+        -0.814
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 0.849,
+      "color": "#fb6dee",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        -0.004,
+        0.496,
+        0.084
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": false,
+    "durationMs": 2700
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.55
+  }
+}

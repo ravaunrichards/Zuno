@@ -1,0 +1,78 @@
+{
+  "giftId": "gift_animals_fantasy_spirit_lion_9dc2ba1e",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "cylinder",
+      "scale": 1.294,
+      "color": "#3623ab",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        0.518,
+        0.674,
+        -0.846
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 1.793,
+      "color": "#fcd43d",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        -0.411,
+        0.985,
+        0.15
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 1.527,
+      "color": "#ed38dd",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        0.584,
+        0.17,
+        -0.202
+      ]
+    },
+    {
+      "shape": "box",
+      "scale": 1.204,
+      "color": "#3623ab",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        0.223,
+        0.497,
+        0.66
+      ]
+    },
+    {
+      "shape": "sphere",
+      "scale": 1.145,
+      "color": "#fcd43d",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        0.761,
+        0.51,
+        -0.698
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 3900
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.7000000000000001
+  }
+}

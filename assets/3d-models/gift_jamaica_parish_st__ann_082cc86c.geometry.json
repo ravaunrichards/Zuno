@@ -1,0 +1,54 @@
+{
+  "giftId": "gift_jamaica_parish_st__ann_082cc86c",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "cylinder",
+      "scale": 0.419,
+      "color": "#2a7139",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        0.097,
+        -0.645,
+        0.142
+      ]
+    },
+    {
+      "shape": "box",
+      "scale": 1.46,
+      "color": "#a7ffb3",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        0.958,
+        0.687,
+        -0.618
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 1.365,
+      "color": "#2584e9",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        -0.436,
+        -0.388,
+        -0.19
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": false,
+    "durationMs": 2700
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.55
+  }
+}

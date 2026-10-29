@@ -1,0 +1,54 @@
+{
+  "giftId": "gift_jamaica_parish_clarendon_8c2c296a",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "box",
+      "scale": 1.567,
+      "color": "#906386",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        -0.31,
+        -0.815,
+        0.654
+      ]
+    },
+    {
+      "shape": "sphere",
+      "scale": 1.203,
+      "color": "#3a1b04",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        -0.63,
+        0.21,
+        -0.627
+      ]
+    },
+    {
+      "shape": "icosahedron",
+      "scale": 1.025,
+      "color": "#c2f904",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        -0.679,
+        0.835,
+        -0.817
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": false,
+    "durationMs": 2700
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.55
+  }
+}

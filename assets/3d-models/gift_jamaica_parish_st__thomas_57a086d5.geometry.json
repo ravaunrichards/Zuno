@@ -1,0 +1,54 @@
+{
+  "giftId": "gift_jamaica_parish_st__thomas_57a086d5",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "cylinder",
+      "scale": 0.557,
+      "color": "#4bd776",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        0.881,
+        -0.64,
+        0.858
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 1.318,
+      "color": "#cde24c",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        0.56,
+        0.688,
+        0.318
+      ]
+    },
+    {
+      "shape": "box",
+      "scale": 0.659,
+      "color": "#f8db1e",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        -0.384,
+        -0.247,
+        0.303
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": false,
+    "durationMs": 2700
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.55
+  }
+}

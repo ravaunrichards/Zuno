@@ -1,0 +1,66 @@
+{
+  "giftId": "gift_cosmic_star_cluster_724eaf7d",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "icosahedron",
+      "scale": 1.594,
+      "color": "#e34c93",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        0.541,
+        -0.215,
+        -0.117
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 1.359,
+      "color": "#6b363c",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        0.428,
+        -0.859,
+        -0.494
+      ]
+    },
+    {
+      "shape": "icosahedron",
+      "scale": 1.292,
+      "color": "#85323d",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        0.743,
+        0.598,
+        0.567
+      ]
+    },
+    {
+      "shape": "torus",
+      "scale": 1.184,
+      "color": "#e34c93",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        -0.151,
+        0.218,
+        -0.991
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 3500
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.65
+  }
+}

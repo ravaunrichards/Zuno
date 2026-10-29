@@ -1,0 +1,78 @@
+{
+  "giftId": "gift_cosmic_nebula_veil_27a829d0",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "tetrahedron",
+      "scale": 0.721,
+      "color": "#8d834f",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        -0.902,
+        -0.558,
+        0.52
+      ]
+    },
+    {
+      "shape": "sphere",
+      "scale": 1.674,
+      "color": "#6acd0a",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        0.236,
+        -0.713,
+        -0.202
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 0.848,
+      "color": "#e68055",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        0.096,
+        0.776,
+        0.418
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 0.574,
+      "color": "#8d834f",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        0.356,
+        0.918,
+        0.501
+      ]
+    },
+    {
+      "shape": "torus",
+      "scale": 0.863,
+      "color": "#6acd0a",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        -0.841,
+        -0.64,
+        -0.216
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 3900
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.7000000000000001
+  }
+}

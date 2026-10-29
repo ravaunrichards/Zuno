@@ -1,0 +1,54 @@
+{
+  "giftId": "gift_seasonal_fireflies_392b5e64",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "box",
+      "scale": 0.509,
+      "color": "#925c38",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        0.076,
+        -0.049,
+        -0.845
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 1.096,
+      "color": "#707271",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        0.153,
+        0.006,
+        -0.804
+      ]
+    },
+    {
+      "shape": "cylinder",
+      "scale": 1.104,
+      "color": "#c354f4",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        0.825,
+        -0.271,
+        -0.658
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": false,
+    "durationMs": 2700
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.55
+  }
+}

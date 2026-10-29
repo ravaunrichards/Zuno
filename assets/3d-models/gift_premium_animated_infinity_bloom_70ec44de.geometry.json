@@ -1,0 +1,78 @@
+{
+  "giftId": "gift_premium_animated_infinity_bloom_70ec44de",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "icosahedron",
+      "scale": 1.075,
+      "color": "#4f2961",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        -0.701,
+        0.09,
+        0.274
+      ]
+    },
+    {
+      "shape": "cylinder",
+      "scale": 0.967,
+      "color": "#f04655",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        0.982,
+        0.151,
+        -0.667
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 1.276,
+      "color": "#b7be16",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        0.078,
+        -0.753,
+        0.375
+      ]
+    },
+    {
+      "shape": "icosahedron",
+      "scale": 1.189,
+      "color": "#4f2961",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        -0.421,
+        0.379,
+        -0.479
+      ]
+    },
+    {
+      "shape": "cylinder",
+      "scale": 0.414,
+      "color": "#f04655",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        0.624,
+        0.533,
+        0.26
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 4300
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.75
+  }
+}

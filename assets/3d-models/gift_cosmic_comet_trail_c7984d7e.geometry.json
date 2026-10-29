@@ -1,0 +1,66 @@
+{
+  "giftId": "gift_cosmic_comet_trail_c7984d7e",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "cylinder",
+      "scale": 1.539,
+      "color": "#70244c",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        0.398,
+        0.88,
+        0.737
+      ]
+    },
+    {
+      "shape": "icosahedron",
+      "scale": 1.43,
+      "color": "#4c241b",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        -0.597,
+        -0.453,
+        0.732
+      ]
+    },
+    {
+      "shape": "sphere",
+      "scale": 0.438,
+      "color": "#d7e7f2",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        0.312,
+        -0.751,
+        0.222
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 0.784,
+      "color": "#70244c",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        -0.31,
+        0.121,
+        -0.313
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": false,
+    "durationMs": 3100
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.6000000000000001
+  }
+}

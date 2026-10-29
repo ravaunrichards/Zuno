@@ -1,0 +1,54 @@
+{
+  "giftId": "gift_jamaica_culture_steel_drum_39363e77",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "icosahedron",
+      "scale": 0.767,
+      "color": "#d2e7f0",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        0.223,
+        -0.43,
+        -0.76
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 1.782,
+      "color": "#4c47b7",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        0.83,
+        -0.82,
+        -0.856
+      ]
+    },
+    {
+      "shape": "cylinder",
+      "scale": 0.687,
+      "color": "#af9655",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        -0.07,
+        0.192,
+        -0.888
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": false,
+    "durationMs": 2700
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.55
+  }
+}

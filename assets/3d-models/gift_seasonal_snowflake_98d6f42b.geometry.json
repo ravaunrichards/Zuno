@@ -1,0 +1,54 @@
+{
+  "giftId": "gift_seasonal_snowflake_98d6f42b",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "sphere",
+      "scale": 0.686,
+      "color": "#ad5586",
+      "metalness": 0.4,
+      "roughness": 0.7,
+      "position": [
+        -0.348,
+        -0.01,
+        0.284
+      ]
+    },
+    {
+      "shape": "box",
+      "scale": 0.894,
+      "color": "#e95c23",
+      "metalness": 0.4,
+      "roughness": 0.7,
+      "position": [
+        -0.175,
+        0.694,
+        -0.774
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 1.014,
+      "color": "#52b377",
+      "metalness": 0.4,
+      "roughness": 0.7,
+      "position": [
+        -0.294,
+        0.022,
+        -0.253
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": false,
+    "particles": false,
+    "durationMs": 2300
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.5
+  }
+}

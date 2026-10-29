@@ -1,0 +1,54 @@
+{
+  "giftId": "gift_flowers_romance_lily_basket_68f81a82",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "torus",
+      "scale": 0.869,
+      "color": "#3b9008",
+      "metalness": 0.4,
+      "roughness": 0.7,
+      "position": [
+        0.847,
+        0.024,
+        -0.471
+      ]
+    },
+    {
+      "shape": "sphere",
+      "scale": 1.649,
+      "color": "#fdcdab",
+      "metalness": 0.4,
+      "roughness": 0.7,
+      "position": [
+        0.354,
+        0.047,
+        0.657
+      ]
+    },
+    {
+      "shape": "cylinder",
+      "scale": 1.293,
+      "color": "#2f109d",
+      "metalness": 0.4,
+      "roughness": 0.7,
+      "position": [
+        0.371,
+        0.723,
+        -0.606
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": false,
+    "particles": false,
+    "durationMs": 2300
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.5
+  }
+}

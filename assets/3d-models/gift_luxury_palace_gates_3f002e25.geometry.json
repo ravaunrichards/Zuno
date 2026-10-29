@@ -1,0 +1,78 @@
+{
+  "giftId": "gift_luxury_palace_gates_3f002e25",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "box",
+      "scale": 1.563,
+      "color": "#912a29",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        -0.249,
+        -0.474,
+        0.431
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 0.741,
+      "color": "#4a0c78",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        0.723,
+        -0.908,
+        -0.678
+      ]
+    },
+    {
+      "shape": "cylinder",
+      "scale": 0.57,
+      "color": "#47d45e",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        0.892,
+        0.193,
+        -0.211
+      ]
+    },
+    {
+      "shape": "torus",
+      "scale": 1.535,
+      "color": "#912a29",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        0.221,
+        -0.702,
+        -0.012
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 1.27,
+      "color": "#4a0c78",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        -0.398,
+        -0.813,
+        -0.541
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 4300
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.75
+  }
+}

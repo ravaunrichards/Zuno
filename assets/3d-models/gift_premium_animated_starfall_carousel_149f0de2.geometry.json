@@ -1,0 +1,78 @@
+{
+  "giftId": "gift_premium_animated_starfall_carousel_149f0de2",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "tetrahedron",
+      "scale": 1.654,
+      "color": "#d71550",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        -0.514,
+        -0.726,
+        -0.9
+      ]
+    },
+    {
+      "shape": "box",
+      "scale": 1.114,
+      "color": "#d47cdd",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        0.753,
+        -0.526,
+        0.488
+      ]
+    },
+    {
+      "shape": "box",
+      "scale": 1.771,
+      "color": "#9cf1b5",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        0.572,
+        -0.623,
+        0.693
+      ]
+    },
+    {
+      "shape": "torus",
+      "scale": 0.85,
+      "color": "#d71550",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        0.689,
+        -0.174,
+        -0.921
+      ]
+    },
+    {
+      "shape": "sphere",
+      "scale": 1.444,
+      "color": "#d47cdd",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        -0.77,
+        -0.519,
+        -0.549
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 4300
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.75
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "giftId": "gift_flowers_romance_diamond_heart_d3d7a021",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "icosahedron",
+      "scale": 1.511,
+      "color": "#ef22b9",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        -0.754,
+        0.083,
+        0.281
+      ]
+    },
+    {
+      "shape": "icosahedron",
+      "scale": 1.237,
+      "color": "#3c6c70",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        -0.957,
+        0.083,
+        -0.352
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 1.256,
+      "color": "#606d9b",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        0.602,
+        0.419,
+        0.996
+      ]
+    },
+    {
+      "shape": "box",
+      "scale": 1.655,
+      "color": "#ef22b9",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        -0.352,
+        -0.099,
+        -0.875
+      ]
+    },
+    {
+      "shape": "sphere",
+      "scale": 1.284,
+      "color": "#3c6c70",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        0.321,
+        0.325,
+        -0.35
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 4300
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.75
+  }
+}

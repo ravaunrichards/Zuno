@@ -1,0 +1,42 @@
+{
+  "giftId": "gift_celebration_confetti_pop_82ad0d98",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "box",
+      "scale": 1.12,
+      "color": "#c5671f",
+      "metalness": 0.3,
+      "roughness": 0.8,
+      "position": [
+        0.464,
+        0.31,
+        -0.21
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 0.528,
+      "color": "#e37f59",
+      "metalness": 0.3,
+      "roughness": 0.8,
+      "position": [
+        0.43,
+        0.026,
+        -0.644
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": false,
+    "particles": false,
+    "durationMs": 1900
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.45
+  }
+}

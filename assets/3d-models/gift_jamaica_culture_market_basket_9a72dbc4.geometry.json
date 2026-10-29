@@ -1,0 +1,54 @@
+{
+  "giftId": "gift_jamaica_culture_market_basket_9a72dbc4",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "cone",
+      "scale": 0.411,
+      "color": "#e8da2b",
+      "metalness": 0.4,
+      "roughness": 0.7,
+      "position": [
+        0.949,
+        -0.016,
+        -0.848
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 1.186,
+      "color": "#5cdf30",
+      "metalness": 0.4,
+      "roughness": 0.7,
+      "position": [
+        0.253,
+        0.286,
+        -0.535
+      ]
+    },
+    {
+      "shape": "torus",
+      "scale": 0.416,
+      "color": "#f107d0",
+      "metalness": 0.4,
+      "roughness": 0.7,
+      "position": [
+        0.423,
+        -0.418,
+        0.924
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": false,
+    "particles": false,
+    "durationMs": 2300
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.5
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "giftId": "gift_seasonal_summer_sun_4a37c14a",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "sphere",
+      "scale": 1.665,
+      "color": "#49cf99",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        -0.37,
+        0.845,
+        -0.42
+      ]
+    },
+    {
+      "shape": "icosahedron",
+      "scale": 1.082,
+      "color": "#30843c",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        0.166,
+        -0.87,
+        -0.278
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 1.38,
+      "color": "#477a4c",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        0.333,
+        -0.021,
+        0.356
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": false,
+    "durationMs": 2700
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.55
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "giftId": "gift_creator_support_fan_badge_b11a2154",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "icosahedron",
+      "scale": 1.202,
+      "color": "#a9cefd",
+      "metalness": 0.4,
+      "roughness": 0.7,
+      "position": [
+        -0.361,
+        -0.792,
+        -0.725
+      ]
+    },
+    {
+      "shape": "box",
+      "scale": 0.563,
+      "color": "#eb8fd5",
+      "metalness": 0.4,
+      "roughness": 0.7,
+      "position": [
+        0.041,
+        0.498,
+        0.199
+      ]
+    },
+    {
+      "shape": "box",
+      "scale": 1.707,
+      "color": "#a4f059",
+      "metalness": 0.4,
+      "roughness": 0.7,
+      "position": [
+        0.203,
+        0.139,
+        0.204
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": false,
+    "particles": false,
+    "durationMs": 2300
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.5
+  }
+}

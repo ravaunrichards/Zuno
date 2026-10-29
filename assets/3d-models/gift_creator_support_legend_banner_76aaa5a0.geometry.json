@@ -1,0 +1,78 @@
+{
+  "giftId": "gift_creator_support_legend_banner_76aaa5a0",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "cone",
+      "scale": 0.413,
+      "color": "#ffeb8d",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        0.076,
+        0.155,
+        0.969
+      ]
+    },
+    {
+      "shape": "box",
+      "scale": 1.668,
+      "color": "#dedbdd",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        0.92,
+        0.523,
+        -0.284
+      ]
+    },
+    {
+      "shape": "icosahedron",
+      "scale": 1.549,
+      "color": "#d39102",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        -0.437,
+        0.119,
+        -0.179
+      ]
+    },
+    {
+      "shape": "icosahedron",
+      "scale": 1.502,
+      "color": "#ffeb8d",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        0.421,
+        0.749,
+        -0.749
+      ]
+    },
+    {
+      "shape": "torus",
+      "scale": 1.665,
+      "color": "#dedbdd",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        0.257,
+        0.515,
+        -0.408
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 3900
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.7000000000000001
+  }
+}

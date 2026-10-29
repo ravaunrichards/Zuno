@@ -1,0 +1,78 @@
+{
+  "giftId": "gift_vehicles_mag_lev_pod_b87dfdd7",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "box",
+      "scale": 0.747,
+      "color": "#54ff01",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        -0.874,
+        0.768,
+        -0.052
+      ]
+    },
+    {
+      "shape": "torus",
+      "scale": 0.79,
+      "color": "#242fa6",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        0.341,
+        0.758,
+        0.946
+      ]
+    },
+    {
+      "shape": "sphere",
+      "scale": 0.422,
+      "color": "#715983",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        0.839,
+        -0.906,
+        0.488
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 1.177,
+      "color": "#54ff01",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        -0.988,
+        -0.139,
+        -0.892
+      ]
+    },
+    {
+      "shape": "box",
+      "scale": 0.587,
+      "color": "#242fa6",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        0.834,
+        -0.801,
+        -0.509
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 3900
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.7000000000000001
+  }
+}

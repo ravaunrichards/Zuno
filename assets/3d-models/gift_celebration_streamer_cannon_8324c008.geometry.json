@@ -1,0 +1,54 @@
+{
+  "giftId": "gift_celebration_streamer_cannon_8324c008",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "box",
+      "scale": 1.465,
+      "color": "#c3f404",
+      "metalness": 0.4,
+      "roughness": 0.7,
+      "position": [
+        -0.263,
+        -0.661,
+        0.762
+      ]
+    },
+    {
+      "shape": "cylinder",
+      "scale": 1.689,
+      "color": "#98ee74",
+      "metalness": 0.4,
+      "roughness": 0.7,
+      "position": [
+        0.011,
+        -0.936,
+        -0.711
+      ]
+    },
+    {
+      "shape": "cylinder",
+      "scale": 0.821,
+      "color": "#c3c188",
+      "metalness": 0.4,
+      "roughness": 0.7,
+      "position": [
+        -0.727,
+        0.358,
+        -0.66
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": false,
+    "particles": false,
+    "durationMs": 2300
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.5
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "giftId": "gift_seasonal_cherry_blossom_rain_03ee9fb8",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "cylinder",
+      "scale": 1.684,
+      "color": "#69e19f",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        0.849,
+        -0.228,
+        -0.865
+      ]
+    },
+    {
+      "shape": "torus",
+      "scale": 1.264,
+      "color": "#2c0749",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        -0.996,
+        -0.287,
+        0.544
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 0.798,
+      "color": "#8105de",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        0.248,
+        -0.292,
+        -0.76
+      ]
+    },
+    {
+      "shape": "cylinder",
+      "scale": 0.427,
+      "color": "#69e19f",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        -0.493,
+        -0.722,
+        -0.388
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 3500
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.65
+  }
+}

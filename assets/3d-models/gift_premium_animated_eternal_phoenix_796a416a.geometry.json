@@ -1,0 +1,90 @@
+{
+  "giftId": "gift_premium_animated_eternal_phoenix_796a416a",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "torus",
+      "scale": 0.826,
+      "color": "#2c4911",
+      "metalness": 1.0,
+      "roughness": 0.1,
+      "position": [
+        -0.723,
+        -0.523,
+        -0.837
+      ]
+    },
+    {
+      "shape": "box",
+      "scale": 1.556,
+      "color": "#9de2f3",
+      "metalness": 1.0,
+      "roughness": 0.1,
+      "position": [
+        0.626,
+        0.076,
+        0.027
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 0.5,
+      "color": "#dc336a",
+      "metalness": 1.0,
+      "roughness": 0.1,
+      "position": [
+        -0.301,
+        -0.824,
+        0.579
+      ]
+    },
+    {
+      "shape": "torus",
+      "scale": 0.661,
+      "color": "#2c4911",
+      "metalness": 1.0,
+      "roughness": 0.1,
+      "position": [
+        0.257,
+        0.618,
+        -0.658
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 0.962,
+      "color": "#9de2f3",
+      "metalness": 1.0,
+      "roughness": 0.1,
+      "position": [
+        0.481,
+        0.059,
+        -0.707
+      ]
+    },
+    {
+      "shape": "cylinder",
+      "scale": 0.81,
+      "color": "#dc336a",
+      "metalness": 1.0,
+      "roughness": 0.1,
+      "position": [
+        -0.515,
+        0.566,
+        0.691
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 4700
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.8
+  }
+}

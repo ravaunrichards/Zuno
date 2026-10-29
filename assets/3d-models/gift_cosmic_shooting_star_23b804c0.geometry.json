@@ -1,0 +1,54 @@
+{
+  "giftId": "gift_cosmic_shooting_star_23b804c0",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "cone",
+      "scale": 1.247,
+      "color": "#a00ac3",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        0.296,
+        -0.433,
+        0.368
+      ]
+    },
+    {
+      "shape": "icosahedron",
+      "scale": 0.974,
+      "color": "#b09be5",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        0.338,
+        0.702,
+        0.981
+      ]
+    },
+    {
+      "shape": "icosahedron",
+      "scale": 0.69,
+      "color": "#99dc4a",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        -0.704,
+        -0.83,
+        -0.604
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": false,
+    "durationMs": 2700
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.55
+  }
+}

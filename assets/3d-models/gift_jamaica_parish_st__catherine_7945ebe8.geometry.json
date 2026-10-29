@@ -1,0 +1,54 @@
+{
+  "giftId": "gift_jamaica_parish_st__catherine_7945ebe8",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "sphere",
+      "scale": 0.409,
+      "color": "#707d5d",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        -0.047,
+        0.613,
+        -0.002
+      ]
+    },
+    {
+      "shape": "torus",
+      "scale": 0.985,
+      "color": "#7eea27",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        -0.73,
+        0.889,
+        0.037
+      ]
+    },
+    {
+      "shape": "box",
+      "scale": 1.354,
+      "color": "#33bcce",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        0.921,
+        0.156,
+        -0.042
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": false,
+    "durationMs": 2700
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.55
+  }
+}

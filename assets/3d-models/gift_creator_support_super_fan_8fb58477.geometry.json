@@ -1,0 +1,66 @@
+{
+  "giftId": "gift_creator_support_super_fan_8fb58477",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "box",
+      "scale": 1.145,
+      "color": "#8a4b1b",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        0.475,
+        -0.563,
+        -0.173
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 1.716,
+      "color": "#d932bc",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        0.578,
+        -0.227,
+        -0.436
+      ]
+    },
+    {
+      "shape": "icosahedron",
+      "scale": 0.599,
+      "color": "#c4f400",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        -0.633,
+        0.795,
+        -0.977
+      ]
+    },
+    {
+      "shape": "cylinder",
+      "scale": 1.165,
+      "color": "#8a4b1b",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        0.079,
+        0.266,
+        0.874
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": false,
+    "durationMs": 3100
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.6000000000000001
+  }
+}

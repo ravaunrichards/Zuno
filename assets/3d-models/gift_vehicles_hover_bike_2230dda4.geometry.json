@@ -1,0 +1,66 @@
+{
+  "giftId": "gift_vehicles_hover_bike_2230dda4",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "box",
+      "scale": 1.568,
+      "color": "#346524",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        0.041,
+        0.56,
+        0.865
+      ]
+    },
+    {
+      "shape": "icosahedron",
+      "scale": 0.795,
+      "color": "#4bcb64",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        -0.796,
+        0.489,
+        -0.196
+      ]
+    },
+    {
+      "shape": "cylinder",
+      "scale": 0.561,
+      "color": "#c4aa65",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        0.752,
+        -0.657,
+        0.235
+      ]
+    },
+    {
+      "shape": "torus",
+      "scale": 0.771,
+      "color": "#346524",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        0.949,
+        0.384,
+        0.64
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 3500
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.65
+  }
+}

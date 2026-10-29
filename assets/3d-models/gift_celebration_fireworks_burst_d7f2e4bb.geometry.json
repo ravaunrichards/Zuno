@@ -1,0 +1,66 @@
+{
+  "giftId": "gift_celebration_fireworks_burst_d7f2e4bb",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "sphere",
+      "scale": 0.969,
+      "color": "#48c52e",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        -0.75,
+        0.879,
+        0.804
+      ]
+    },
+    {
+      "shape": "torus",
+      "scale": 1.573,
+      "color": "#a87dcc",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        -0.27,
+        0.907,
+        -0.023
+      ]
+    },
+    {
+      "shape": "icosahedron",
+      "scale": 0.675,
+      "color": "#cc2c4e",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        -0.235,
+        -0.91,
+        -0.381
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 1.657,
+      "color": "#48c52e",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        -0.998,
+        0.513,
+        -0.834
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": false,
+    "durationMs": 3100
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.6000000000000001
+  }
+}

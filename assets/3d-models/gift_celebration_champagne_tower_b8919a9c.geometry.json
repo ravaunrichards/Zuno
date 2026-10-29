@@ -1,0 +1,66 @@
+{
+  "giftId": "gift_celebration_champagne_tower_b8919a9c",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "sphere",
+      "scale": 0.431,
+      "color": "#6017fa",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        0.575,
+        -0.099,
+        -0.199
+      ]
+    },
+    {
+      "shape": "sphere",
+      "scale": 1.123,
+      "color": "#b2a241",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        -0.964,
+        -0.978,
+        -0.742
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 0.942,
+      "color": "#3d14c3",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        -0.998,
+        -0.775,
+        -0.983
+      ]
+    },
+    {
+      "shape": "torus",
+      "scale": 1.465,
+      "color": "#6017fa",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        0.874,
+        0.992,
+        -0.751
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 3500
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.65
+  }
+}

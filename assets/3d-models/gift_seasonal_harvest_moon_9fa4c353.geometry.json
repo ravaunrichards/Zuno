@@ -1,0 +1,66 @@
+{
+  "giftId": "gift_seasonal_harvest_moon_9fa4c353",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "icosahedron",
+      "scale": 0.731,
+      "color": "#f387b0",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        -0.441,
+        0.177,
+        0.815
+      ]
+    },
+    {
+      "shape": "icosahedron",
+      "scale": 1.623,
+      "color": "#3a6a46",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        -0.416,
+        0.391,
+        -0.763
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 1.304,
+      "color": "#277390",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        0.973,
+        -0.462,
+        -0.904
+      ]
+    },
+    {
+      "shape": "sphere",
+      "scale": 0.825,
+      "color": "#f387b0",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        -0.543,
+        0.396,
+        -0.282
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": false,
+    "durationMs": 3100
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.6000000000000001
+  }
+}

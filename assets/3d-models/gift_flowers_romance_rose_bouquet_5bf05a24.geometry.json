@@ -1,0 +1,54 @@
+{
+  "giftId": "gift_flowers_romance_rose_bouquet_5bf05a24",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "sphere",
+      "scale": 0.734,
+      "color": "#45ef5b",
+      "metalness": 0.4,
+      "roughness": 0.7,
+      "position": [
+        0.295,
+        -0.597,
+        0.975
+      ]
+    },
+    {
+      "shape": "icosahedron",
+      "scale": 1.756,
+      "color": "#6b2189",
+      "metalness": 0.4,
+      "roughness": 0.7,
+      "position": [
+        -0.264,
+        0.629,
+        -0.722
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 0.539,
+      "color": "#ace836",
+      "metalness": 0.4,
+      "roughness": 0.7,
+      "position": [
+        -0.401,
+        0.053,
+        0.331
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": false,
+    "particles": false,
+    "durationMs": 2300
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.5
+  }
+}

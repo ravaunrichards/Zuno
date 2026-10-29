@@ -1,0 +1,78 @@
+{
+  "giftId": "gift_cosmic_supernova_3f46776a",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "sphere",
+      "scale": 1.35,
+      "color": "#d25e92",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        -0.142,
+        -0.934,
+        0.741
+      ]
+    },
+    {
+      "shape": "icosahedron",
+      "scale": 1.273,
+      "color": "#c744ff",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        -0.91,
+        -0.901,
+        0.597
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 1.366,
+      "color": "#2dbbb9",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        -0.729,
+        -0.367,
+        -0.15
+      ]
+    },
+    {
+      "shape": "sphere",
+      "scale": 1.382,
+      "color": "#d25e92",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        -0.449,
+        -0.401,
+        0.404
+      ]
+    },
+    {
+      "shape": "box",
+      "scale": 0.895,
+      "color": "#c744ff",
+      "metalness": 0.9,
+      "roughness": 0.2,
+      "position": [
+        0.371,
+        -0.934,
+        0.832
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 4300
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.75
+  }
+}

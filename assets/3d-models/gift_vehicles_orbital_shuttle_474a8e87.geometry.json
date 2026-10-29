@@ -1,0 +1,90 @@
+{
+  "giftId": "gift_vehicles_orbital_shuttle_474a8e87",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "cone",
+      "scale": 1.37,
+      "color": "#d54ffe",
+      "metalness": 1.0,
+      "roughness": 0.1,
+      "position": [
+        0.66,
+        0.274,
+        -0.71
+      ]
+    },
+    {
+      "shape": "box",
+      "scale": 1.595,
+      "color": "#4dda6f",
+      "metalness": 1.0,
+      "roughness": 0.1,
+      "position": [
+        -0.958,
+        0.981,
+        -0.613
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 1.217,
+      "color": "#3c821d",
+      "metalness": 1.0,
+      "roughness": 0.1,
+      "position": [
+        -0.994,
+        -0.999,
+        0.828
+      ]
+    },
+    {
+      "shape": "cylinder",
+      "scale": 1.036,
+      "color": "#d54ffe",
+      "metalness": 1.0,
+      "roughness": 0.1,
+      "position": [
+        -0.555,
+        -0.138,
+        0.193
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 1.435,
+      "color": "#4dda6f",
+      "metalness": 1.0,
+      "roughness": 0.1,
+      "position": [
+        0.01,
+        -0.151,
+        -0.5
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 1.687,
+      "color": "#3c821d",
+      "metalness": 1.0,
+      "roughness": 0.1,
+      "position": [
+        -0.969,
+        -0.267,
+        -0.849
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 4700
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.8
+  }
+}

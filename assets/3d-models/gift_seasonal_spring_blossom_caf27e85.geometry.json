@@ -1,0 +1,54 @@
+{
+  "giftId": "gift_seasonal_spring_blossom_caf27e85",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "torus",
+      "scale": 0.945,
+      "color": "#f12df8",
+      "metalness": 0.4,
+      "roughness": 0.7,
+      "position": [
+        0.874,
+        0.738,
+        -0.119
+      ]
+    },
+    {
+      "shape": "icosahedron",
+      "scale": 0.531,
+      "color": "#c921c1",
+      "metalness": 0.4,
+      "roughness": 0.7,
+      "position": [
+        -0.799,
+        0.982,
+        0.124
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 1.604,
+      "color": "#dda3aa",
+      "metalness": 0.4,
+      "roughness": 0.7,
+      "position": [
+        -0.804,
+        0.047,
+        -0.844
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": false,
+    "particles": false,
+    "durationMs": 2300
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.5
+  }
+}

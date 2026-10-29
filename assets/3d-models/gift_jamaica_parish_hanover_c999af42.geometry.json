@@ -1,0 +1,54 @@
+{
+  "giftId": "gift_jamaica_parish_hanover_c999af42",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "cone",
+      "scale": 0.856,
+      "color": "#4ce221",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        0.977,
+        0.532,
+        -0.487
+      ]
+    },
+    {
+      "shape": "torus",
+      "scale": 1.386,
+      "color": "#ea7ef8",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        0.469,
+        -0.528,
+        -0.605
+      ]
+    },
+    {
+      "shape": "cylinder",
+      "scale": 1.332,
+      "color": "#6602c6",
+      "metalness": 0.5,
+      "roughness": 0.6,
+      "position": [
+        -0.371,
+        -0.759,
+        -0.949
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": false,
+    "durationMs": 2700
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.55
+  }
+}

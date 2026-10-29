@@ -1,0 +1,78 @@
+{
+  "giftId": "gift_premium_animated_aurora_wings_61465d9e",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "cone",
+      "scale": 1.512,
+      "color": "#2fd021",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        -0.914,
+        0.75,
+        -0.963
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 1.127,
+      "color": "#b4c92f",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        0.696,
+        0.607,
+        0.968
+      ]
+    },
+    {
+      "shape": "cylinder",
+      "scale": 0.432,
+      "color": "#98eeeb",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        -0.3,
+        0.603,
+        -0.487
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 0.611,
+      "color": "#2fd021",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        -0.269,
+        -0.602,
+        0.719
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 0.838,
+      "color": "#b4c92f",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        0.505,
+        0.203,
+        0.714
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 3900
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.7000000000000001
+  }
+}

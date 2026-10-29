@@ -1,0 +1,66 @@
+{
+  "giftId": "gift_music_perf_sound_system_8a7a0c90",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "icosahedron",
+      "scale": 1.58,
+      "color": "#d58f9a",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        0.329,
+        0.785,
+        0.727
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 0.679,
+      "color": "#37a3e9",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        -0.253,
+        0.44,
+        0.334
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 0.446,
+      "color": "#aeb672",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        -0.16,
+        0.348,
+        0.508
+      ]
+    },
+    {
+      "shape": "cylinder",
+      "scale": 1.64,
+      "color": "#d58f9a",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        0.984,
+        0.989,
+        -0.33
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": false,
+    "durationMs": 3100
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.6000000000000001
+  }
+}

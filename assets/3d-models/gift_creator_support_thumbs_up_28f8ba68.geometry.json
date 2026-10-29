@@ -1,0 +1,42 @@
+{
+  "giftId": "gift_creator_support_thumbs_up_28f8ba68",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "cone",
+      "scale": 0.684,
+      "color": "#297a13",
+      "metalness": 0.3,
+      "roughness": 0.8,
+      "position": [
+        0.702,
+        -0.386,
+        -0.183
+      ]
+    },
+    {
+      "shape": "sphere",
+      "scale": 1.392,
+      "color": "#88eff7",
+      "metalness": 0.3,
+      "roughness": 0.8,
+      "position": [
+        0.215,
+        -0.833,
+        -0.26
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": false,
+    "particles": false,
+    "durationMs": 1900
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.45
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "giftId": "gift_luxury_platinum_watch_3cd084d5",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "cone",
+      "scale": 1.164,
+      "color": "#fffd9f",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        0.239,
+        -0.156,
+        0.632
+      ]
+    },
+    {
+      "shape": "torus",
+      "scale": 1.099,
+      "color": "#f51d3e",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        -0.669,
+        -0.629,
+        0.132
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 1.425,
+      "color": "#4c4991",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        0.546,
+        0.716,
+        -0.972
+      ]
+    },
+    {
+      "shape": "icosahedron",
+      "scale": 1.68,
+      "color": "#fffd9f",
+      "metalness": 0.7,
+      "roughness": 0.4,
+      "position": [
+        0.94,
+        0.305,
+        -0.052
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 3500
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.65
+  }
+}

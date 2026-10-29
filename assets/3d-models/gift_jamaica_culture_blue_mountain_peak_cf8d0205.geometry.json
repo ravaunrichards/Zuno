@@ -1,0 +1,66 @@
+{
+  "giftId": "gift_jamaica_culture_blue_mountain_peak_cf8d0205",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "cone",
+      "scale": 1.343,
+      "color": "#e47dfc",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        0.334,
+        0.41,
+        0.715
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 0.943,
+      "color": "#aeb4c8",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        -0.797,
+        -0.122,
+        0.248
+      ]
+    },
+    {
+      "shape": "torus",
+      "scale": 1.428,
+      "color": "#6a3e3b",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        0.61,
+        -0.42,
+        -0.728
+      ]
+    },
+    {
+      "shape": "torus",
+      "scale": 0.741,
+      "color": "#e47dfc",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        0.337,
+        -0.638,
+        -0.586
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": false,
+    "durationMs": 3100
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.6000000000000001
+  }
+}

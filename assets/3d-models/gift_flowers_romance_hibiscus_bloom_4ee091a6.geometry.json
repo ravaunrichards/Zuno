@@ -1,0 +1,54 @@
+{
+  "giftId": "gift_flowers_romance_hibiscus_bloom_4ee091a6",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "icosahedron",
+      "scale": 1.376,
+      "color": "#46da95",
+      "metalness": 0.4,
+      "roughness": 0.7,
+      "position": [
+        -0.193,
+        -0.255,
+        -0.714
+      ]
+    },
+    {
+      "shape": "icosahedron",
+      "scale": 1.045,
+      "color": "#9d396a",
+      "metalness": 0.4,
+      "roughness": 0.7,
+      "position": [
+        0.862,
+        -0.218,
+        0.6
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 1.266,
+      "color": "#ec2321",
+      "metalness": 0.4,
+      "roughness": 0.7,
+      "position": [
+        -0.253,
+        -0.044,
+        -0.071
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": false,
+    "particles": false,
+    "durationMs": 2300
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.5
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "giftId": "gift_jamaica_culture_ackee___saltfish_8cc49dc0",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "tetrahedron",
+      "scale": 1.061,
+      "color": "#dbc058",
+      "metalness": 0.4,
+      "roughness": 0.7,
+      "position": [
+        0.152,
+        0.488,
+        -0.772
+      ]
+    },
+    {
+      "shape": "box",
+      "scale": 1.559,
+      "color": "#a728d5",
+      "metalness": 0.4,
+      "roughness": 0.7,
+      "position": [
+        -0.94,
+        -0.839,
+        -0.064
+      ]
+    },
+    {
+      "shape": "box",
+      "scale": 1.01,
+      "color": "#c95e55",
+      "metalness": 0.4,
+      "roughness": 0.7,
+      "position": [
+        0.646,
+        0.949,
+        -0.428
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": false,
+    "particles": false,
+    "durationMs": 2300
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.5
+  }
+}

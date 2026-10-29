@@ -1,0 +1,78 @@
+{
+  "giftId": "gift_luxury_emerald_scepter_c91501a2",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "tetrahedron",
+      "scale": 0.933,
+      "color": "#e854e8",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        0.49,
+        0.522,
+        0.528
+      ]
+    },
+    {
+      "shape": "sphere",
+      "scale": 0.845,
+      "color": "#3422ac",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        -0.026,
+        -0.702,
+        -0.977
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 1.123,
+      "color": "#9d464e",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        0.261,
+        0.605,
+        -0.745
+      ]
+    },
+    {
+      "shape": "box",
+      "scale": 1.553,
+      "color": "#e854e8",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        -0.827,
+        -0.696,
+        0.966
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 1.183,
+      "color": "#3422ac",
+      "metalness": 0.8,
+      "roughness": 0.3,
+      "position": [
+        -0.631,
+        -0.997,
+        -0.191
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": true,
+    "durationMs": 3900
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.7000000000000001
+  }
+}

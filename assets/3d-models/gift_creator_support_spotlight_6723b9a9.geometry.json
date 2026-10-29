@@ -1,0 +1,66 @@
+{
+  "giftId": "gift_creator_support_spotlight_6723b9a9",
+  "renderer": "three.js",
+  "format": "procedural-geometry-spec-v1",
+  "parts": [
+    {
+      "shape": "box",
+      "scale": 1.568,
+      "color": "#425e7b",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        0.063,
+        -0.322,
+        -0.036
+      ]
+    },
+    {
+      "shape": "cone",
+      "scale": 1.379,
+      "color": "#a35a4c",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        -0.704,
+        0.425,
+        0.403
+      ]
+    },
+    {
+      "shape": "tetrahedron",
+      "scale": 1.142,
+      "color": "#c368a3",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        0.327,
+        -0.484,
+        -0.274
+      ]
+    },
+    {
+      "shape": "box",
+      "scale": 1.258,
+      "color": "#425e7b",
+      "metalness": 0.6,
+      "roughness": 0.5,
+      "position": [
+        0.613,
+        -0.901,
+        -0.284
+      ]
+    }
+  ],
+  "animation": {
+    "spin": true,
+    "bob": true,
+    "particles": false,
+    "durationMs": 3100
+  },
+  "lighting": {
+    "ambient": 0.6,
+    "key": 1.0,
+    "rim": 0.6000000000000001
+  }
+}
