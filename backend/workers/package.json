@@ -5,7 +5,10 @@
   "description": "Durable ZUNO event outbox worker",
   "main": "src/job-policy.js",
   "scripts": {
-    "check": "node --check src/job-policy.js && node --check src/notification-worker.js",
-    "start": "node src/notification-worker.js"
+    "check": "node --check src/job-policy.js && node --check src/notification-worker.js && node --check src/notification-delivery-worker.js",
+    "start": "node src/notification-dispatcher.js"
+  },
+  "dependencies": {
+    "web-push": "^3.6.7"
   }
 }
