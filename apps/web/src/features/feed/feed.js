@@ -2,6 +2,26 @@ import { requestJson } from '../../services/api-client.js';
 import { getSession } from '../auth/session.js';
 
 const PAGE_SIZE = 12;
+let feedPreferences = { autoplayVideo: false, reducedMotion: false, dataSaver: false, preferredTopics: [] };
+async function loadFeedPreferences() {
+  if (!getSession()) {
+    feedPreferences = { autoplayVideo: false, reducedMotion: false, dataSaver: false, preferredTopics: [] };
+    applyFeedPreferences();
+    return;
+  }
+  try {
+    const response = await requestJson('/api/feed/preferences');
+    feedPreferences = { ...feedPreferences, ...(response.preferences || {}) };
+    applyFeedPreferences();
+  } catch (_) {
+    applyFeedPreferences();
+  }
+}
+function applyFeedPreferences() {
+  document.body.classList.toggle('zuno-reduced-motion',Boolean(feedPreferences.reducedMotion));
+  document.body.classList.toggle('zuno-data-saver',Boolean(feedPreferences.dataSaver));
+}
+
 let mode = 'for-you';
 let offset = 0;
 let loading = false;
@@ -46,7 +66,9 @@ function mediaElement(post) {
     const video = element('video', 'feed-media-player');
     video.controls = true;
     video.playsInline = true;
-    video.preload = 'metadata';
+    video.preload = feedPreferences.dataSaver ? 'none' : 'metadata';
+    video.autoplay = Boolean(feedPreferences.autoplayVideo && !feedPreferences.reducedMotion);
+    if (video.autoplay) video.muted = true;
     video.src = first.url;
     video.setAttribute('aria-label', 'Post video');
     wrap.append(video);
@@ -255,7 +277,9 @@ export function mountFeed() {
   }));
   document.getElementById('feed-refresh')?.addEventListener('click', () => load(true));
   document.getElementById('feed-load-more')?.addEventListener('click', () => { if (!exhausted) load(false); });
-  window.addEventListener('zuno:session-change', () => load(true));
+  window.addEventListener('zuno:session-change', () => { loadFeedPreferences(); load(true); });
+  window.addEventListener('zuno:feed-preferences-change',event=>{feedPreferences={...feedPreferences,...(event.detail||{})};applyFeedPreferences();document.querySelectorAll('.feed-media-player').forEach(video=>{video.preload=feedPreferences.dataSaver?'none':'metadata';});});
+  loadFeedPreferences();
   window.addEventListener('zuno:feed-refresh', () => load(true));
   load(true);
 }

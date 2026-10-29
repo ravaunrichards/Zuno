@@ -154,6 +154,40 @@ function renderConsents(consents) {
     control.append(select,save); row.append(copy,control); box.append(row);
   }
 }
+async function loadFeedPreferences() {
+  const result = await requestJson('/api/feed/preferences');
+  const prefs = result.preferences || {};
+  $('settings-feed-autoplay').checked = Boolean(prefs.autoplayVideo);
+  $('settings-feed-reduced-motion').checked = Boolean(prefs.reducedMotion);
+  $('settings-feed-data-saver').checked = Boolean(prefs.dataSaver);
+  $('settings-feed-topics').value = Array.isArray(prefs.preferredTopics) ? prefs.preferredTopics.join(', ') : '';
+}
+async function saveFeedPreferences(event) {
+  event.preventDefault();
+  if (!requireSession()) return;
+  const rawTopics = $('settings-feed-topics').value.split(',').map(value => value.trim()).filter(Boolean);
+  if (rawTopics.length > 20) {
+    showStatus('feed-preferences-status','Choose no more than 20 topic interests.',true);
+    return;
+  }
+  const button = $('feed-preferences-save');
+  if (button) button.disabled = true;
+  showStatus('feed-preferences-status','Saving feed preferences…');
+  try {
+    const result = await requestJson('/api/feed/preferences',{method:'PATCH',body:{
+      autoplayVideo:$('settings-feed-autoplay').checked,
+      reducedMotion:$('settings-feed-reduced-motion').checked,
+      dataSaver:$('settings-feed-data-saver').checked,
+      preferredTopics:rawTopics
+    }});
+    const prefs = result.preferences || {};
+    showStatus('feed-preferences-status','Feed preferences saved.');
+    window.dispatchEvent(new CustomEvent('zuno:feed-preferences-change',{detail:prefs}));
+  } catch(error) {
+    showStatus('feed-preferences-status',error.message||'Feed preferences could not be saved.',true);
+  } finally { if(button)button.disabled=false; }
+}
+
 async function loadConsents() {
   const result = await requestJson('/api/privacy/consents');
   renderConsents(Array.isArray(result.consents)?result.consents:[]);
@@ -264,7 +298,7 @@ async function openSettings() {
   if(loadBusy)return;
   loadBusy=true;
   showStatus('profile-settings-status','Loading account settings…');
-  const results=await Promise.allSettled([loadProfile(),loadNotificationPreferences(),loadConsents(),loadRelationships(),loadDataRequests()]);
+  const results=await Promise.allSettled([loadProfile(),loadNotificationPreferences(),loadFeedPreferences(),loadConsents(),loadRelationships(),loadDataRequests()]);
   const failed=results.filter(result=>result.status==='rejected');
   if(failed.length)showStatus('profile-settings-status','Some settings could not load. Check the status shown in each section and retry.',true);
   else showStatus('profile-settings-status','Account settings loaded from ZUNO.');
@@ -277,6 +311,7 @@ export function mountProfileSettings() {
   document.querySelectorAll('[data-close-profile-settings]').forEach(button=>button.addEventListener('click',closeDialog));
   $('profile-settings-form')?.addEventListener('submit',saveProfile);
   $('notification-settings-form')?.addEventListener('submit',saveNotificationPreferences);
+  $('feed-preferences-form')?.addEventListener('submit',saveFeedPreferences);
   $('relationship-settings-form')?.addEventListener('submit',addRelationship);
   $('data-request-form')?.addEventListener('submit',submitDataRequest);
   $('profile-settings-dialog')?.addEventListener('cancel',event=>{event.preventDefault();closeDialog();});

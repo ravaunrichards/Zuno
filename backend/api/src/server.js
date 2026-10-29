@@ -1503,6 +1503,89 @@ const server = http.createServer(async (req, res) => {
       } });
     }
 
+
+    if (req.method === 'GET' && url.pathname === '/api/feed/preferences') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const current = await rowsForUser(session, 'feed_preferences', {
+        select: 'profile_id,preferred_topics,autoplay_video,reduced_motion,data_saver,updated_at',
+        profile_id: 'eq.' + session.profile.id, limit: '1'
+      });
+      if (!current.ok || !Array.isArray(current.data)) return badDatabase(res, current, 'FEED_PREFERENCES_UNAVAILABLE');
+      let prefs = current.data[0];
+      if (!prefs) {
+        const created = await rowsForUser(session, 'feed_preferences', {
+          select: 'profile_id,preferred_topics,autoplay_video,reduced_motion,data_saver,updated_at'
+        }, { method: 'POST', body: { profile_id: session.profile.id } });
+        if (!created.ok || !Array.isArray(created.data) || !created.data[0]) return badDatabase(res, created, 'FEED_PREFERENCES_CREATE_FAILED');
+        prefs = created.data[0];
+      }
+      return json(res, 200, { ok: true, preferences: {
+        preferredTopics: Array.isArray(prefs.preferred_topics) ? prefs.preferred_topics : [],
+        autoplayVideo: Boolean(prefs.autoplay_video),
+        reducedMotion: Boolean(prefs.reduced_motion),
+        dataSaver: Boolean(prefs.data_saver),
+        updatedAt: prefs.updated_at
+      } });
+    }
+
+    if (req.method === 'PATCH' && url.pathname === '/api/feed/preferences') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const body = await readBody(req);
+      const patch = {};
+      for (const [input, column] of [
+        ['autoplayVideo', 'autoplay_video'],
+        ['reducedMotion', 'reduced_motion'],
+        ['dataSaver', 'data_saver']
+      ]) {
+        if (body[input] !== undefined) {
+          if (typeof body[input] !== 'boolean') return error(res, 400, 'INVALID_FEED_PREFERENCE', input + ' must be boolean.');
+          patch[column] = body[input];
+        }
+      }
+      if (body.preferredTopics !== undefined) {
+        if (!Array.isArray(body.preferredTopics) || body.preferredTopics.length > 20) return error(res, 400, 'INVALID_FEED_TOPICS');
+        const topics = [];
+        for (const item of body.preferredTopics) {
+          if (typeof item !== 'string') return error(res, 400, 'INVALID_FEED_TOPICS');
+          const normalized = item.normalize('NFKC').trim().toLowerCase().replace(/\s+/g, '-');
+          if (!/^[a-z0-9_-]{1,40}$/.test(normalized)) return error(res, 400, 'INVALID_FEED_TOPIC', 'Topics may use letters, numbers, spaces, underscores and hyphens.');
+          if (!topics.includes(normalized)) topics.push(normalized);
+        }
+        patch.preferred_topics = topics;
+      }
+      if (!Object.keys(patch).length) return error(res, 400, 'EMPTY_FEED_PREFERENCE_UPDATE');
+      patch.updated_at = new Date().toISOString();
+      const saved = await rowsForUser(session, 'feed_preferences', {
+        select: 'profile_id,preferred_topics,autoplay_video,reduced_motion,data_saver,updated_at',
+        profile_id: 'eq.' + session.profile.id, limit: '1'
+      });
+      if (!saved.ok || !Array.isArray(saved.data)) return badDatabase(res, saved, 'FEED_PREFERENCES_LOOKUP_FAILED');
+      let result;
+      if (saved.data[0]) {
+        result = await rowsForUser(session, 'feed_preferences', {
+          profile_id: 'eq.' + session.profile.id,
+          select: 'profile_id,preferred_topics,autoplay_video,reduced_motion,data_saver,updated_at'
+        }, { method: 'PATCH', body: patch });
+      } else {
+        const initial = {
+          profile_id: session.profile.id, preferred_topics: [],
+          autoplay_video: false, reduced_motion: false, data_saver: false, ...patch
+        };
+        result = await rowsForUser(session, 'feed_preferences', {
+          select: 'profile_id,preferred_topics,autoplay_video,reduced_motion,data_saver,updated_at'
+        }, { method: 'POST', body: initial });
+      }
+      if (!result.ok || !Array.isArray(result.data) || !result.data[0]) return badDatabase(res, result, 'FEED_PREFERENCES_SAVE_FAILED');
+      const prefs = result.data[0];
+      return json(res, 200, { ok: true, preferences: {
+        preferredTopics: Array.isArray(prefs.preferred_topics) ? prefs.preferred_topics : [],
+        autoplayVideo: Boolean(prefs.autoplay_video), reducedMotion: Boolean(prefs.reduced_motion),
+        dataSaver: Boolean(prefs.data_saver), updatedAt: prefs.updated_at
+      } });
+    }
+
     if (req.method === 'GET' && url.pathname === '/api/feed') {
       const session = await requireSession(req, res);
       if (!session.ok) return;

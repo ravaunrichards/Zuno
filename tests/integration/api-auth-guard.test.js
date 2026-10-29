@@ -258,6 +258,11 @@ test('story view, reply and deletion require authentication',async()=>{
  const reply=await post(port,base+'/replies');ok(reply.status===401);ok(reply.body.code==='AUTH_REQUIRED');
  const remove=await del(port,base);ok(remove.status===401);ok(remove.body.code==='AUTH_REQUIRED');
 });
+test('feed preferences GET and PATCH require authentication',async()=>{
+ const port=await start();
+ const read=await get(port,'/api/feed/preferences');ok(read.status===401);ok(read.body.code==='AUTH_REQUIRED');
+ const update=await patch(port,'/api/feed/preferences');ok(update.status===401);ok(update.body.code==='AUTH_REQUIRED');
+});
 test('payment endpoint rejects unauthenticated requests',async()=>{
  const response=await post(await start(),'/api/payments/order');
  ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');

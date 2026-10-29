@@ -439,3 +439,6 @@
 .story-reply-form input{flex:1;min-width:0;padding:10px;border:1px solid var(--line-strong);border-radius:10px;background:#0e0e17;color:var(--text);font-size:10px}
 .story-reply-form[hidden]{display:none}
 @media(max-width:600px){.stories-module{padding:12px}.stories-header h3{font-size:14px}.story-viewer-dialog{padding:12px}.story-viewer-media{min-height:210px}.story-reply-form{flex-wrap:wrap}.story-reply-form input{flex-basis:100%}}
+
+.settings-check-grid label input{accent-color:var(--violet)}
+body.zuno-reduced-motion *,body.zuno-reduced-motion *::before,body.zuno-reduced-motion *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}
