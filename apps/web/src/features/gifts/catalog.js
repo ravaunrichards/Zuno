@@ -17,18 +17,68 @@ function family(category) {
   if (text.includes('seasonal')) return 'seasonal';
   return 'premium';
 }
+let selectedGift = null;
+let activeLiveRoomId = null;
+function giftSendStatus(message,isError=false) {
+  const status=document.getElementById('gift-send-status');
+  if(status){status.textContent=message;status.classList.toggle('is-error',Boolean(isError));}
+}
+function openGiftSendForm() {
+  if(!getSession()) {
+    giftSendStatus('Sign in before sending a gift.',true);
+    document.getElementById('auth-state-button')?.click();
+    return;
+  }
+  const form=document.getElementById('gift-send-form');
+  if(!form||!selectedGift)return;
+  form.hidden=false;
+  document.getElementById('gift-send-id').value=selectedGift.id;
+  document.getElementById('gift-send-live-room').value=activeLiveRoomId||'';
+  document.getElementById('gift-recipient-username')?.focus();
+}
+function secureGiftKey() {
+  if(window.crypto&&typeof window.crypto.randomUUID==='function')return window.crypto.randomUUID();
+  if(window.crypto&&typeof window.crypto.getRandomValues==='function')return Array.from(window.crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');
+  return null;
+}
+async function submitGift(event) {
+  event.preventDefault();
+  if(!getSession()){document.getElementById('auth-state-button')?.click();giftSendStatus('Sign in before sending a gift.',true);return;}
+  const username=document.getElementById('gift-recipient-username')?.value.trim().toLowerCase()||'';
+  const message=document.getElementById('gift-send-message')?.value.trim()||'';
+  const giftId=document.getElementById('gift-send-id')?.value||'';
+  const liveRoomId=document.getElementById('gift-send-live-room')?.value||'';
+  const key=secureGiftKey();
+  if(!/^[a-z0-9_.]{3,30}$/.test(username)){giftSendStatus('Enter the exact ZUNO username.',true);return;}
+  if(!key){giftSendStatus('Secure request IDs require an up-to-date browser over HTTPS.',true);return;}
+  const button=document.getElementById('gift-send-submit');if(button)button.disabled=true;
+  giftSendStatus('Checking the recipient and sending the gift…');
+  try {
+    const result=await requestJson('/api/gifts/send',{method:'POST',headers:{'Idempotency-Key':key},body:{recipientUsername:username,giftId,message,...(liveRoomId?{liveRoomId}:{})}});
+    giftSendStatus('Gift delivered to @'+username+'. '+Number(result.delivery?.priceCoins||selectedGift?.priceCoins||0)+' Z Coins charged.');
+    const note=document.getElementById('gift-inspect-note');if(note)note.textContent='Delivery confirmed by the ZUNO server.';
+    window.dispatchEvent(new CustomEvent('zuno:wallet-refresh'));
+  } catch(error) {
+    const messageText=error.status===404?'No ZUNO account was found with that username.':error.code==='INSUFFICIENT_FUNDS'?'Your Z Coins balance is too low.':error.code==='GIFT_LOCKED'?'Your gifter level has not unlocked this gift yet.':(error.message||'Gift delivery could not be confirmed.');
+    giftSendStatus(messageText,true);
+  } finally {if(button)button.disabled=false;}
+}
+
 function showDetails(gift, group) {
   const dialog = document.getElementById('gift-dialog');
   const title = document.getElementById('gift-detail-title');
   const content = document.getElementById('gift-detail-content');
   if (!dialog || !content) return;
+  selectedGift=gift;
+  const sendForm=document.getElementById('gift-send-form');if(sendForm){sendForm.hidden=true;sendForm.reset();}
   if (title) title.textContent = gift.name || 'Gift';
   content.innerHTML = '<div class="gift-detail-hero"><div class="gift-detail-glyph" aria-hidden="true">' + glyphs[group] + '</div><div><h3>' + safeText(gift.name) + '</h3><p>' + safeText(gift.categoryLabel || gift.category) + '</p></div></div><ul class="gift-detail-list">' +
     '<li><span>Stable gift ID</span><strong>' + safeText(gift.id) + '</strong></li>' +
     '<li><span>Catalogue price</span><strong>' + safeText(gift.priceCoins) + ' Z Coins</strong></li>' +
     '<li><span>Tier</span><strong>' + safeText(gift.tier) + '</strong></li>' +
     '<li><span>Audio status</span><strong>' + safeText(gift.audioStatus || 'not specified') + '</strong></li>' +
-    '<li><span>Model asset</span><strong>' + safeText(gift.modelPath || 'Not specified') + '</strong></li></ul>';
+    '<li><span>Model asset</span><strong>' + safeText(gift.modelPath || 'Not specified') + '</strong></li></ul><button class="button button-primary button-small" id="gift-detail-send-open" type="button">Send this gift · ' + safeText(gift.priceCoins) + ' Z Coins</button>';
+  content.querySelector('#gift-detail-send-open')?.addEventListener('click',openGiftSendForm);
   if (typeof dialog.showModal === 'function') dialog.showModal(); else dialog.setAttribute('open', '');
 }
 function createCard(gift) {
@@ -74,6 +124,12 @@ export async function mountGiftCatalog() {
   }
   render(true);
   if (loadMore) loadMore.addEventListener('click', () => render(false));
+  document.getElementById('gift-send-form')?.addEventListener('submit',submitGift);
+  document.getElementById('gift-send-cancel')?.addEventListener('click',()=>{const form=document.getElementById('gift-send-form');if(form)form.hidden=true;});
+  window.addEventListener('zuno:live-gift-context',event=>{
+    activeLiveRoomId=typeof event.detail?.roomId==='string'?event.detail.roomId:null;
+    const liveInput=document.getElementById('gift-send-live-room');if(liveInput)liveInput.value=activeLiveRoomId||'';
+  });
   const filters = document.getElementById('gift-filters');
   if (filters) filters.addEventListener('click', (event) => {
     const button = event.target.closest('[data-gift-category]');
