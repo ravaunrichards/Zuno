@@ -446,7 +446,7 @@ const server = http.createServer(async (req, res) => {
             });
             processing = 'failed'; errorCode = 'PAYPAL_CAPTURE_REVERSED';
           }
-        } else if (body.event_type && /^PAYMENT\.PAYOUTS(?:BATCH|ITEM)\./.test(body.event_type)) {
+        } else if (body.event_type && /^PAYMENT\.PAYOUTS(?:BATCH|-ITEM)\./.test(body.event_type)) {
           const batchHeader=resource.batch_header||resource.sender_batch_header||{};
           const payoutBatchId=String(resource.payout_batch_id||batchHeader.payout_batch_id||resource.batch_id||'');
           const payoutItemId=String(resource.payout_item_id||resource.item_id||'');

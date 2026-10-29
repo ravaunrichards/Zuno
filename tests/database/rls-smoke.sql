@@ -457,4 +457,83 @@ BEGIN
 END
 $marketplace_fulfillment_checks$;
 
+
+-- Payout reservations remain held until a verified item-success finalizes them.
+DO $payout_checks$
+DECLARE
+  v_creator uuid := '10000000-0000-4000-8000-000000000002';
+  v_other_creator uuid := '10000000-0000-4000-8000-000000000001';
+  v_payout uuid;
+  v_replay uuid;
+  v_fail_payout uuid;
+  v_amount bigint;
+  v_state text;
+  v_count integer;
+BEGIN
+  INSERT INTO creator_payout_profiles(
+    creator_id,recipient_ciphertext,recipient_nonce,recipient_tag,recipient_hash,recipient_masked,
+    country_code,country_eligibility,provider_recipient_ready,identity_verified_at,compliance_state,risk_hold
+  ) VALUES(
+    v_creator,'ci-encrypted-recipient','Y2ktbm9uY2U=','Y2ktdGFn=',repeat('a',64),'c***@ci.invalid',
+    'JM','eligible',true,now(),'cleared',false
+  ) ON CONFLICT(creator_id) DO UPDATE SET
+    recipient_ciphertext=excluded.recipient_ciphertext,recipient_nonce=excluded.recipient_nonce,
+    recipient_tag=excluded.recipient_tag,recipient_hash=excluded.recipient_hash,recipient_masked=excluded.recipient_masked,
+    country_code='JM',country_eligibility='eligible',provider_recipient_ready=true,identity_verified_at=now(),
+    compliance_state='cleared',risk_hold=false;
+
+  INSERT INTO creator_earning_entries(
+    creator_id,source_type,source_id,gross_minor,provider_fee_minor,creator_share_minor,platform_share_minor,
+    currency,policy_version,state,idempotency_key,available_at
+  ) VALUES
+    (v_creator,'other','ci-payout-success-a',2000,0,1000,1000,'USD','v1-2026','available','ci-payout-success-earn-0001',now()-interval '1 minute'),
+    (v_creator,'other','ci-payout-success-b',1400,0,700,700,'USD','v1-2026','available','ci-payout-success-earn-0002',now()-interval '1 minute')
+  ON CONFLICT(idempotency_key) DO NOTHING;
+
+  SELECT public.request_creator_payout(v_creator,1000,'zuno-ci-payout-success-idempotency-0001') INTO v_payout;
+  SELECT public.request_creator_payout(v_creator,1000,'zuno-ci-payout-success-idempotency-0001') INTO v_replay;
+  IF v_payout IS DISTINCT FROM v_replay THEN RAISE EXCEPTION 'Payout idempotency retry created a second payout'; END IF;
+  SELECT amount_minor,state INTO v_amount,v_state FROM payouts WHERE id=v_payout;
+  IF v_amount<>1700 OR v_state<>'requested' THEN RAISE EXCEPTION 'Payout request did not reserve correct amount/state: %, %',v_amount,v_state; END IF;
+  SELECT count(*) INTO v_count FROM creator_earning_entries WHERE payout_id=v_payout AND state='held';
+  IF v_count<>2 THEN RAISE EXCEPTION 'Payout did not reserve exactly both available earning entries'; END IF;
+
+  IF public.attach_creator_payout_batch(v_payout,'ZUNO-CI-PAYOUT-BATCH-0001')<>'processing' THEN
+    RAISE EXCEPTION 'Payout batch was not attached';
+  END IF;
+  IF public.complete_creator_payout(v_payout,'ZUNO-CI-PAYOUT-BATCH-0001','ZUNO-CI-PAYOUT-ITEM-0001',1700)<>'paid' THEN
+    RAISE EXCEPTION 'Verified payout success was not finalized';
+  END IF;
+  IF public.complete_creator_payout(v_payout,'ZUNO-CI-PAYOUT-BATCH-0001','ZUNO-CI-PAYOUT-ITEM-0001',1700)<>'paid' THEN
+    RAISE EXCEPTION 'Payout success retry was not idempotent';
+  END IF;
+  SELECT count(*) INTO v_count FROM creator_earning_entries WHERE payout_id=v_payout AND state='paid';
+  IF v_count<>2 THEN RAISE EXCEPTION 'Paid payout did not finalize the reserved creator earnings'; END IF;
+
+  INSERT INTO creator_payout_profiles(
+    creator_id,recipient_ciphertext,recipient_nonce,recipient_tag,recipient_hash,recipient_masked,
+    country_code,country_eligibility,provider_recipient_ready,identity_verified_at,compliance_state,risk_hold
+  ) VALUES(
+    v_other_creator,'ci-encrypted-recipient','Y2ktbm9uY2U=','Y2ktdGFn=',repeat('b',64),'o***@ci.invalid',
+    'JM','eligible',true,now(),'cleared',false
+  ) ON CONFLICT(creator_id) DO UPDATE SET
+    country_eligibility='eligible',provider_recipient_ready=true,identity_verified_at=now(),
+    compliance_state='cleared',risk_hold=false;
+
+  INSERT INTO creator_earning_entries(
+    creator_id,source_type,source_id,gross_minor,provider_fee_minor,creator_share_minor,platform_share_minor,
+    currency,policy_version,state,idempotency_key,available_at
+  ) VALUES(v_other_creator,'other','ci-payout-fail',2200,0,1100,1100,'USD','v1-2026','available','ci-payout-fail-earn-0001',now()-interval '1 minute')
+  ON CONFLICT(idempotency_key) DO NOTHING;
+  SELECT public.request_creator_payout(v_other_creator,1000,'zuno-ci-payout-fail-idempotency-0001') INTO v_fail_payout;
+  IF public.release_creator_payout(v_fail_payout,'PAYPAL_PAYOUT_REJECTED')<>'failed' THEN
+    RAISE EXCEPTION 'Definitively rejected provider payout was not marked failed';
+  END IF;
+  SELECT state INTO v_state FROM creator_earning_entries WHERE idempotency_key='ci-payout-fail-earn-0001';
+  IF v_state<>'available' THEN RAISE EXCEPTION 'Failed payout did not release reserved earnings'; END IF;
+  SELECT count(*) INTO v_count FROM creator_earning_entries WHERE payout_id IS NULL AND state='available' AND idempotency_key='ci-payout-fail-earn-0001';
+  IF v_count<>1 THEN RAISE EXCEPTION 'Failed payout left earning entry incorrectly reserved'; END IF;
+END
+$payout_checks$;
+
 SELECT 'ZUNO PostgreSQL migration + RLS + economy + moderation + messaging/community/call/search/fulfillment smoke checks passed' AS verification;
