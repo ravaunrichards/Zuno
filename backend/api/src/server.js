@@ -2060,9 +2060,21 @@ const server = http.createServer(async (req, res) => {
         if (!['internal','copy_link','external','message'].includes(destination)) return error(res, 400, 'INVALID_SHARE_DESTINATION');
         const key = String(req.headers['idempotency-key'] || body.idempotencyKey || '');
         if (key && !/^[A-Za-z0-9._:-]{16,180}$/.test(key)) return error(res, 400, 'INVALID_IDEMPOTENCY_KEY');
+        const idempotencyKey = key ? session.profile.id + ':' + key : null;
+        if (idempotencyKey) {
+          const prior = await selectAdminRows(config, 'post_share_events', query({
+            select: 'id,post_id,actor_id,destination,created_at',
+            actor_id: 'eq.' + session.profile.id, idempotency_key: 'eq.' + idempotencyKey, limit: '1'
+          }));
+          if (!prior.ok) return error(res, 503, 'POST_SHARE_LOOKUP_FAILED');
+          if (prior.rows[0]) {
+            const target = new URL('/', config.appBaseUrl); target.searchParams.set('post', postId);
+            return json(res, 200, { ok: true, idempotent: true, destination: prior.rows[0].destination, shareUrl: target.toString(), recorded: true });
+          }
+        }
         const inserted = await adminRest(config, 'post_share_events', new URLSearchParams(), 'POST', {
           post_id: postId, actor_id: session.profile.id, destination,
-          ...(key ? { idempotency_key: session.profile.id + ':' + key } : {})
+          ...(idempotencyKey ? { idempotency_key: idempotencyKey } : {})
         });
         if (!inserted.ok) return badDatabase(res, inserted, 'POST_SHARE_RECORD_FAILED');
         const target = new URL('/', config.appBaseUrl);
@@ -2078,9 +2090,21 @@ const server = http.createServer(async (req, res) => {
         if (typeof completed !== 'boolean') return error(res, 400, 'INVALID_COMPLETION_FLAG');
         const key = String(req.headers['idempotency-key'] || body.idempotencyKey || '');
         if (key && !/^[A-Za-z0-9._:-]{16,180}$/.test(key)) return error(res, 400, 'INVALID_IDEMPOTENCY_KEY');
+        const idempotencyKey = key ? session.profile.id + ':' + key : null;
+        if (idempotencyKey) {
+          const prior = await selectAdminRows(config, 'post_view_events', query({
+            select: 'id,post_id,viewer_id,watch_ms,completed,created_at',
+            viewer_id: 'eq.' + session.profile.id, idempotency_key: 'eq.' + idempotencyKey, limit: '1'
+          }));
+          if (!prior.ok) return error(res, 503, 'POST_VIEW_LOOKUP_FAILED');
+          if (prior.rows[0]) return json(res, 200, { ok: true, idempotent: true, view: {
+            postId: prior.rows[0].post_id, watchMs: Number(prior.rows[0].watch_ms || 0),
+            completed: Boolean(prior.rows[0].completed), recorded: true
+          } });
+        }
         const inserted = await adminRest(config, 'post_view_events', new URLSearchParams(), 'POST', {
           post_id: postId, viewer_id: session.profile.id, watch_ms: watchMs, completed,
-          ...(key ? { idempotency_key: session.profile.id + ':' + key } : {})
+          ...(idempotencyKey ? { idempotency_key: idempotencyKey } : {})
         });
         if (!inserted.ok) return badDatabase(res, inserted, 'POST_VIEW_RECORD_FAILED');
         return json(res, 201, { ok: true, view: { postId, watchMs, completed, recorded: true } });

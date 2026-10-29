@@ -14,6 +14,15 @@ function element(tag, className, text) {
   if (text !== undefined && text !== null) node.textContent = String(text);
   return node;
 }
+function makeClientKey() {
+  if (window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID();
+  if (window.crypto && typeof window.crypto.getRandomValues === 'function') {
+    const bytes = new Uint8Array(16);
+    window.crypto.getRandomValues(bytes);
+    return Array.from(bytes, value => value.toString(16).padStart(2, '0')).join('');
+  }
+  throw new Error('Secure request IDs are unavailable in this browser.');
+}
 function dateLabel(value) {
   const date = new Date(value);
   if (!Number.isFinite(date.getTime())) return 'Recently';
@@ -115,7 +124,86 @@ function renderPost(post) {
       statusMessage(error.message || 'Comment could not be posted.', true);
     }
   });
-  actions.append(like, comment);
+  const save = element('button', 'feed-action', 'Save');
+  save.type = 'button';
+  save.addEventListener('click', async () => {
+    if (!getSession()) { statusMessage('Sign in to save posts.'); openAuth(); return; }
+    save.disabled = true;
+    try {
+      await requestJson('/api/posts/' + encodeURIComponent(post.id) + '/bookmark', { method: 'POST', body: {} });
+      save.textContent = '✓ Saved';
+      statusMessage('Post saved to your bookmarks.');
+    } catch (error) {
+      statusMessage(error.message || 'Post could not be saved.', true);
+    } finally { save.disabled = false; }
+  });
+
+  const repost = element('button', 'feed-action', 'Repost');
+  repost.type = 'button';
+  repost.addEventListener('click', async () => {
+    if (!getSession()) { statusMessage('Sign in to repost.'); openAuth(); return; }
+    const caption = window.prompt('Add an optional comment to your repost (up to 1,000 characters):') || '';
+    if (caption.length > 1000) { statusMessage('Repost comments are limited to 1,000 characters.', true); return; }
+    repost.disabled = true;
+    try {
+      await requestJson('/api/posts/' + encodeURIComponent(post.id) + '/repost', { method: 'POST', body: { caption } });
+      repost.textContent = '✓ Reposted';
+      statusMessage('Repost recorded.');
+    } catch (error) {
+      statusMessage(error.message || 'Repost failed.', true);
+    } finally { repost.disabled = false; }
+  });
+
+  const share = element('button', 'feed-action', 'Share');
+  share.type = 'button';
+  share.addEventListener('click', async () => {
+    if (!getSession()) { statusMessage('Sign in to record a share.'); openAuth(); return; }
+    share.disabled = true;
+    try {
+      const result = await requestJson('/api/posts/' + encodeURIComponent(post.id) + '/share', {
+        method: 'POST', headers: { 'Idempotency-Key': makeClientKey() }, body: { destination: 'copy_link' }
+      });
+      if (!result.shareUrl) throw new Error('The server did not return a share URL.');
+      try {
+        await navigator.clipboard.writeText(result.shareUrl);
+        statusMessage('Share link copied. The share event was recorded.');
+      } catch (_) {
+        statusMessage('Share link: ' + result.shareUrl);
+      }
+    } catch (error) {
+      statusMessage(error.message || 'Share link could not be generated.', true);
+    } finally { share.disabled = false; }
+  });
+
+  if (post.kind === 'short_video' || post.kind === 'long_video') {
+    const video = card.querySelector('video');
+    if (video) {
+      let playbackStartedAt = 0;
+      let viewRecordedForSession = false;
+      const recordView = async (completed) => {
+        if (!getSession() || viewRecordedForSession) return;
+        viewRecordedForSession = true;
+        const watchMs = playbackStartedAt ? Math.max(0, Math.min(86400000, Math.round(performance.now() - playbackStartedAt))) : 0;
+        playbackStartedAt = 0;
+        try {
+          await requestJson('/api/posts/' + encodeURIComponent(post.id) + '/view', {
+            method: 'POST', headers: { 'Idempotency-Key': makeClientKey() }, body: { watchMs, completed }
+          });
+        } catch (_) {
+          viewRecordedForSession = false;
+        }
+      };
+      video.addEventListener('play', () => {
+        if (!getSession()) return;
+        if (!playbackStartedAt) playbackStartedAt = performance.now();
+        viewRecordedForSession = false;
+      });
+      video.addEventListener('pause', () => { if (!video.ended) recordView(false); });
+      video.addEventListener('ended', () => recordView(true));
+    }
+  }
+
+  actions.append(like, comment, save, repost, share);
   card.append(actions);
   return card;
 }
