@@ -247,6 +247,33 @@ async function createBillingSubscription(cfg, { planId, customId, returnUrl, can
   }
 }
 
+async function getBillingSubscription(cfg, providerSubscriptionId) {
+  if (!cfg || !cfg.clientId || !cfg.clientSecret) return notConfigured();
+  if (typeof providerSubscriptionId !== 'string' || !/^[A-Za-z0-9_-]{3,100}$/.test(providerSubscriptionId)) {
+    return { ok: false, status: 400, code: 'PAYPAL_SUBSCRIPTION_ID_INVALID' };
+  }
+  const token = await getAccessToken(cfg);
+  if (!token.ok) return token;
+  const host = HOSTS[cfg.env] || HOSTS.sandbox;
+  try {
+    const response = await request(host, '/v1/billing/subscriptions/' + encodeURIComponent(providerSubscriptionId), 'GET', {
+      Authorization: 'Bearer ' + token.accessToken
+    }, null);
+    if (response.status < 200 || response.status >= 300 || !response.body || !response.body.id) {
+      return { ok: false, status: response.status || 502, code: 'PAYPAL_SUBSCRIPTION_LOOKUP_FAILED' };
+    }
+    return {
+      ok: true,
+      subscriptionId: String(response.body.id),
+      status: String(response.body.status || ''),
+      planId: response.body.plan_id || null,
+      nextBillingTime: response.body.billing_info && response.body.billing_info.next_billing_time || null
+    };
+  } catch (_) {
+    return { ok: false, status: 503, code: 'PAYPAL_PROVIDER_UNAVAILABLE' };
+  }
+}
+
 async function cancelBillingSubscription(cfg, providerSubscriptionId, reason = 'Subscriber requested cancellation') {
   if (!cfg || !cfg.clientId || !cfg.clientSecret) return notConfigured();
   if (typeof providerSubscriptionId !== 'string' || !/^[A-Za-z0-9_-]{3,100}$/.test(providerSubscriptionId)) {
@@ -268,4 +295,4 @@ async function cancelBillingSubscription(cfg, providerSubscriptionId, reason = '
   }
 }
 
-module.exports = { getAccessToken, createOrder, captureOrder, refundCapture, verifyWebhook, createSubscriptionPlan, createBillingSubscription, cancelBillingSubscription, notConfigured, HOSTS };
+module.exports = { getAccessToken, createOrder, captureOrder, refundCapture, verifyWebhook, createSubscriptionPlan, createBillingSubscription, getBillingSubscription, cancelBillingSubscription, notConfigured, HOSTS };
