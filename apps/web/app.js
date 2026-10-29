@@ -13,6 +13,7 @@ import { mountSubscriptions } from './src/features/subscriptions/subscriptions.j
 import { mountMessaging } from './src/features/messaging.js';
 import { mountProfileSettings } from './src/features/profile/profile-settings.js';
 import { mountStories } from './src/features/stories/stories.js';
+import { mountNotifications } from './src/features/notifications/notifications.js';
 
 mountNavigation();
 mountSearch();
@@ -27,6 +28,7 @@ mountSubscriptions();
 mountMessaging();
 mountProfileSettings();
 mountStories();
+mountNotifications();
 mountGiftCatalog();
 mountLiveRooms();
 

@@ -454,3 +454,21 @@ body.zuno-reduced-motion *,body.zuno-reduced-motion *::before,body.zuno-reduced-
 .gift-send-form input:not([type="hidden"]){display:block;width:100%;padding:11px 12px;border:1px solid var(--line-strong);border-radius:9px;background:#10101a;color:var(--text);font-size:11px}
 .gift-send-form .form-status{font-size:10px;line-height:1.6}
 .gift-send-form .form-status.is-error{color:#ff9bb0}
+
+.topbar-notifications{flex-shrink:0;display:grid;place-items:center;text-decoration:none;font-size:17px;color:#d5cfff}
+.notification-card-heading{display:flex;align-items:center;justify-content:space-between;gap:9px}
+.notification-card-heading h3{margin:0}
+.notification-summary{margin-top:10px;padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:rgba(255,255,255,.025);font-size:9px;line-height:1.6;color:var(--muted)}
+.notification-summary.is-error{color:#ff9bb0;border-color:rgba(255,120,150,.35)}
+.notification-feed{display:grid;gap:8px;margin-top:10px}
+.notification-item{min-width:0;padding:11px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.02)}
+.notification-item.is-unread{border-color:rgba(154,124,255,.35);background:rgba(154,124,255,.045)}
+.notification-item-header{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.notification-kind{font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--violet);font-weight:800}
+.notification-item-header time{font-size:8px;color:var(--faint);text-align:right}
+.notification-item h4{font-size:11px;margin:9px 0 4px}
+.notification-item-body{font-size:10px;line-height:1.65;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere;margin:0}
+.notification-item-actions{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+.notification-empty{padding:12px;border:1px dashed var(--line-strong);border-radius:10px;color:var(--muted);font-size:10px;line-height:1.65}
+.notification-card-footer{display:flex;justify-content:flex-start;margin-top:9px}
+@media(max-width:640px){.topbar-notifications{min-width:31px;width:31px;height:31px}.notification-item{padding:9px}}
