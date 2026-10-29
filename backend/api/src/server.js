@@ -1947,11 +1947,206 @@ const server = http.createServer(async (req, res) => {
       return json(res, 201, { ok: true, reaction: Array.isArray(result.data) ? result.data[0] : null });
     }
 
+
+    const postInteractionMatch = url.pathname.match(/^\/api\/posts\/([0-9a-f-]+)\/(reactions|bookmark|repost|share|view)$/i);
+    if (postInteractionMatch) {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const postId = postInteractionMatch[1];
+      const action = postInteractionMatch[2].toLowerCase();
+      if (!uuid(postId)) return error(res, 400, 'INVALID_POST_ID');
+
+      const visible = await rowsForUser(session, 'posts', {
+        select: 'id,author_id,kind,audience',
+        id: 'eq.' + postId, deleted_at: 'is.null', limit: '1'
+      });
+      if (!visible.ok) return badDatabase(res, visible, 'POST_ACCESS_CHECK_FAILED');
+      if (!Array.isArray(visible.data) || !visible.data[0]) return error(res, 404, 'POST_NOT_FOUND');
+
+      if (action === 'reactions' && req.method === 'POST') {
+        const body = await readBody(req);
+        const kind = typeof body.kind === 'string' ? body.kind : 'like';
+        if (!['like','love','laugh','wow','sad','angry','support'].includes(kind)) return error(res, 400, 'INVALID_REACTION_KIND');
+        const existing = await rowsForUser(session, 'reactions', {
+          select: 'id,post_id,profile_id,kind,created_at',
+          post_id: 'eq.' + postId, profile_id: 'eq.' + session.profile.id, kind: 'eq.' + kind, limit: '1'
+        });
+        if (!existing.ok || !Array.isArray(existing.data)) return badDatabase(res, existing, 'REACTION_LOOKUP_FAILED');
+        if (existing.data[0]) return json(res, 200, { ok: true, idempotent: true, reaction: existing.data[0] });
+        const inserted = await rowsForUser(session, 'reactions', {
+          select: 'id,post_id,profile_id,kind,created_at'
+        }, { method: 'POST', body: { post_id: postId, profile_id: session.profile.id, kind } });
+        if (!inserted.ok) {
+          const race = await rowsForUser(session, 'reactions', {
+            select: 'id,post_id,profile_id,kind,created_at',
+            post_id: 'eq.' + postId, profile_id: 'eq.' + session.profile.id, kind: 'eq.' + kind, limit: '1'
+          });
+          if (race.ok && Array.isArray(race.data) && race.data[0]) return json(res, 200, { ok: true, idempotent: true, reaction: race.data[0] });
+          return badDatabase(res, inserted, 'REACTION_FAILED');
+        }
+        return json(res, 201, { ok: true, reaction: Array.isArray(inserted.data) ? inserted.data[0] : null });
+      }
+
+      if (action === 'reactions' && req.method === 'DELETE') {
+        const kind = url.searchParams.get('kind') || 'like';
+        if (!['like','love','laugh','wow','sad','angry','support'].includes(kind)) return error(res, 400, 'INVALID_REACTION_KIND');
+        const removed = await rowsForUser(session, 'reactions', {
+          post_id: 'eq.' + postId, profile_id: 'eq.' + session.profile.id, kind: 'eq.' + kind
+        }, { method: 'DELETE' });
+        if (!removed.ok) return badDatabase(res, removed, 'REACTION_REMOVE_FAILED');
+        return json(res, 200, { ok: true, removed: true, kind });
+      }
+
+      if (action === 'bookmark' && req.method === 'POST') {
+        const prior = await rowsForUser(session, 'post_bookmarks', {
+          select: 'profile_id,post_id,created_at', profile_id: 'eq.' + session.profile.id, post_id: 'eq.' + postId, limit: '1'
+        });
+        if (!prior.ok || !Array.isArray(prior.data)) return badDatabase(res, prior, 'BOOKMARK_LOOKUP_FAILED');
+        if (prior.data[0]) return json(res, 200, { ok: true, idempotent: true, bookmark: prior.data[0] });
+        const saved = await rowsForUser(session, 'post_bookmarks', { select: 'profile_id,post_id,created_at' }, {
+          method: 'POST', body: { profile_id: session.profile.id, post_id: postId }
+        });
+        if (!saved.ok) {
+          const race = await rowsForUser(session, 'post_bookmarks', {
+            select: 'profile_id,post_id,created_at', profile_id: 'eq.' + session.profile.id, post_id: 'eq.' + postId, limit: '1'
+          });
+          if (race.ok && Array.isArray(race.data) && race.data[0]) return json(res, 200, { ok: true, idempotent: true, bookmark: race.data[0] });
+          return badDatabase(res, saved, 'BOOKMARK_FAILED');
+        }
+        return json(res, 201, { ok: true, bookmark: Array.isArray(saved.data) ? saved.data[0] : null });
+      }
+      if (action === 'bookmark' && req.method === 'DELETE') {
+        const removed = await rowsForUser(session, 'post_bookmarks', {
+          profile_id: 'eq.' + session.profile.id, post_id: 'eq.' + postId
+        }, { method: 'DELETE' });
+        if (!removed.ok) return badDatabase(res, removed, 'BOOKMARK_REMOVE_FAILED');
+        return json(res, 200, { ok: true, removed: true });
+      }
+
+      if (action === 'repost' && req.method === 'POST') {
+        const body = await readBody(req);
+        const caption = typeof body.caption === 'string' ? body.caption.trim() : '';
+        if (caption.length > 1000) return error(res, 400, 'REPOST_CAPTION_TOO_LONG');
+        const prior = await rowsForUser(session, 'post_reposts', {
+          select: 'id,profile_id,post_id,caption,created_at',
+          profile_id: 'eq.' + session.profile.id, post_id: 'eq.' + postId, limit: '1'
+        });
+        if (!prior.ok || !Array.isArray(prior.data)) return badDatabase(res, prior, 'REPOST_LOOKUP_FAILED');
+        if (prior.data[0]) return json(res, 200, { ok: true, idempotent: true, repost: prior.data[0] });
+        const created = await rowsForUser(session, 'post_reposts', {
+          select: 'id,profile_id,post_id,caption,created_at'
+        }, { method: 'POST', body: { profile_id: session.profile.id, post_id: postId, caption: caption || null } });
+        if (!created.ok) {
+          const race = await rowsForUser(session, 'post_reposts', {
+            select: 'id,profile_id,post_id,caption,created_at',
+            profile_id: 'eq.' + session.profile.id, post_id: 'eq.' + postId, limit: '1'
+          });
+          if (race.ok && Array.isArray(race.data) && race.data[0]) return json(res, 200, { ok: true, idempotent: true, repost: race.data[0] });
+          return badDatabase(res, created, 'REPOST_FAILED');
+        }
+        return json(res, 201, { ok: true, repost: Array.isArray(created.data) ? created.data[0] : null });
+      }
+      if (action === 'repost' && req.method === 'DELETE') {
+        const removed = await rowsForUser(session, 'post_reposts', {
+          profile_id: 'eq.' + session.profile.id, post_id: 'eq.' + postId
+        }, { method: 'DELETE' });
+        if (!removed.ok) return badDatabase(res, removed, 'REPOST_REMOVE_FAILED');
+        return json(res, 200, { ok: true, removed: true });
+      }
+
+      if (action === 'share' && req.method === 'POST') {
+        const body = await readBody(req);
+        const destination = typeof body.destination === 'string' ? body.destination : 'copy_link';
+        if (!['internal','copy_link','external','message'].includes(destination)) return error(res, 400, 'INVALID_SHARE_DESTINATION');
+        const key = String(req.headers['idempotency-key'] || body.idempotencyKey || '');
+        if (key && !/^[A-Za-z0-9._:-]{16,180}$/.test(key)) return error(res, 400, 'INVALID_IDEMPOTENCY_KEY');
+        const inserted = await adminRest(config, 'post_share_events', new URLSearchParams(), 'POST', {
+          post_id: postId, actor_id: session.profile.id, destination,
+          ...(key ? { idempotency_key: session.profile.id + ':' + key } : {})
+        });
+        if (!inserted.ok) return badDatabase(res, inserted, 'POST_SHARE_RECORD_FAILED');
+        const target = new URL('/', config.appBaseUrl);
+        target.searchParams.set('post', postId);
+        return json(res, 201, { ok: true, destination, shareUrl: target.toString(), recorded: true });
+      }
+
+      if (action === 'view' && req.method === 'POST') {
+        const body = await readBody(req);
+        const watchMs = body.watchMs === undefined ? 0 : Number(body.watchMs);
+        const completed = body.completed === undefined ? false : body.completed;
+        if (!Number.isSafeInteger(watchMs) || watchMs < 0 || watchMs > 86400000) return error(res, 400, 'INVALID_WATCH_TIME');
+        if (typeof completed !== 'boolean') return error(res, 400, 'INVALID_COMPLETION_FLAG');
+        const key = String(req.headers['idempotency-key'] || body.idempotencyKey || '');
+        if (key && !/^[A-Za-z0-9._:-]{16,180}$/.test(key)) return error(res, 400, 'INVALID_IDEMPOTENCY_KEY');
+        const inserted = await adminRest(config, 'post_view_events', new URLSearchParams(), 'POST', {
+          post_id: postId, viewer_id: session.profile.id, watch_ms: watchMs, completed,
+          ...(key ? { idempotency_key: session.profile.id + ':' + key } : {})
+        });
+        if (!inserted.ok) return badDatabase(res, inserted, 'POST_VIEW_RECORD_FAILED');
+        return json(res, 201, { ok: true, view: { postId, watchMs, completed, recorded: true } });
+      }
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api/bookmarks') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const limit = asSafeInt(url.searchParams.get('limit'), 30, 1, 100);
+      const offset = asSafeInt(url.searchParams.get('offset'), 0, 0, 10000);
+      const saved = await rowsForUser(session, 'post_bookmarks', {
+        select: 'profile_id,post_id,created_at', profile_id: 'eq.' + session.profile.id,
+        order: 'created_at.desc', limit: String(limit), offset: String(offset)
+      });
+      if (!saved.ok || !Array.isArray(saved.data)) return badDatabase(res, saved, 'BOOKMARKS_UNAVAILABLE');
+      const ids = [...new Set(saved.data.map(row => row.post_id).filter(uuid))];
+      if (!ids.length) return json(res, 200, { ok: true, bookmarks: [], offset, limit, hasMore: saved.data.length === limit });
+      const posts = await rowsForUser(session, 'posts', {
+        select: 'id,author_id,kind,caption,audience,created_at,media', id: 'in.(' + ids.join(',') + ')', deleted_at: 'is.null'
+      });
+      if (!posts.ok || !Array.isArray(posts.data)) return badDatabase(res, posts, 'BOOKMARKED_POSTS_UNAVAILABLE');
+      const postById = new Map(posts.data.map(post => [post.id, post]));
+      return json(res, 200, { ok: true, bookmarks: saved.data.filter(row => postById.has(row.post_id)).map(row => ({
+        createdAt: row.created_at, post: { id: postById.get(row.post_id).id, kind: postById.get(row.post_id).kind,
+          caption: postById.get(row.post_id).caption || '', createdAt: postById.get(row.post_id).created_at }
+      })), offset, limit, hasMore: saved.data.length === limit });
+    }
+
+    const commentListMatch = url.pathname.match(/^\/api\/posts\/([0-9a-f-]+)\/comments$/i);
+    if (req.method === 'GET' && commentListMatch) {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const postId = commentListMatch[1];
+      if (!uuid(postId)) return error(res, 400, 'INVALID_POST_ID');
+      const post = await rowsForUser(session, 'posts', { select: 'id', id: 'eq.' + postId, deleted_at: 'is.null', limit: '1' });
+      if (!post.ok) return badDatabase(res, post, 'POST_ACCESS_CHECK_FAILED');
+      if (!Array.isArray(post.data) || !post.data[0]) return error(res, 404, 'POST_NOT_FOUND');
+      const limit = asSafeInt(url.searchParams.get('limit'), 50, 1, 100);
+      const offset = asSafeInt(url.searchParams.get('offset'), 0, 0, 10000);
+      const comments = await rowsForUser(session, 'comments', {
+        select: 'id,post_id,author_id,parent_id,body,created_at',
+        post_id: 'eq.' + postId, deleted_at: 'is.null', order: 'created_at.asc',
+        limit: String(limit), offset: String(offset)
+      });
+      if (!comments.ok || !Array.isArray(comments.data)) return badDatabase(res, comments, 'COMMENTS_UNAVAILABLE');
+      const authorIds = [...new Set(comments.data.map(item => item.author_id).filter(uuid))];
+      const authors = authorIds.length ? await selectAdminRows(config, 'profiles', query({
+        select: 'id,username,display_name,avatar_url,is_verified', id: profileIdIn(authorIds), limit: String(authorIds.length)
+      })) : { ok: true, rows: [] };
+      if (!authors.ok) return error(res, 503, 'COMMENT_AUTHORS_UNAVAILABLE');
+      const byId = new Map(authors.rows.map(profile => [profile.id, profile]));
+      return json(res, 200, { ok: true, comments: comments.data.map(item => ({
+        id: item.id, postId: item.post_id, body: item.body, parentId: item.parent_id,
+        createdAt: item.created_at, author: profileProjection(byId.get(item.author_id))
+      })), offset, limit, hasMore: comments.data.length === limit });
+    }
+
     if (req.method === 'POST' && url.pathname === '/api/comments') {
       const session = await requireSession(req, res);
       if (!session.ok) return;
       const body = await readBody(req);
       if (!uuid(body.postId)) return error(res, 400, 'INVALID_POST_ID');
+      const postAccess = await rowsForUser(session, 'posts', { select: 'id', id: 'eq.' + body.postId, deleted_at: 'is.null', limit: '1' });
+      if (!postAccess.ok) return badDatabase(res, postAccess, 'POST_ACCESS_CHECK_FAILED');
+      if (!Array.isArray(postAccess.data) || !postAccess.data[0]) return error(res, 404, 'POST_NOT_FOUND');
       if (typeof body.body !== 'string' || body.body.trim().length < 1 || body.body.trim().length > 2000) return error(res, 400, 'INVALID_COMMENT');
       if (body.parentId && !uuid(body.parentId)) return error(res, 400, 'INVALID_PARENT_ID');
       const result = await rowsForUser(session, 'comments', { select: 'id,post_id,author_id,parent_id,body,created_at' }, {

@@ -22,7 +22,7 @@ const ADMIN_TABLES = new Set([
   'coin_packages','provider_webhook_attempts',
   'wallet_restrictions','creator_subscription_tiers','creator_subscriptions','creator_subscription_entitlements','live_rooms','live_participants','profiles','wallet_accounts','ledger_postings',
   'ranking_aggregates','notifications','live_room_events','guest_requests','gift_definitions','live_poll_votes','live_polls',
-  'media_assets','posts','follows','blocks','recommendation_events','event_outbox',
+  'media_assets','posts','follows','blocks','post_share_events','post_view_events','recommendation_events','event_outbox',
   'background_jobs','payment_orders','payment_webhook_events','refund_records','gift_deliveries',
   'creator_earning_entries','creator_earnings','payouts','recharge_purchases','creator_subscriptions',
   'marketplace_listings','listing_inventory','commerce_orders','commerce_order_items','ad_campaigns','reports','moderation_actions','audit_events'

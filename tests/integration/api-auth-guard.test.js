@@ -20,6 +20,16 @@ function post(port,path) {
   });
 }
 
+function del(port,path) {
+  return new Promise((resolve,reject)=>{
+    const req=http.request({hostname:'127.0.0.1',port,path,method:'DELETE'},res=>{
+      let data='';res.setEncoding('utf8');res.on('data',chunk=>data+=chunk);
+      res.on('end',()=>{try{resolve({status:res.statusCode,body:JSON.parse(data)});}catch(e){reject(e);}});
+    });
+    req.on('error',reject);
+    req.end();
+  });
+}
 function patch(port,path) {
   return new Promise((resolve,reject)=>{
     const req=http.request({hostname:'127.0.0.1',port,path,method:'PATCH',headers:{'Content-Type':'application/json'}},res=>{
@@ -206,6 +216,34 @@ test('call join requires authentication',async()=>{
 });
 test('message reaction requires authentication',async()=>{
  const response=await post(await start(),'/api/messages/10000000-0000-4000-8000-000000000001/reactions');
+ ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
+});
+test('post reactions require authentication',async()=>{
+ const port=await start();
+ const read=await get(port,'/api/posts/10000000-0000-4000-8000-000000000001/reactions');
+ ok(read.status===401);ok(read.body.code==='AUTH_REQUIRED');
+ const create=await post(port,'/api/posts/10000000-0000-4000-8000-000000000001/reactions');
+ ok(create.status===401);ok(create.body.code==='AUTH_REQUIRED');
+ const remove=await del(port,'/api/posts/10000000-0000-4000-8000-000000000001/reactions');
+ ok(remove.status===401);ok(remove.body.code==='AUTH_REQUIRED');
+});
+test('post bookmarks and reposts require authentication',async()=>{
+ const port=await start();
+ for(const path of ['/api/posts/10000000-0000-4000-8000-000000000001/bookmark','/api/posts/10000000-0000-4000-8000-000000000001/repost']){
+  const create=await post(port,path);ok(create.status===401);ok(create.body.code==='AUTH_REQUIRED');
+  const remove=await del(port,path);ok(remove.status===401);ok(remove.body.code==='AUTH_REQUIRED');
+ }
+ const list=await get(port,'/api/bookmarks');ok(list.status===401);ok(list.body.code==='AUTH_REQUIRED');
+});
+test('post share and view telemetry require authentication',async()=>{
+ const port=await start();
+ const share=await post(port,'/api/posts/10000000-0000-4000-8000-000000000001/share');
+ ok(share.status===401);ok(share.body.code==='AUTH_REQUIRED');
+ const view=await post(port,'/api/posts/10000000-0000-4000-8000-000000000001/view');
+ ok(view.status===401);ok(view.body.code==='AUTH_REQUIRED');
+});
+test('post comments list requires authentication',async()=>{
+ const response=await get(await start(),'/api/posts/10000000-0000-4000-8000-000000000001/comments');
  ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
 });
 test('payment endpoint rejects unauthenticated requests',async()=>{
