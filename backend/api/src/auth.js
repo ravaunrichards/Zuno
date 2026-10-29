@@ -20,13 +20,13 @@ const USER_TABLES = new Set([
 const ADMIN_TABLES = new Set([
   'coin_packages','provider_webhook_attempts',
   'wallet_restrictions','live_rooms','live_participants','profiles','wallet_accounts','ledger_postings',
-  'ranking_aggregates','notifications','live_room_events','guest_requests','gift_definitions',
+  'ranking_aggregates','notifications','live_room_events','guest_requests','gift_definitions','live_poll_votes',
   'media_assets','posts','follows','blocks','recommendation_events','event_outbox',
   'background_jobs','payment_orders','payment_webhook_events','refund_records','gift_deliveries',
   'creator_earning_entries','creator_earnings','payouts','recharge_purchases','creator_subscriptions',
   'marketplace_listings','commerce_orders','ad_campaigns','reports','moderation_actions','audit_events'
 ]);
-const ADMIN_RPCS = new Set(['accept_live_guest_request','refresh_gifter_progress','claim_background_job','finish_background_job','fail_background_job','queue_media_processing_job','deliver_gift','credit_captured_coin_order','reserve_coin_refund','finalize_coin_refund']);
+const ADMIN_RPCS = new Set(['accept_live_guest_request','refresh_gifter_progress','claim_background_job','finish_background_job','fail_background_job','queue_media_processing_job','deliver_gift','credit_captured_coin_order','reserve_coin_refund','finalize_coin_refund','create_live_room','start_live_room','end_live_room','join_live_room','leave_live_room','create_live_guest_request','reject_live_guest_request','create_live_poll','get_live_room_summaries']);
 
 function readBearerToken(req) {
   const value = req && req.headers ? req.headers.authorization : '';
@@ -67,7 +67,7 @@ async function requestRest(url, headers, method = 'GET', body = null, timeoutMs 
   const data = await readResponse(response);
   if (!response.ok) {
     const domainMessage = data && typeof data.message === 'string' ? data.message.trim() : '';
-    const allowedDomainCodes = new Set(["INSUFFICIENT_FUNDS","NO_ACCOUNT","NO_RECIPIENT_ACCOUNT","INVALID_GIFT_PRICE","SELF_GIFT_NOT_ALLOWED","INVALID_IDEMPOTENCY_KEY","GIFT_REQUEST_INVALID","SELF_GIFT_FORBIDDEN","GIFT_IDEMPOTENCY_KEY_INVALID","GIFT_MESSAGE_TOO_LONG","GIFT_IDEMPOTENCY_CONFLICT","UNKNOWN_GIFT","SENDER_NOT_FOUND","RECIPIENT_NOT_FOUND","GIFT_LOCKED","GIFT_UNLOCK_RULE_UNSUPPORTED","LIVE_ROOM_NOT_ACTIVE","SENDER_NOT_IN_LIVE_ROOM","RECIPIENT_NOT_IN_LIVE_ROOM","WALLET_ACCOUNT_UNAVAILABLE","GIFT_DELIVERY_RECORD_FAILED","PAYMENT_CAPTURE_IDENTIFIERS_REQUIRED","PAYMENT_CURRENCY_MISMATCH","PAYMENT_ORDER_NOT_FOUND","PAYMENT_ALREADY_CREDITED","PAYMENT_ORDER_STATE_INVALID","PAYMENT_AMOUNT_MISMATCH","CAPTURE_ALREADY_USED","COIN_PACKAGE_UNAVAILABLE"]);
+    const allowedDomainCodes = new Set(["LIVE_ROOM_REQUEST_INVALID","LIVE_ROOM_TITLE_INVALID","LIVE_ROOM_CATEGORY_INVALID","LIVE_HOST_NOT_FOUND","LIVE_ROOM_NOT_FOUND","LIVE_HOST_REQUIRED","LIVE_ROOM_ENDED","LIVE_ROOM_NOT_LIVE","LIVE_BLOCK_RELATION_EXISTS","LIVE_ROOM_ACCESS_DENIED","LIVE_HOST_MUST_END_ROOM","LIVE_HOST_CANNOT_REQUEST","LIVE_ALREADY_PUBLISHING","LIVE_GUEST_REQUEST_NOT_FOUND","LIVE_GUEST_REQUEST_NOT_PENDING","LIVE_GUEST_REQUEST_EXPIRED","LIVE_ROOM_FULL","LIVE_POLL_QUESTION_INVALID","LIVE_POLL_OPTION_COUNT_INVALID","LIVE_POLL_CLOSE_TIME_INVALID","LIVE_POLL_OPTION_INVALID","LIVE_POLL_OPTIONS_DUPLICATE"].concat(["INSUFFICIENT_FUNDS","NO_ACCOUNT","NO_RECIPIENT_ACCOUNT","INVALID_GIFT_PRICE","SELF_GIFT_NOT_ALLOWED","INVALID_IDEMPOTENCY_KEY","GIFT_REQUEST_INVALID","SELF_GIFT_FORBIDDEN","GIFT_IDEMPOTENCY_KEY_INVALID","GIFT_MESSAGE_TOO_LONG","GIFT_IDEMPOTENCY_CONFLICT","UNKNOWN_GIFT","SENDER_NOT_FOUND","RECIPIENT_NOT_FOUND","GIFT_LOCKED","GIFT_UNLOCK_RULE_UNSUPPORTED","LIVE_ROOM_NOT_ACTIVE","SENDER_NOT_IN_LIVE_ROOM","RECIPIENT_NOT_IN_LIVE_ROOM","WALLET_ACCOUNT_UNAVAILABLE","GIFT_DELIVERY_RECORD_FAILED","PAYMENT_CAPTURE_IDENTIFIERS_REQUIRED","PAYMENT_CURRENCY_MISMATCH","PAYMENT_ORDER_NOT_FOUND","PAYMENT_ALREADY_CREDITED","PAYMENT_ORDER_STATE_INVALID","PAYMENT_AMOUNT_MISMATCH","CAPTURE_ALREADY_USED","COIN_PACKAGE_UNAVAILABLE"]));
     return { ok: false, status: response.status, code: allowedDomainCodes.has(domainMessage) ? domainMessage : 'SUPABASE_REST_FAILED', data: null };
   }
   return { ok: true, status: response.status, data };
