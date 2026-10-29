@@ -1085,8 +1085,6 @@ const server = http.createServer(async (req, res) => {
         availableMinor,minimumMinor:config.payouts.minimumMinor
       });
       if(!eligibility.eligible)return error(res,409,'PAYOUT_NOT_ELIGIBLE','Payout is not eligible: '+eligibility.reasons.join(', '));
-      const decrypted=payoutRecipient.decryptRecipientEmail(destination,config.payouts.recipientEncryptionKey);
-      if(!decrypted.ok)return error(res,503,decrypted.code,'The encrypted payout recipient could not be verified; no payout was requested.');
       const idempotencyKey=session.profile.id+':paypal-payout:'+rawKey;
       const requested=await adminRpc(config,'request_creator_payout',{
         p_creator_profile_id:session.profile.id,p_minimum_minor:config.payouts.minimumMinor,p_idempotency_key:idempotencyKey
@@ -1095,7 +1093,7 @@ const server = http.createServer(async (req, res) => {
       const payoutId=typeof requested.data==='string'?requested.data:Array.isArray(requested.data)?requested.data[0]:requested.data&&requested.data.request_creator_payout;
       if(!uuid(String(payoutId||'')))return error(res,503,'PAYOUT_REQUEST_RESULT_INVALID');
       const payoutLookup=await selectAdminRows(config,'payouts',query({
-        select:'id,creator_id,amount_minor,currency,state,provider_batch_id,provider_item_id,failure_code',
+        select:'id,creator_id,amount_minor,currency,state,provider_batch_id,provider_item_id,failure_code,recipient_ciphertext,recipient_nonce,recipient_tag,recipient_hash,recipient_masked,recipient_country_code',
         id:'eq.'+payoutId,creator_id:'eq.'+session.profile.id,limit:'1'
       }));
       if(!payoutLookup.ok||!payoutLookup.rows[0])return error(res,503,'PAYOUT_READBACK_UNAVAILABLE');
@@ -1103,8 +1101,13 @@ const server = http.createServer(async (req, res) => {
       if(payout.state==='paid')return json(res,200,{ok:true,idempotent:true,payout:{id:payout.id,state:'paid',amountMinor:Number(payout.amount_minor),currency:payout.currency}});
       if(payout.state==='failed')return error(res,409,'PAYOUT_PREVIOUS_ATTEMPT_FAILED','The previous payout attempt failed and reserved earnings were released. Use a new Idempotency-Key to retry.');
       if(payout.state==='processing'&&payout.provider_batch_id)return json(res,202,{ok:true,idempotent:true,payout:{id:payout.id,state:'processing',amountMinor:Number(payout.amount_minor),currency:payout.currency,providerBatchId:payout.provider_batch_id},message:'Payout is pending provider confirmation.'});
+      const payoutDestination=payoutRecipient.decryptRecipientEmail({
+        recipient_ciphertext:payout.recipient_ciphertext,recipient_nonce:payout.recipient_nonce,
+        recipient_tag:payout.recipient_tag,recipient_hash:payout.recipient_hash
+      },config.payouts.recipientEncryptionKey);
+      if(!payoutDestination.ok)return error(res,503,payoutDestination.code,'The payout-specific encrypted recipient snapshot could not be verified; the payout remains reserved and no new dispatch was attempted.');
       const provider=await paypal.createPayout(config.paypal,{
-        senderBatchId:payout.id,amountMinor:Number(payout.amount_minor),recipientEmail:decrypted.email,
+        senderBatchId:payout.id,amountMinor:Number(payout.amount_minor),recipientEmail:payoutDestination.email,
         requestId:payout.id.replace(/-/g,'')
       });
       if(!provider.ok){

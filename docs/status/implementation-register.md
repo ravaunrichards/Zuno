@@ -90,3 +90,8 @@ Migration `0029_search_index_and_indexing_queue.sql` adds a GIN-backed PostgreSQ
 ## Creator PayPal Payouts workflow update
 
 Migration `0031_creator_payouts_and_provider_reconciliation.sql` adds encrypted payout-destination metadata, finance/admin eligibility review, service-role-only earnings reservation, batch attachment, payout-success finalization and safe earnings release after a definitive provider failure. The API encrypts recipient email with AES-256-GCM using `PAYOUT_RECIPIENT_ENCRYPTION_KEY`; raw email is never sent back to the client. Payout requests remain disabled unless feature flags, PayPal Payouts, encryption key and reviewed destination/compliance fields are all ready. Verified PayPal item-success webhooks are required before creator earnings transition from held to paid. Sandbox/account eligibility is not claimed without a real provider test.
+
+
+## Payout recipient snapshot hardening
+
+Migration `0032_payout_recipient_snapshot.sql` copies the recipient ciphertext, nonce, authentication tag, integrity hash, masked label and country onto each payout in the same transaction that reserves creator earnings. Retries decrypt the immutable payout snapshot rather than reading a destination that may have changed after an uncertain provider response.

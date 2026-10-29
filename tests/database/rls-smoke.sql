@@ -469,6 +469,7 @@ DECLARE
   v_amount bigint;
   v_state text;
   v_count integer;
+  v_recipient_ciphertext text;
 BEGIN
   INSERT INTO creator_payout_profiles(
     creator_id,recipient_ciphertext,recipient_nonce,recipient_tag,recipient_hash,recipient_masked,
@@ -493,6 +494,9 @@ BEGIN
   SELECT public.request_creator_payout(v_creator,1000,'zuno-ci-payout-success-idempotency-0001') INTO v_payout;
   SELECT public.request_creator_payout(v_creator,1000,'zuno-ci-payout-success-idempotency-0001') INTO v_replay;
   IF v_payout IS DISTINCT FROM v_replay THEN RAISE EXCEPTION 'Payout idempotency retry created a second payout'; END IF;
+  UPDATE creator_payout_profiles SET recipient_ciphertext='edited-after-reservation' WHERE creator_id=v_creator;
+  SELECT recipient_ciphertext INTO v_recipient_ciphertext FROM payouts WHERE id=v_payout;
+  IF v_recipient_ciphertext<>'ci-encrypted-recipient' THEN RAISE EXCEPTION 'Payout recipient snapshot changed after reservation'; END IF;
   SELECT amount_minor,state INTO v_amount,v_state FROM payouts WHERE id=v_payout;
   IF v_amount<>1700 OR v_state<>'requested' THEN RAISE EXCEPTION 'Payout request did not reserve correct amount/state: %, %',v_amount,v_state; END IF;
   SELECT count(*) INTO v_count FROM creator_earning_entries WHERE payout_id=v_payout AND state='held';
