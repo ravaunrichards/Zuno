@@ -75,12 +75,14 @@ function showDetails(gift, group) {
   selectedGift=gift;
   const sendForm=document.getElementById('gift-send-form');if(sendForm){sendForm.hidden=true;sendForm.reset();}
   if (title) title.textContent = gift.name || 'Gift';
+  const audioPath=typeof gift.audioPath==='string'&&gift.audioPath.startsWith('assets/gift-audio/')&&!gift.audioPath.includes('..')?gift.audioPath:'';
+  const audioPanel=gift.audioStatus==='resolved'&&audioPath?'<label class="gift-audio-preview-label" for="gift-audio-preview">Original gift sound</label><audio id="gift-audio-preview" class="gift-audio-preview" controls preload="none" aria-label="Play original gift sound"><source src="'+safeText(audioPath)+'" type="audio/wav"></audio>':'<p class="gift-audio-unresolved">'+safeText(gift.audioReason||'Distinct original sound has not yet been authored; no generic substitute is assigned.')+'</p>';
   content.innerHTML = '<div class="gift-detail-hero"><div class="gift-detail-glyph" aria-hidden="true">' + glyphs[group] + '</div><div><h3>' + safeText(gift.name) + '</h3><p>' + safeText(gift.categoryLabel || gift.category) + '</p></div></div><ul class="gift-detail-list">' +
     '<li><span>Stable gift ID</span><strong>' + safeText(gift.id) + '</strong></li>' +
     '<li><span>Catalogue price</span><strong>' + safeText(gift.priceCoins) + ' Z Coins</strong></li>' +
     '<li><span>Tier</span><strong>' + safeText(gift.tier) + '</strong></li>' +
     '<li><span>Audio status</span><strong>' + safeText(gift.audioStatus || 'not specified') + '</strong></li>' +
-    '<li><span>Model asset</span><strong>' + safeText(gift.modelPath || 'Not specified') + '</strong></li></ul><button class="button button-primary button-small" id="gift-detail-send-open" type="button">Send this gift · ' + safeText(gift.priceCoins) + ' Z Coins</button>';
+    '<li><span>Model asset</span><strong>' + safeText(gift.modelPath || 'Not specified') + '</strong></li></ul>' + audioPanel + '<button class="button button-primary button-small" id="gift-detail-send-open" type="button">Send this gift · ' + safeText(gift.priceCoins) + ' Z Coins</button>';
   content.querySelector('#gift-detail-send-open')?.addEventListener('click',openGiftSendForm);
   if (typeof dialog.showModal === 'function') dialog.showModal(); else dialog.setAttribute('open', '');
 }

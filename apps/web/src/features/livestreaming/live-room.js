@@ -208,7 +208,7 @@ function bindRoomEvents(room) {
     if (active && active.room === room && state === 'connected') say('Connected to the LIVE room.');
   });
 }
-async function connectRoom({roomId,title,token,url,role,isHost,privateRoom=false,startAfterConnect=false}) {
+async function connectRoom({roomId,title,token,url,role,isHost,privateRoom=false,startAfterConnect=false,hostUsername=''}) {
   const safeUrl = safeLiveKitUrl(url);
   if (!safeUrl) throw new Error('The LiveKit service URL is missing or not a trusted secure URL.');
   if (active) {
@@ -228,7 +228,7 @@ async function connectRoom({roomId,title,token,url,role,isHost,privateRoom=false
   }
   const room = new Room({adaptiveStream:true,dynacast:true,stopLocalTrackOnUnpublish:true});
   active = {
-    room, roomId, title, role:role||'viewer', isHost:Boolean(isHost), privateRoom, hostUsername:arguments[0]?.hostUsername||'',
+    room, roomId, title, role:role||'viewer', isHost:Boolean(isHost), privateRoom, hostUsername:hostUsername||'',
     state:'connecting', micEnabled:false, cameraEnabled:false,
     tiles:new Map(), pollTimer:null, guestRequestState:null
   };
