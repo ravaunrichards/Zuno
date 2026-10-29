@@ -4187,6 +4187,11 @@ async function verifySupabaseAdminCredentials() {
     console.warn('[auth-config] Supabase Auth Admin API probe skipped: required settings are missing');
     return;
   }
+  const adminKey = String(config.supabase.serviceRoleKey || '').trim();
+  const keyFormat = adminKey.startsWith('sb_secret_') ? 'modern-secret'
+    : adminKey.startsWith('eyJ') ? 'legacy-jwt'
+      : adminKey ? 'unknown-format' : 'missing';
+  console.info('[auth-config] Supabase admin credential format=' + keyFormat);
   try {
     // A tiny read-only Admin API request verifies the configured server secret
     // without creating a test user or exposing user rows or the secret in logs.
