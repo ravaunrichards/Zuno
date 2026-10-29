@@ -1,7 +1,7 @@
 export function mountNavigation() {
   const links = Array.from(document.querySelectorAll('[data-nav]'));
   const title = document.getElementById('page-title');
-  const labels = { home:'Home', discover:'Discover', live:'LIVE', messages:'Messages', communities:'Communities', creator:'Creator Studio', notifications:'Notifications', wallet:'Z Coins & wallet', profile:'Profile' };
+  const labels = { home:'Home', discover:'Discover', feed:'For You Feed', live:'LIVE', messages:'Messages', communities:'Communities', creator:'Creator Studio', notifications:'Notifications', wallet:'Z Coins & wallet', profile:'Profile' };
   function activate(id) {
     links.forEach((link) => link.classList.toggle('is-active', link.dataset.nav === id));
     if (title && labels[id]) title.textContent = labels[id];

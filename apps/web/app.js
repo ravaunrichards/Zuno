@@ -4,12 +4,18 @@ import { mountComposer } from './src/features/creation/composer.js';
 import { mountGiftCatalog } from './src/features/gifts/catalog.js';
 import { mountLivePreview } from './src/features/livestreaming/live-preview.js';
 import { mountActions } from './src/features/actions.js';
+import { mountAuth } from './src/features/auth/auth-ui.js';
+import { mountFeed } from './src/features/feed/feed.js';
+
 mountNavigation();
 mountSearch();
 mountComposer();
 mountActions();
+mountAuth();
+mountFeed();
 mountGiftCatalog();
 mountLivePreview();
+
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   navigator.serviceWorker.register('./sw.js').catch(() => {
     const source = document.getElementById('gift-source');

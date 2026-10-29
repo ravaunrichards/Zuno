@@ -1,4 +1,5 @@
 import { requestJson } from '../../services/api-client.js';
+const PAGE_SIZE = 12;
 const glyphs = { flowers:'✿', celebration:'✦', cosmic:'✧', jamaica:'♬', vehicles:'➤', luxury:'◇', animals:'♧', music:'♫', creator_support:'♡', seasonal:'❋', premium:'✺' };
 function safeText(value) { return String(value == null ? '' : value).replace(/[&<>"']/g, (c) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
 function family(category) {
@@ -52,19 +53,30 @@ export async function mountGiftCatalog() {
   }
   if (count) count.textContent = gifts.length + ' catalogue items';
   if (source) source.textContent = dataSource;
-  grid.replaceChildren();
-  function render(category) {
-    grid.replaceChildren();
-    const matching = category === 'all' ? gifts : gifts.filter((gift) => family(gift.category) === category);
-    matching.slice(0, 8).forEach((gift) => grid.appendChild(createCard(gift)));
+  let selectedCategory = 'all';
+  let shown = 0;
+  const loadMore = document.getElementById('gift-load-more');
+  const matchingGifts = () => selectedCategory === 'all' ? gifts : gifts.filter((gift) => family(gift.category) === selectedCategory);
+  function render(reset = false) {
+    if (reset) { grid.replaceChildren(); shown = 0; }
+    const matching = matchingGifts();
+    matching.slice(shown, shown + PAGE_SIZE).forEach((gift) => grid.appendChild(createCard(gift)));
+    shown = Math.min(matching.length, shown + PAGE_SIZE);
     if (!matching.length) grid.innerHTML = '<div class="catalog-loading">No gifts in this category.</div>';
+    if (count) count.textContent = matching.length + ' gifts in this category';
+    if (loadMore) {
+      loadMore.hidden = shown >= matching.length;
+      loadMore.textContent = 'Load more gifts (' + Math.max(0, matching.length - shown) + ' remaining)';
+    }
   }
-  render('all');
+  render(true);
+  if (loadMore) loadMore.addEventListener('click', () => render(false));
   const filters = document.getElementById('gift-filters');
   if (filters) filters.addEventListener('click', (event) => {
     const button = event.target.closest('[data-gift-category]');
     if (!button) return;
     filters.querySelectorAll('.gift-filter').forEach((item) => item.classList.toggle('is-active', item === button));
-    render(button.dataset.giftCategory);
+    selectedCategory = button.dataset.giftCategory;
+    render(true);
   });
 }

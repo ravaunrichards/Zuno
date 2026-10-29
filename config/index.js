@@ -34,6 +34,10 @@ function load(env = process.env) {
   const config = {
     nodeEnv: env.NODE_ENV || 'development',
     appBaseUrl: env.APP_BASE_URL || 'http://localhost:3000',
+    apiPublicBaseUrl: env.ZUNO_PUBLIC_API_BASE_URL || '',
+    corsAllowedOrigins: (env.CORS_ALLOWED_ORIGINS || '').split(',').map((origin) => origin.trim().replace(/\/$/, '')).filter(Boolean),
+    storageBucket: env.SUPABASE_MEDIA_BUCKET || 'zuno-media',
+    mediaSignedUrlTtlSeconds: Number(env.MEDIA_SIGNED_URL_TTL_SECONDS || 600),
     apiPort: Number(env.API_PORT || 4000),
     rankingResetTz: env.RANKING_RESET_TZ || 'America/Jamaica',
     supabase,

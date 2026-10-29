@@ -100,7 +100,27 @@ async function rowsForUser(session, table, values, options = {}) {
   return userRest(config, session, table, query(values), options.method || 'GET', options.body ?? null);
 }
 
+function applyCors(req, res) {
+  const origin = req.headers.origin;
+  if (!origin) return { allowed: true, hasOrigin: false };
+  const localDevelopment = config.nodeEnv !== 'production' && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+  const allowed = localDevelopment || config.corsAllowedOrigins.includes(origin);
+  if (!allowed) return { allowed: false, hasOrigin: true };
+  res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Vary', 'Origin');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Authorization,Content-Type,apikey,x-client-info');
+  res.setHeader('Access-Control-Max-Age', '600');
+  return { allowed: true, hasOrigin: true };
+}
+
 const server = http.createServer(async (req, res) => {
+  const cors = applyCors(req, res);
+  if (!cors.allowed) return error(res, 403, 'CORS_ORIGIN_NOT_ALLOWED');
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204, { 'Cache-Control': 'no-store', 'Access-Control-Allow-Origin': req.headers.origin || '', 'Vary': 'Origin' });
+    return res.end();
+  }
   const url = new URL(req.url, 'http://localhost:' + config.apiPort);
   try {
     if (req.method === 'GET' && url.pathname === '/health') {

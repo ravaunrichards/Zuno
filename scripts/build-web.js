@@ -19,7 +19,7 @@ for (const file of ['manifest.webmanifest','gifts.json']) {
     try { JSON.parse(fs.readFileSync(p, 'utf8')); } catch (error) { errors.push(file + ' is invalid JSON: ' + error.message); }
   }
 }
-for (const file of ['app.js','src/components/navigation.js','src/services/api-client.js','src/features/search/search.js','src/features/creation/composer.js','src/features/gifts/catalog.js','src/features/livestreaming/live-preview.js','src/features/actions.js']) {
+for (const file of ['app.js','runtime-config.js','src/components/navigation.js','src/services/api-client.js','src/features/search/search.js','src/features/creation/composer.js','src/features/gifts/catalog.js','src/features/livestreaming/live-preview.js','src/features/actions.js','src/features/auth/session.js','src/features/auth/auth-ui.js','src/features/feed/feed.js']) {
   if (!fs.existsSync(path.join(WEB,file))) errors.push('required web module missing: ' + file);
 }
 if (errors.length) { console.error(errors.join('\n')); process.exit(1); }
@@ -34,4 +34,31 @@ function copyDir(source,target) {
   }
 }
 copyDir(WEB,output);
-console.log('Web package built to dist/web after static reference and JSON validation.');
+const publicRuntime = {
+  apiBaseUrl: process.env.ZUNO_PUBLIC_API_BASE_URL || '',
+  supabaseUrl: process.env.SUPABASE_URL || '',
+  supabaseAnonKey: process.env.SUPABASE_ANON_KEY || ''
+};
+fs.writeFileSync(path.join(output,'runtime-config.js'),'window.ZUNO_CONFIG = Object.freeze('+JSON.stringify(publicRuntime)+');\n');
+const outputHtmlPath = path.join(output,'index.html');
+let outputHtml = fs.readFileSync(outputHtmlPath,'utf8');
+const origins = [];
+for (const candidate of [publicRuntime.apiBaseUrl, publicRuntime.supabaseUrl]) {
+  if (!candidate) continue;
+  try {
+    const parsed = new URL(candidate);
+    if (!['https:','http:'].includes(parsed.protocol) || parsed.username || parsed.password) throw new Error('unsafe URL');
+    origins.push(parsed.origin);
+  } catch (_) {
+    errors.push('invalid public origin supplied to web build');
+  }
+}
+if (errors.length) { console.error(errors.join('\\n')); process.exit(1); }
+const allowed = [...new Set(origins)].join(' ');
+if (allowed) {
+  outputHtml = outputHtml.replace("connect-src 'self' http://localhost:4000 https://*.supabase.co;", "connect-src 'self' http://localhost:4000 https://*.supabase.co "+allowed+";");
+  outputHtml = outputHtml.replace("img-src 'self' data: blob: https://*.supabase.co;", "img-src 'self' data: blob: https://*.supabase.co "+allowed+";");
+  outputHtml = outputHtml.replace("media-src 'self' blob: https://*.supabase.co;", "media-src 'self' blob: https://*.supabase.co "+allowed+";");
+  fs.writeFileSync(outputHtmlPath,outputHtml);
+}
+console.log('Web package built to dist/web. Runtime config contains only public API and Supabase anonymous-key values.');
