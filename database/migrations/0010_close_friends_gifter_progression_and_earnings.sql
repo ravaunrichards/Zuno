@@ -42,6 +42,8 @@ insert into gifter_level_thresholds(level,minimum_eligible_lifetime_coins)
 select level::smallint,ceil(100::numeric*power(1000000::numeric,level::numeric/50.0))::bigint
 from generate_series(1,50) as levels(level)
 on conflict(level) do update set minimum_eligible_lifetime_coins=excluded.minimum_eligible_lifetime_coins;
+alter table gifter_level_thresholds enable row level security;
+create policy gifter_level_thresholds_public_read on gifter_level_thresholds for select using(true);
 
 alter table gifter_progress add column if not exists eligible_lifetime_coins bigint not null default 0;
 alter table gifter_progress add column if not exists level smallint not null default 0;
@@ -146,7 +148,7 @@ end;
 $$;
 drop trigger if exists gift_deliveries_sync_gifter_progress on gift_deliveries;
 create trigger gift_deliveries_sync_gifter_progress
-after insert or update of state,price_coins or delete on gift_deliveries
+after insert or update or delete on gift_deliveries
 for each row execute function sync_gifter_progress_from_delivery();
 revoke all on function sync_gifter_progress_from_delivery() from public;
 
