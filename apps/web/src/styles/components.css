@@ -303,3 +303,11 @@
 .my-subscription-actions{display:flex;gap:6px;flex-wrap:wrap}
 .subscription-empty{grid-column:1/-1;font-size:10px;line-height:1.7;color:var(--muted);padding:12px;border:1px dashed var(--line);border-radius:12px}
 @media(max-width:640px){.creator-tier-results,.my-subscription-results{grid-template-columns:1fr}}
+
+.gift-preview-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2}
+.gift-visual{position:relative;isolation:isolate;overflow:hidden}
+.gift-visual .gift-glyph{position:relative;z-index:0;transition:opacity .15s}
+.gift-visual.gift-3d-ready .gift-glyph{opacity:0}
+.gift-visual.gift-3d-fallback .gift-glyph{opacity:1}
+.gift-preview-unavailable .gift-preview-canvas{display:none}
+@media(prefers-reduced-motion:reduce){.gift-visual{scroll-behavior:auto}}

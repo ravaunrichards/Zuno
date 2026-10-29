@@ -9,6 +9,7 @@
     "test": "node ../../scripts/test-web.js"
   },
   "dependencies": {
-    "livekit-client": "^2.23.0"
+    "livekit-client": "^2.23.0",
+    "three": "^0.180.0"
   }
 }

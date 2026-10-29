@@ -1,4 +1,5 @@
 import { requestJson } from '../../services/api-client.js';
+import { mountGiftPreviews } from './preview3d.js';
 const PAGE_SIZE = 12;
 const glyphs = { flowers:'✿', celebration:'✦', cosmic:'✧', jamaica:'♬', vehicles:'➤', luxury:'◇', animals:'♧', music:'♫', creator_support:'♡', seasonal:'❋', premium:'✺' };
 function safeText(value) { return String(value == null ? '' : value).replace(/[&<>"']/g, (c) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
@@ -35,7 +36,7 @@ function createCard(gift) {
   const el = document.createElement('article');
   el.className = 'gift-card';
   el.dataset.category = group;
-  el.innerHTML = '<div class="gift-visual"><span class="gift-glyph" aria-hidden="true">' + glyphs[group] + '</span></div><div class="gift-name">' + safeText(gift.name) + '</div><div class="gift-meta"><span class="gift-price">◇ ' + safeText(gift.priceCoins) + '</span><span class="gift-tier">Tier ' + safeText(gift.tier) + '</span></div><button class="gift-inspect" type="button">Inspect gift</button>';
+  el.innerHTML = '<div class="gift-visual" role="img" aria-label="' + safeText(gift.name) + ' preview"><span class="gift-glyph" aria-hidden="true">' + glyphs[group] + '</span></div><div class="gift-name">' + safeText(gift.name) + '</div><div class="gift-meta"><span class="gift-price">◇ ' + safeText(gift.priceCoins) + '</span><span class="gift-tier">Tier ' + safeText(gift.tier) + '</span></div><button class="gift-inspect" type="button">Inspect gift</button>';
   el.querySelector('button').addEventListener('click', () => showDetails(gift, group));
   return el;
 }
@@ -53,6 +54,7 @@ export async function mountGiftCatalog() {
   }
   if (count) count.textContent = gifts.length + ' catalogue items';
   if (source) source.textContent = dataSource;
+  const previewRenderer = mountGiftPreviews(grid);
   let selectedCategory = 'all';
   let shown = 0;
   const loadMore = document.getElementById('gift-load-more');
@@ -60,7 +62,8 @@ export async function mountGiftCatalog() {
   function render(reset = false) {
     if (reset) { grid.replaceChildren(); shown = 0; }
     const matching = matchingGifts();
-    matching.slice(shown, shown + PAGE_SIZE).forEach((gift) => grid.appendChild(createCard(gift)));
+    matching.slice(shown, shown + PAGE_SIZE).forEach((gift) => { const card = createCard(gift); card.dataset.giftId = gift.id; card.dataset.giftName = gift.name; card.dataset.modelPath = gift.modelPath || ''; grid.appendChild(card); });
+    previewRenderer.refresh();
     shown = Math.min(matching.length, shown + PAGE_SIZE);
     if (!matching.length) grid.innerHTML = '<div class="catalog-loading">No gifts in this category.</div>';
     if (count) count.textContent = matching.length + ' gifts in this category';
