@@ -2859,7 +2859,7 @@ const server = http.createServer(async (req, res) => {
       return json(res,200,{ok:true,order:{id:orderId,status:typeof cancelled.data==='string'?cancelled.data.replace(/^"|"$/g,''):'cancelled'}});
     }
 
-    const commerceFulfillmentMatch=url.pathname.match(/^\\/api\\/marketplace\\/orders\\/([0-9a-f-]+)\\/fulfillment$/i);
+    const commerceFulfillmentMatch=url.pathname.match(/^\/api\/marketplace\/orders\/([0-9a-f-]+)\/fulfillment$/i);
     if(req.method==='POST'&&commerceFulfillmentMatch){
       const session=await requireSession(req,res);
       if(!session.ok)return;
