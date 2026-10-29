@@ -10,6 +10,6 @@
   },
   "dependencies": {
     "livekit-client": "^2.23.0",
-    "three": "^0.180.0"
+    "three": "^0.186.1"
   }
 }
