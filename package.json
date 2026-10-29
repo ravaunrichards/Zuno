@@ -34,14 +34,15 @@
     "check:source": "node scripts/lint.js",
     "test:payments": "node scripts/run-tests.js payments",
     "test:accessibility": "node scripts/run-tests.js accessibility",
-    "serve:web": "node scripts/serve-static.js --root apps/web --port 3000",
+    "serve:web": "pnpm build:web && node scripts/serve-static.js --root dist/web --port 3000",
     "serve:admin": "node scripts/serve-static.js --root apps/admin --port 3002",
     "serve:creator": "node scripts/serve-static.js --root apps/creator-studio --port 3003",
     "serve:tv": "node scripts/serve-static.js --root apps/tv --port 3004"
   },
   "devDependencies": {
     "turbo": "^1.13.0",
-    "typescript": "^5.4.0"
+    "typescript": "^5.4.0",
+    "esbuild": "^0.28.2"
   },
   "pnpm": {
     "overrides": {

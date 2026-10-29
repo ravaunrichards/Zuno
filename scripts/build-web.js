@@ -1,6 +1,8 @@
 'use strict';
 const fs = require('node:fs');
 const path = require('node:path');
+const esbuild = require('esbuild');
+
 const ROOT = path.resolve(__dirname, '..');
 const WEB = path.join(ROOT, 'apps', 'web');
 const errors = [];
@@ -34,6 +36,24 @@ function copyDir(source,target) {
   }
 }
 copyDir(WEB,output);
+
+// Bundle all browser modules, including the official LiveKit client SDK.
+try {
+  esbuild.buildSync({
+    entryPoints: [path.join(WEB, 'app.js')],
+    outfile: path.join(output, 'app.js'),
+    bundle: true,
+    format: 'esm',
+    platform: 'browser',
+    target: ['es2022'],
+    minify: true,
+    legalComments: 'none',
+    logLevel: 'silent'
+  });
+} catch (error) {
+  console.error('Browser bundle failed:', error.message);
+  process.exit(1);
+}
 const publicRuntime = {
   apiBaseUrl: process.env.ZUNO_PUBLIC_API_BASE_URL || '',
   supabaseUrl: process.env.SUPABASE_URL || '',
