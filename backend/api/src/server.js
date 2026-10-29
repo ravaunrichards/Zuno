@@ -108,6 +108,16 @@ function profileIdIn(ids) {
   const clean = [...new Set(ids.filter(uuid))];
   return clean.length ? 'in.(' + clean.join(',') + ')' : 'in.(00000000-0000-4000-8000-000000000000)';
 }
+async function requireStaffSession(req, res, allowedRoles = ['admin','moderator']) {
+  const session = await authenticateProfile(req, config);
+  if (!session.ok) { error(res, session.status || 401, session.code || 'AUTH_REQUIRED'); return null; }
+  const roles = await selectAdminRows(config,'roles',query({select:'role',profile_id:'eq.'+session.profile.id}));
+  if (!roles.ok) { error(res,503,'STAFF_ROLE_LOOKUP_FAILED','Operator authorization could not be verified.'); return null; }
+  const assigned = new Set(roles.rows.map(row => row.role));
+  if (!allowedRoles.some(role => assigned.has(role))) { error(res,403,'STAFF_ROLE_REQUIRED','This account is not authorized for this administrative operation.'); return null; }
+  return session;
+}
+
 function safeRoom(room, host) {
   return {
     id: room.id, title: room.title || 'LIVE room', category: room.category || 'General',
