@@ -122,6 +122,7 @@ function createPrivacyExportWorker(options={}) {
   const serviceKey=env.SUPABASE_SERVICE_ROLE_KEY||'';
   const bucket=env.SUPABASE_MEDIA_BUCKET||'zuno-media';
   let stopped=false;
+  let nextCleanupAt=0;
   async function fetchJson(url,init={}) {
     let response;
     try { response=await fetcher(url,{...init,signal:AbortSignal.timeout(15000)}); }
@@ -230,7 +231,37 @@ function createPrivacyExportWorker(options={}) {
       await fs.rm(folder,{recursive:true,force:true}).catch(()=>{});
     }
   }
+  async function cleanupExpiredExports() {
+    const now=new Date().toISOString();
+    const expired=await restRows('data_requests',{
+      select:'id,profile_id,result_storage_path,result_expires_at',
+      request_type:'eq.export',state:'eq.completed',
+      result_expires_at:'lt.'+now,result_storage_path:'not.is.null',limit:'100'
+    });
+    for(const row of expired) {
+      const expected='privacy-exports/'+row.profile_id+'/'+row.id+'.json';
+      if(!uuid(row.id)||!uuid(row.profile_id)||row.result_storage_path!==expected) {
+        logger.error('[zuno-privacy-export] invalid expired object path',row.id,'PRIVACY_EXPORT_PATH_INVALID');
+        continue;
+      }
+      const removed=await adapter.deleteObject({supabase:{url:base,serviceRoleKey:serviceKey}},bucket,expected,fetcher);
+      if(!removed.ok&&removed.status!==404) {
+        logger.error('[zuno-privacy-export] expired object cleanup failed',row.id,removed.code||'EXPORT_CLEANUP_FAILED');
+        continue;
+      }
+      const url=new URL('/rest/v1/data_requests',base);
+      url.searchParams.set('id','eq.'+row.id);
+      url.searchParams.set('profile_id','eq.'+row.profile_id);
+      url.searchParams.set('request_type','eq.export');
+      url.searchParams.set('state','eq.completed');
+      await fetchJson(url,{method:'PATCH',headers:headers({'Content-Type':'application/json',Prefer:'return=minimal'}),body:JSON.stringify({
+        result_storage_path:null,result_byte_size:null,result_sha256:null,updated_at:new Date().toISOString()
+      })});
+    }
+    return expired.length;
+  }
   async function runOne() {
+    if(Date.now()>=nextCleanupAt){await cleanupExpiredExports();nextCleanupAt=Date.now()+60000;}
     const result=await rpc('claim_privacy_export',{p_worker:workerId});
     const row=Array.isArray(result)?result[0]:result;
     if(!row||!row.id)return {worked:false};
@@ -251,6 +282,6 @@ function createPrivacyExportWorker(options={}) {
     }
   }
   function stop(){stopped=true;}
-  return {workerId,runOne,run,stop,processRequest};
+  return {workerId,runOne,run,stop,processRequest,cleanupExpiredExports};
 }
 module.exports={createPrivacyExportWorker,safeCode,buildExportDocument,safeAuthIdentity,scrub,DIRECT_PLAN};

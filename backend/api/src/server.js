@@ -1207,8 +1207,8 @@ const server = http.createServer(async (req, res) => {
       const request=found.data[0];
       if(!request)return error(res,404,'DATA_REQUEST_NOT_FOUND');
       if(request.request_type!=='export')return error(res,409,'DATA_REQUEST_NOT_DOWNLOADABLE');
-      if(request.state!=='completed'||!request.result_storage_path)return error(res,409,'DATA_EXPORT_NOT_READY','The export has not been completed. No download is available yet.');
-      if(!request.result_expires_at||new Date(request.result_expires_at).getTime()<=Date.now())return error(res,410,'DATA_EXPORT_EXPIRED','This export link has expired. Submit a new export request.');
+      if(request.state!=='completed')return error(res,409,'DATA_EXPORT_NOT_READY','The export has not been completed. No download is available yet.');
+      if(!request.result_expires_at||new Date(request.result_expires_at).getTime()<=Date.now()||!request.result_storage_path)return error(res,410,'DATA_EXPORT_EXPIRED','This export has expired or was removed. Submit a new export request.');
       const expectedPath='privacy-exports/'+session.profile.id+'/'+request.id+'.json';
       if(request.result_storage_path!==expectedPath)return error(res,404,'DATA_EXPORT_NOT_FOUND');
       const signed=await storage.createSignedDownloadUrl(config,config.storageBucket,expectedPath,Math.min(600,config.mediaSignedUrlTtlSeconds));

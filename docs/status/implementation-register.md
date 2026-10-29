@@ -69,3 +69,6 @@ These additions passed the clean PostgreSQL 16 migration and core smoke workflow
 ## Privacy export processing update
 
 Migration `0027_privacy_data_export_processing.sql` adds a service-role-only claim/finish lease for export jobs. The worker creates a JSON export of account, social, content, messaging, community, LIVE, wallet, creator, commerce, moderation, consent and notification records in private Supabase Storage. It redacts credential-like fields and signed URL query credentials, paginates database reads, caps each export at 50,000 rows/100 MiB and expires the result after 7 days. The owner can request a short-lived signed download URL from the API. Deletion/correction/restriction requests remain visibly pending review; they are not silently declared complete by the export worker.
+
+
+Expired privacy export objects are removed by the worker after their 7-day availability window. The request record is retained, but its storage path, byte size and checksum are cleared only after successful deletion (or a confirmed already-missing object). A new signed link cannot be created once the export has expired.

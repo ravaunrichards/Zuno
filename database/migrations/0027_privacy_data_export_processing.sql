@@ -89,7 +89,35 @@ begin
   if coalesce(p_success,false) then
     if p_storage_path is distinct from ('privacy-exports/'||v_request.profile_id::text||'/'||v_request.id::text||'.json')
        or p_byte_size is null or p_byte_size<=0 or p_byte_size>104857600
-       or p_sha256 !~ '^[a-f0-9]{64}$' then
+       or p_sha256 is null or p_sha256 !~ '^[a-f0-9]{64}
+      raise exception 'PRIVACY_EXPORT_RESULT_INVALID';
+    end if;
+    update public.data_requests set state='completed',result_storage_path=p_storage_path,
+      result_expires_at=now()+interval '7 days',result_byte_size=p_byte_size,result_sha256=p_sha256,
+      completed_at=now(),updated_at=now(),resolution_code=null,last_error_code=null,
+      locked_at=null,locked_by=null
+    where id=p_request_id;
+    insert into public.event_outbox(event_key,event_type,aggregate_type,aggregate_id,payload)
+    values('privacy-export-completed:'||p_request_id::text,'privacy.export.completed','data_request',p_request_id::text,
+      jsonb_build_object('requestId',p_request_id,'profileId',v_request.profile_id,'byteSize',p_byte_size,'expiresAt',now()+interval '7 days'))
+    on conflict(event_key) do nothing;
+    return 'completed';
+  end if;
+
+  v_safe_error:=left(coalesce(nullif(p_error_code,''),'PRIVACY_EXPORT_FAILED'),100);
+  v_next_state:=case when v_request.attempt_count>=3 then 'failed' else 'submitted' end;
+  update public.data_requests set state=v_next_state,run_after=now()+make_interval(secs=>least(3600,30*power(2,greatest(0,attempt_count-1))::integer)),
+    updated_at=now(),locked_at=null,locked_by=null,last_error_code=v_safe_error,
+    resolution_code=case when v_next_state='failed' then 'EXPORT_PROCESSING_FAILED' else null end
+  where id=p_request_id;
+  return v_next_state;
+end;
+$$;
+revoke all on function public.finish_privacy_export(uuid,text,boolean,text,bigint,text,text) from public;
+revoke all on function public.finish_privacy_export(uuid,text,boolean,text,bigint,text,text) from anon;
+revoke all on function public.finish_privacy_export(uuid,text,boolean,text,bigint,text,text) from authenticated;
+grant execute on function public.finish_privacy_export(uuid,text,boolean,text,bigint,text,text) to service_role;
+ then
       raise exception 'PRIVACY_EXPORT_RESULT_INVALID';
     end if;
     update public.data_requests set state='completed',result_storage_path=p_storage_path,
