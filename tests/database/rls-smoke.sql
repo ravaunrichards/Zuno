@@ -50,8 +50,8 @@ BEGIN
   IF EXISTS(SELECT 1 FROM messages WHERE id='50000000-0000-4000-8000-000000000001') THEN
     RAISE EXCEPTION 'RLS failed: non-member read private conversation message';
   END IF;
-  IF EXISTS(SELECT 1 FROM wallet_accounts WHERE profile_id='10000000-0000-4000-8000-000000000002') THEN
-    RAISE EXCEPTION 'RLS failed: client read protected wallet account';
+  IF has_table_privilege(current_user,'public.wallet_accounts','SELECT') THEN
+    RAISE EXCEPTION 'RLS failed: authenticated role has direct SELECT privilege on protected wallet accounts';
   END IF;
 END
 $viewer_checks$;

@@ -764,6 +764,11 @@ const server = http.createServer(async (req, res) => {
       if (message !== null && message.length > 240) return error(res, 400, 'GIFT_MESSAGE_TOO_LONG');
       if (!/^[a-zA-Z0-9._:-]{16,180}$/.test(rawKey)) return error(res, 400, 'IDEMPOTENCY_KEY_REQUIRED');
       const idempotencyKey = 'gift:' + session.profile.id + ':' + rawKey;
+      const replayLookup = await selectAdminRows(config, 'gift_deliveries', query({
+        select: 'id', idempotency_key: 'eq.' + idempotencyKey, limit: '1'
+      }));
+      if (!replayLookup.ok) return error(res, 503, 'GIFT_IDEMPOTENCY_LOOKUP_FAILED');
+      const wasReplay = replayLookup.rows.length > 0;
       const delivered = await adminRpc(config, 'deliver_gift', {
         p_sender_profile_id: session.profile.id,
         p_recipient_profile_id: recipientId,
@@ -794,7 +799,7 @@ const server = http.createServer(async (req, res) => {
       }));
       await adminRpc(config, 'refresh_gifter_progress', { p_profile_id: session.profile.id });
       return json(res, 201, {
-        ok: true, idempotent: false,
+        ok: true, idempotent: wasReplay,
         delivery: {
           id: delivery.id, senderProfileId: delivery.sender_profile_id, recipientProfileId: delivery.recipient_profile_id,
           liveRoomId: delivery.live_room_id, giftId: delivery.gift_id, priceCoins: Number(delivery.price_coins),
@@ -929,7 +934,15 @@ const server = http.createServer(async (req, res) => {
       });
       if (!credited.ok) return error(res, 503, 'PAYMENT_RECONCILIATION_REQUIRED', 'The capture could not yet be reconciled to the ZUNO ledger. Do not create another payment; a verified event may complete reconciliation.');
       const ledgerEntryId = typeof credited.data === 'string' ? credited.data : Array.isArray(credited.data) ? credited.data[0] : credited.data && credited.data.credit_captured_coin_order;
-      return json(res, 200, { ok: true, order: { id: order.id, state: 'credited', captureId: captured.captureId, ledgerEntryId: ledgerEntryId || null, coins } });
+      let creditedCoins = Number(order.custom_coins || 0);
+      if (!creditedCoins && order.package_id) {
+        const packageResult = await selectAdminRows(config, 'coin_packages', query({
+          select: 'coins', id: 'eq.' + order.package_id, limit: '1'
+        }));
+        if (!packageResult.ok || !packageResult.rows[0]) return error(res, 503, 'COIN_PACKAGE_RECONCILIATION_REQUIRED');
+        creditedCoins = Number(packageResult.rows[0].coins);
+      }
+      return json(res, 200, { ok: true, order: { id: order.id, state: 'credited', captureId: captured.captureId, ledgerEntryId: ledgerEntryId || null, coins: creditedCoins } });
     }
 
 

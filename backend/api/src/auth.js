@@ -65,7 +65,11 @@ async function requestRest(url, headers, method = 'GET', body = null, timeoutMs 
   }
   const response = await boundedFetch(url, options, timeoutMs);
   const data = await readResponse(response);
-  if (!response.ok) return { ok: false, status: response.status, code: 'SUPABASE_REST_FAILED', data: null };
+  if (!response.ok) {
+    const domainMessage = data && typeof data.message === 'string' ? data.message.trim() : '';
+    const allowedDomainCodes = new Set(["INSUFFICIENT_FUNDS","NO_ACCOUNT","NO_RECIPIENT_ACCOUNT","INVALID_GIFT_PRICE","SELF_GIFT_NOT_ALLOWED","INVALID_IDEMPOTENCY_KEY","GIFT_REQUEST_INVALID","SELF_GIFT_FORBIDDEN","GIFT_IDEMPOTENCY_KEY_INVALID","GIFT_MESSAGE_TOO_LONG","GIFT_IDEMPOTENCY_CONFLICT","UNKNOWN_GIFT","SENDER_NOT_FOUND","RECIPIENT_NOT_FOUND","GIFT_LOCKED","GIFT_UNLOCK_RULE_UNSUPPORTED","LIVE_ROOM_NOT_ACTIVE","SENDER_NOT_IN_LIVE_ROOM","RECIPIENT_NOT_IN_LIVE_ROOM","WALLET_ACCOUNT_UNAVAILABLE","GIFT_DELIVERY_RECORD_FAILED","PAYMENT_CAPTURE_IDENTIFIERS_REQUIRED","PAYMENT_CURRENCY_MISMATCH","PAYMENT_ORDER_NOT_FOUND","PAYMENT_ALREADY_CREDITED","PAYMENT_ORDER_STATE_INVALID","PAYMENT_AMOUNT_MISMATCH","CAPTURE_ALREADY_USED","COIN_PACKAGE_UNAVAILABLE"]);
+    return { ok: false, status: response.status, code: allowedDomainCodes.has(domainMessage) ? domainMessage : 'SUPABASE_REST_FAILED', data: null };
+  }
   return { ok: true, status: response.status, data };
 }
 
