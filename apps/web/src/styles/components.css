@@ -128,3 +128,6 @@
 .auth-dialog .composer-form label{margin-top:8px}
 .auth-dialog [hidden]{display:none!important}
 #auth-signup-fields{padding-top:1px}
+
+.composer-form input[type="file"]{display:block;width:100%;max-width:100%;margin:0 0 12px;padding:12px;border:1px dashed var(--line-strong);border-radius:12px;background:rgba(255,255,255,.025);color:var(--muted);font-size:10px}
+.composer-form input[type="file"]::file-selector-button{margin-right:10px;padding:7px 10px;border:0;border-radius:8px;background:rgba(154,124,255,.2);color:#e0d7ff;font-size:10px;font-weight:750}

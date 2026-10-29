@@ -42,6 +42,14 @@ test('gift endpoint rejects unauthenticated requests',async()=>{
  const response=await post(await start(),'/api/gifts/send');
  ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
 });
+test('media upload URL endpoint rejects unauthenticated requests',async()=>{
+ const response=await post(await start(),'/api/media/upload-url');
+ ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
+});
+test('media completion endpoint rejects unauthenticated requests',async()=>{
+ const response=await post(await start(),'/api/media/10000000-0000-4000-8000-000000000001/complete');
+ ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
+});
 test('payment endpoint rejects unauthenticated requests',async()=>{
  const response=await post(await start(),'/api/payments/order');
  ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');

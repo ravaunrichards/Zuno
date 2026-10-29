@@ -167,19 +167,21 @@ async function inspectObject(config, bucket, objectPath, fetcher = fetch) {
   if (!isConfigured(config)) return { ok: false, status: 503, code: 'STORAGE_NOT_CONFIGURED' };
   try {
     const key = encodeObjectPath(objectPath);
-    const url = endpoint(config, '/object/authenticated/' + encodeURIComponent(bucket) + '/' + key);
+    const url = endpoint(config, '/object/info/' + encodeURIComponent(bucket) + '/' + key);
     const response = await fetchWithTimeout(fetcher, url, {
-      method: 'HEAD',
-      headers: serviceHeaders(config, { Accept: 'application/json, */*' })
+      method: 'GET',
+      headers: serviceHeaders(config, { Accept: 'application/json' })
     });
-    await response.arrayBuffer().catch(() => null);
+    const data = await readJson(response);
     if (!response.ok) return { ok: false, status: response.status, code: response.status === 404 ? 'OBJECT_NOT_FOUND' : 'STORAGE_OBJECT_INSPECTION_FAILED' };
-    const size = Number(response.headers.get('content-length'));
+    const metadata = data && typeof data.metadata === 'object' && data.metadata ? data.metadata : {};
+    const rawSize = data.size ?? data.byteSize ?? metadata.size;
+    const size = Number(rawSize);
     return {
       ok: true, status: response.status,
-      byteSize: Number.isSafeInteger(size) && size >= 0 ? size : null,
-      mimeType: response.headers.get('content-type') || null,
-      etag: response.headers.get('etag') || null
+      byteSize: rawSize !== undefined && rawSize !== null && Number.isSafeInteger(size) && size >= 0 ? size : null,
+      mimeType: data.mimetype || data.mimeType || metadata.mimetype || metadata.contentType || null,
+      etag: data.etag || metadata.eTag || null
     };
   } catch (_) {
     return { ok: false, status: 503, code: 'STORAGE_UNAVAILABLE' };
