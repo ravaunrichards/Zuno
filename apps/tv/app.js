@@ -1,6 +1,6 @@
-mountProductLinks();
 'use strict';
 import { mountProductLinks } from '../web/src/components/product-links.js';
+mountProductLinks();
 const cards = Array.from(document.querySelectorAll('.tv-card'));
 function focusCard(index) {
   if (!cards.length) return;
