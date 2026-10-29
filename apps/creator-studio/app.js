@@ -162,7 +162,93 @@ if(saveButton&&caption){
  saveButton.addEventListener('click',persistLocalDraft);
 }
 publishButton?.addEventListener('click',publish);
+
+async function loadCreatorTiers(){
+ const box=document.getElementById('creator-tier-list');
+ if(!box)return;
+ if(!getSession()){box.replaceChildren(el('div','empty-state','Sign in to manage membership tiers.'));return;}
+ box.replaceChildren(el('div','empty-state','Loading tiers from ZUNO…'));
+ try{
+  const result=await requestJson('/api/creator/subscription-tiers');
+  box.replaceChildren();
+  if(!result.tiers?.length){box.append(el('div','empty-state','No membership tiers yet. Create one to start memberships.'));return;}
+  result.tiers.forEach(tier=>{
+   const card=el('article','studio-list-item');
+   const info=el('div','studio-list-copy');
+   const price=new Intl.NumberFormat('en-US',{style:'currency',currency:tier.currency||'USD'}).format(Number(tier.monthlyPriceMinor)/100);
+   info.append(el('strong','',tier.title+' · '+price+'/month'));
+   info.append(el('span','',tier.enabled?'PayPal plan connected':'Disabled draft · provider plan needs reconciliation'));
+   info.append(el('small','',(tier.benefits||[]).map(item=>typeof item==='string'?item:(item.label||item.key)).join(' · ')||'No listed benefits'));
+   card.append(info,el('span',tier.enabled?'tier-ready':'tier-pending',tier.enabled?'ENABLED':'DRAFT'));
+   box.append(card);
+  });
+ }catch(error){box.replaceChildren(el('div','empty-state',error.message||'Membership tiers unavailable.'));}
+}
+async function loadCreatorSubscribers(){
+ const box=document.getElementById('creator-subscriber-list');
+ if(!box)return;
+ if(!getSession()){box.replaceChildren(el('div','empty-state','Sign in to see membership status.'));return;}
+ box.replaceChildren(el('div','empty-state','Loading subscriber status…'));
+ try{
+  const result=await requestJson('/api/creator/subscriptions');
+  box.replaceChildren();
+  if(!result.subscriptions?.length){box.append(el('div','empty-state','No subscribers yet. Provider-confirmed memberships appear here.'));return;}
+  result.subscriptions.forEach(sub=>{
+   const row=el('article','studio-list-item');
+   const info=el('div','studio-list-copy');
+   info.append(el('strong','',sub.subscriber?.displayName||sub.subscriber?.username||'ZUNO subscriber'));
+   info.append(el('span','',sub.tier+' · '+sub.state));
+   info.append(el('small','',sub.currentPeriodEnd?'Current period ends '+new Date(sub.currentPeriodEnd).toLocaleDateString():'Period end not provided yet'));
+   row.append(info,el('span',sub.state==='active'?'tier-ready':'tier-pending',sub.state.toUpperCase()));
+   box.append(row);
+  });
+ }catch(error){box.replaceChildren(el('div','empty-state',error.message||'Subscriber list unavailable.'));}
+}
+function mountCreatorSubscriptions(){
+ const form=document.getElementById('creator-tier-form');
+ const title=document.getElementById('creator-tier-title');
+ const price=document.getElementById('creator-tier-price');
+ const benefits=document.getElementById('creator-tier-benefits');
+ const note=document.getElementById('creator-tier-status');
+ const submit=document.getElementById('creator-tier-submit');
+ function report(message,isError=false){if(note){note.textContent=message;note.classList.toggle('is-error',isError);}}
+ form?.addEventListener('submit',async event=>{
+  event.preventDefault();
+  if(!requireSignedIn())return;
+  const name=title?.value.trim()||'';
+  const amount=Number(price?.value);
+  const benefitLines=(benefits?.value||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+  if(name.length<2||name.length>80||!Number.isFinite(amount)||Math.round(amount*100)!==amount*100||amount<1||amount>999.99){
+    report('Use a tier name and monthly USD price between 1.00 and 999.99.',true);return;
+  }
+  if(benefitLines.length>10||benefitLines.some(x=>x.length>160)){
+    report('Limit benefits to 10 lines and 160 characters each.',true);return;
+  }
+  const key=window.crypto?.randomUUID?.();
+  if(!key){report('Secure request IDs require a modern browser over HTTPS.',true);return;}
+  if(submit)submit.disabled=true;
+  report('Creating PayPal product and monthly billing plan…');
+  try{
+   const result=await requestJson('/api/creator/subscription-tiers',{
+    method:'POST',headers:{'Idempotency-Key':key},
+    body:{title:name,monthlyPriceMinor:Math.round(amount*100),benefits:benefitLines}
+   });
+   report('Membership tier '+result.tier.title+' is enabled with a provider-backed monthly plan.');
+   if(title)title.value='';
+   if(benefits)benefits.value='';
+   await Promise.all([loadCreatorTiers(),loadCreatorSubscribers()]);
+  }catch(error){report(error.message||'The membership tier could not be enabled.',true);}
+  finally{if(submit)submit.disabled=false;}
+ });
+ document.getElementById('creator-tiers-refresh')?.addEventListener('click',loadCreatorTiers);
+ document.getElementById('creator-subscribers-refresh')?.addEventListener('click',loadCreatorSubscribers);
+ window.addEventListener('zuno:session-change',()=>{loadCreatorTiers();loadCreatorSubscribers();});
+ loadCreatorTiers();
+ loadCreatorSubscribers();
+}
+
 mountAuth();
+mountCreatorSubscriptions();
 async function refreshAll(){await Promise.all([loadLibrary(),loadPosts(),loadAnalytics()]);}
 window.addEventListener('zuno:session-change',refreshAll);
 refreshAll();
