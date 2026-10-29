@@ -69,6 +69,7 @@ const DIRECT_PLAN = [
   ['posts','posts',p=>commonFilter('author_id',p)],
   ['reactions','reactions',p=>commonFilter('profile_id',p)],
   ['comments','comments',p=>commonFilter('author_id',p)],
+  ['sentMessages','messages',p=>commonFilter('sender_id',p)],
   ['postBookmarks','post_bookmarks',p=>commonFilter('profile_id',p)],
   ['postReposts','post_reposts',p=>commonFilter('profile_id',p)],
   ['postViews','post_view_events',p=>commonFilter('profile_id',p)],
