@@ -12,7 +12,7 @@ function notConfigured() {
 }
 function request(host, pathName, method, headers, body) {
   return new Promise((resolve, reject) => {
-    const data = body === null || body === undefined ? null : JSON.stringify(body);
+    const data = body === null || body === undefined ? null : (typeof body === 'string' ? body : JSON.stringify(body));
     const req = https.request({ host, path: pathName, method,
       headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...headers,
         ...(data !== null ? { 'Content-Length': Buffer.byteLength(data) } : {}) } },
@@ -36,8 +36,8 @@ async function getAccessToken(cfg) {
   const host = HOSTS[cfg.env] || HOSTS.sandbox;
   const auth = Buffer.from(cfg.clientId + ':' + cfg.clientSecret).toString('base64');
   try {
-    const res = await request(host, '/v1/oauth2/token?grant_type=client_credentials', 'POST',
-      { Authorization: 'Basic ' + auth, 'Content-Type': 'application/x-www-form-urlencoded' }, null);
+    const res = await request(host, '/v1/oauth2/token', 'POST',
+      { Authorization: 'Basic ' + auth, 'Content-Type': 'application/x-www-form-urlencoded' }, 'grant_type=client_credentials');
     if (res.status !== 200 || !res.body || !res.body.access_token) return { ok: false, status: res.status || 502, code: 'PAYPAL_AUTH_FAILED' };
     return { ok: true, accessToken: res.body.access_token, expiresIn: res.body.expires_in };
   } catch (_) { return { ok: false, status: 503, code: 'PAYPAL_PROVIDER_UNAVAILABLE' }; }
