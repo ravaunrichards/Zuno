@@ -389,4 +389,40 @@ BEGIN
 END
 $message_identity_checks$;
 
-SELECT 'ZUNO PostgreSQL migration + RLS + economy + moderation + messaging/community/call smoke checks passed' AS verification;
+
+DO $search_index_checks$
+DECLARE
+  v_doc_id uuid := '60000000-0000-4000-8000-000000000001';
+  v_owner uuid := '10000000-0000-4000-8000-000000000001';
+  v_vector tsvector;
+  v_pending bigint;
+BEGIN
+  INSERT INTO search_documents(
+    entity_type,entity_id,owner_id,title,body,tags,visibility,metadata
+  ) VALUES (
+    'profile',v_doc_id,v_owner,'ZUNO SearchVector Trigger','Full text indexing smoke check',array['search-index','zuno'],'public','{"synthetic":true}'::jsonb
+  ) ON CONFLICT(entity_type,entity_id) DO UPDATE SET
+    title=excluded.title,body=excluded.body,tags=excluded.tags,visibility=excluded.visibility,metadata=excluded.metadata;
+
+  SELECT search_vector INTO v_vector FROM search_documents WHERE entity_type='profile' AND entity_id=v_doc_id;
+  IF v_vector IS NULL OR NOT (v_vector @@ plainto_tsquery('simple','SearchVector')) OR NOT (v_vector @@ plainto_tsquery('simple','search-index')) THEN
+    RAISE EXCEPTION 'Search document trigger did not index title and tags';
+  END IF;
+
+  UPDATE search_documents SET title='Changed searchable title',tags=array['updated-marker']
+    WHERE entity_type='profile' AND entity_id=v_doc_id;
+  SELECT search_vector INTO v_vector FROM search_documents WHERE entity_type='profile' AND entity_id=v_doc_id;
+  IF NOT (v_vector @@ plainto_tsquery('simple','updated-marker')) OR v_vector @@ plainto_tsquery('simple','SearchVector') THEN
+    RAISE EXCEPTION 'Search vector trigger did not refresh on update';
+  END IF;
+
+  SELECT count(*) INTO v_pending FROM search_index_jobs
+    WHERE entity_type='profile' AND entity_id='10000000-0000-4000-8000-000000000001'
+      AND operation='delete';
+  IF v_pending=0 THEN
+    RAISE EXCEPTION 'Private profile insertion did not enqueue an index-removal operation';
+  END IF;
+END
+$search_index_checks$;
+
+SELECT 'ZUNO PostgreSQL migration + RLS + economy + moderation + messaging/community/call/search smoke checks passed' AS verification;

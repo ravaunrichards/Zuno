@@ -2,15 +2,15 @@
 
 ## Supabase
 - [ ] Verify project URL and server-only credentials.
-- [x] Apply migrations 0001–0026 to disposable PostgreSQL 16 in GitHub Actions.
+- [x] Apply migrations 0001–0029 to disposable PostgreSQL 16 in GitHub Actions.
 - [x] Test positive/negative RLS access plus synthetic gift, capture-credit, refund-release/finalization and moderation/audit transitions in CI.
 - [ ] Apply to an actual disposable Supabase project and verify Supabase-specific Auth, Storage and Realtime behavior.
 - [ ] Verify private storage bucket policies.
-- [ ] Derive profile identity from a trusted provider-verified JWT, not a client-supplied profile ID.
+- [x] Derive API profile identity from provider-verified Supabase access tokens, not client-supplied profile IDs.
 
 ## LiveKit
-- [ ] Authenticate callers before issuing room tokens.
-- [ ] Verify room host/guest permissions, short token expiry and least-privilege grants.
+- [x] Authenticate callers before issuing room tokens.
+- [x] Verify room host/guest permissions, short token expiry and least-privilege grants in source and unit/CI tests.
 - [x] Implement signed webhook verification and idempotent room event records in source; unit test rejects missing/forged signatures.
 - [ ] Verify webhooks against a configured LiveKit sandbox and test concurrent participant-capacity enforcement.
 
