@@ -9,6 +9,7 @@ import { mountFeed } from './src/features/feed/feed.js';
 import { mountWallet } from './src/features/auth/wallet.js';
 import { mountCommunities } from './src/features/communities/communities.js';
 import { mountMarketplace } from './src/features/marketplace/marketplace.js';
+import { mountSubscriptions } from './src/features/subscriptions/subscriptions.js';
 
 mountNavigation();
 mountSearch();
@@ -19,6 +20,7 @@ mountFeed();
 mountWallet();
 mountCommunities();
 mountMarketplace();
+mountSubscriptions();
 mountGiftCatalog();
 mountLiveRooms();
 

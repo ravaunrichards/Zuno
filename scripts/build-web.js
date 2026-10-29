@@ -21,7 +21,7 @@ for (const file of ['manifest.webmanifest','gifts.json']) {
     try { JSON.parse(fs.readFileSync(p, 'utf8')); } catch (error) { errors.push(file + ' is invalid JSON: ' + error.message); }
   }
 }
-for (const file of ['app.js','runtime-config.js','src/components/navigation.js','src/services/api-client.js','src/features/search/search.js','src/features/creation/composer.js','src/features/gifts/catalog.js','src/features/livestreaming/live-preview.js','src/features/livestreaming/live-room.js','src/features/actions.js','src/features/auth/session.js','src/features/auth/auth-ui.js','src/features/feed/feed.js','src/features/auth/wallet.js','src/features/communities/communities.js','src/features/marketplace/marketplace.js']) {
+for (const file of ['app.js','runtime-config.js','src/components/navigation.js','src/services/api-client.js','src/features/search/search.js','src/features/creation/composer.js','src/features/gifts/catalog.js','src/features/livestreaming/live-preview.js','src/features/livestreaming/live-room.js','src/features/actions.js','src/features/auth/session.js','src/features/auth/auth-ui.js','src/features/feed/feed.js','src/features/auth/wallet.js','src/features/communities/communities.js','src/features/marketplace/marketplace.js','src/features/subscriptions/subscriptions.js']) {
   if (!fs.existsSync(path.join(WEB,file))) errors.push('required web module missing: ' + file);
 }
 if (errors.length) { console.error(errors.join('\n')); process.exit(1); }

@@ -97,14 +97,22 @@ export function mountSearch() {
           count++;
           if (label === 'Creators') {
             const card = resultCard('profile', (item.displayName || item.username || 'Creator') + (item.isVerified ? ' ✓' : ''),
-              '@' + item.username, [resultButton('Follow', async () => {
-                try {
-                  await requestJson('/api/follows', { method: 'POST', body: { profileId: item.id } });
-                  showPanel('Followed @' + item.username + '.');
-                } catch (error) {
-                  showPanel(error.message || 'Follow request failed.', true);
-                }
-              })]);
+              '@' + item.username, [
+                resultButton('Follow', async () => {
+                  try {
+                    await requestJson('/api/follows', { method: 'POST', body: { profileId: item.id } });
+                    showPanel('Followed @' + item.username + '.');
+                  } catch (error) {
+                    showPanel(error.message || 'Follow request failed.', true);
+                  }
+                }),
+                resultButton('View memberships', () => {
+                  results.hidden = true;
+                  window.dispatchEvent(new CustomEvent('zuno:view-creator-tiers', { detail: {
+                    id: item.id, username: item.username, displayName: item.displayName
+                  }}));
+                })
+              ]);
             section.append(card);
           } else if (label === 'Posts') {
             section.append(resultCard('post', item.author?.displayName || 'ZUNO member',
