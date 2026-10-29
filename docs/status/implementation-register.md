@@ -29,3 +29,12 @@ This file differentiates committed code from production-verified capability. A s
 ## Reporting standard
 
 Record each test as **passed**, **failed**, **blocked**, or **not run** with its command and result. Do not infer production readiness from a configured environment variable, UI preview or static validation.
+
+
+## Added progression policy in migration 0010
+
+- Close-friends story visibility now has a private close-friend relation and owner-scoped management.
+- The configurable gifter threshold table maps Level 0 to 0 and Level 50 to exactly 100,000,000 eligible lifetime coins; intermediate levels use a stored exponential threshold schedule.
+- Eligible gift-delivery rows automatically refresh gifter progress and record Ultimate Universe at 1,000,000 eligible lifetime coins, separately from level milestones.
+- Creator earning entries can record gross amount, provider fees, net amount, creator/platform shares, policy version, source idempotency and payout association under server-managed writes.
+- These SQL definitions still require application to a real disposable PostgreSQL/Supabase database and transaction-level RLS/trigger tests before they can be treated as verified.
