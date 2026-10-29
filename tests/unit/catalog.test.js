@@ -23,5 +23,8 @@ test('manifest validates against packaged asset files', () => {
   const r = cat.validateCatalog(REPO_ROOT);
   if (!r.ok) throw new Error('manifest errors: ' + r.errors.slice(0, 5).join('; '));
   ok(r.count >= 100, 'count');
-  ok(r.soundBearing > 0, 'has sound-bearing gifts with real audio');
+  eq(r.soundBearing, r.count, 'every gift has checksum-verified audio');
+  eq(r.unresolvedAudio, 0, 'no gifts remain without audio');
+  const resolved = cat.loadGifts().filter((g) => g.audioStatus === 'resolved');
+  eq(new Set(resolved.map((g) => g.audioPath)).size, resolved.length, 'each gift has its own audio file');
 });

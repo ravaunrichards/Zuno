@@ -48,7 +48,7 @@ The API now accepts `offset` and `limit` for feed pagination. Following feeds us
 
 ## Gift audio inventory — 2026-10-29
 
-The manifest contains 103 stable gift IDs. 57 have an audio file with a matching SHA-256 checksum. The remaining 46 entries are marked `unresolved` with an explicit reason and no audio path; they are not represented by generic substitute sounds. A gift can be called audio-complete only when its authored effect exists, is mapped to the correct ID, and validates against the manifest.
+The manifest contains 103 stable gift IDs and 103 checksum-verified, distinct, procedurally generated WAV files. Each gift has its own ID-derived sound with category-specific base tones and distinct per-ID frequency ratios. High-tier sounds retain the seeded harmonic generator; formerly unresolved lower-tier gifts use deterministic integer-waveform synthesis. No shared audio file or generic substitute is mapped across gifts. WAV checksums, IDs, paths and resolved statuses are checked by the asset validator and unit suite.
 
 
 ## Additional migrations 0018–0026

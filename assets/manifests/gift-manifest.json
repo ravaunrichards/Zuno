@@ -60,8 +60,8 @@
         "particles": false,
         "durationMs": 2700
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_animals_fantasy_doctor_bird_ef185972.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -69,7 +69,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:bfa64e6e365c3873f619b26bd5c669fc3563883cbe84b8597114995b60244345",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:bd4f97394137f2bc47c8821c336860746d155cbd4b20102ecdb1b611769e2328"
     },
     {
       "giftId": "gift_animals_fantasy_hummingbird_a40fd17c",
@@ -83,8 +83,8 @@
         "particles": false,
         "durationMs": 2300
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_animals_fantasy_hummingbird_a40fd17c.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -92,7 +92,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:0853d77be503e03a7ce7f0b3372e1ebb53d06ac4ad6f861b9c87238d145b2efb",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:2ea46a1a56501e175689aed48de2b71dd2e15e22e33cee61c3798f93731003bc"
     },
     {
       "giftId": "gift_animals_fantasy_mongoose_dash_025c78ca",
@@ -106,8 +106,8 @@
         "particles": false,
         "durationMs": 2300
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_animals_fantasy_mongoose_dash_025c78ca.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -115,7 +115,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:5b8749306784553bbba870b5f0c54dad9a53662033b209919411a6ee23c7630e",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:e5d59a96963b57eef8cea02efabc7d3ca13a59ef97ff265b4617bd41e0073b88"
     },
     {
       "giftId": "gift_animals_fantasy_phoenix_rise_f49d274d",
@@ -152,8 +152,8 @@
         "particles": false,
         "durationMs": 2700
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_animals_fantasy_sea_turtle_726e149c.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -161,7 +161,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:71daed7d1594769e169822e8a5f83f9f9b55c7a96600a93954c6651b75780914",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:3643b05f7ccd4354e85598007c99c138bd8734b2cbfe713a235f084ccead710a"
     },
     {
       "giftId": "gift_animals_fantasy_spirit_lion_9dc2ba1e",
@@ -198,8 +198,8 @@
         "particles": false,
         "durationMs": 2300
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_celebration_balloon_bunch_522b7789.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -207,7 +207,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:fb83c619d7b4aacab733d9d3966cfc34478996ca8288a7c5f9afcfc3a9b75d2c",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:27a33ba8b814d6ec5fbd82a29f302c2b92fa9c5cc804c6013edc364861a1f748"
     },
     {
       "giftId": "gift_celebration_birthday_cake_3691e330",
@@ -221,8 +221,8 @@
         "particles": false,
         "durationMs": 2700
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_celebration_birthday_cake_3691e330.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -230,7 +230,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:0f0192b3a9427aa48acf665eebee5a49ddca9d80886d6a6321a31ab633c22b74",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:f1ab19272bf58b4c5e63b85b08a80178aa4d17dea600158591bade1ae541e3f4"
     },
     {
       "giftId": "gift_celebration_champagne_tower_b8919a9c",
@@ -267,8 +267,8 @@
         "particles": false,
         "durationMs": 1900
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_celebration_confetti_pop_82ad0d98.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -276,7 +276,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:6fd831df798718b2b712dbeca069cfee7eaefcdfaf526525709b4bbc62799027",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:9281887f5c91b407e46b6ea6f63f087e8e17bcfe1d3477f88583e86f6265c792"
     },
     {
       "giftId": "gift_celebration_fireworks_burst_d7f2e4bb",
@@ -382,8 +382,8 @@
         "particles": false,
         "durationMs": 2300
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_celebration_streamer_cannon_8324c008.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -391,7 +391,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:5c2a3355b6345f5dd6e0199ef01835bc1d63d21f1aef8fc7c77e64e997b0f086",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:a08541351dd9875dd4075bf59fb51c1e472385aeb8a0a50b18f458ea6118ef50"
     },
     {
       "giftId": "gift_cosmic_black_hole_b2112d82",
@@ -520,8 +520,8 @@
         "particles": false,
         "durationMs": 2700
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_cosmic_shooting_star_23b804c0.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -529,7 +529,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:2384c3e8abe5c7b769131311bdc75ef80b30d86a37603ae2e79284b595563e8a",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:dbacf734d7c7bdc9201505eea1b714a819007001aa17d34ddbdc36586e65ee8f"
     },
     {
       "giftId": "gift_cosmic_star_cluster_724eaf7d",
@@ -635,8 +635,8 @@
         "particles": false,
         "durationMs": 1900
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_creator_support_coffee_cup_f56ab090.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -644,7 +644,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:7d57f5de69f2e9813eb1ffcbae55cdcea975bdb76c68028667c634bbd528db89",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:bd17034e24700517ca901c6b9650784ca0d98e7c46e133e09e9383af8470a610"
     },
     {
       "giftId": "gift_creator_support_fan_badge_b11a2154",
@@ -658,8 +658,8 @@
         "particles": false,
         "durationMs": 2300
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_creator_support_fan_badge_b11a2154.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -667,7 +667,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:62b49ad2854c9a7ebc841b2bdb857421e939e715644799bb03aff368d49324fa",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:43d998a743dabe7ad65ede9cd6df468eef300f3d93c80f862fab54e5dc343dbc"
     },
     {
       "giftId": "gift_creator_support_hall_of_fame_e88255fa",
@@ -750,8 +750,8 @@
         "particles": false,
         "durationMs": 2700
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_creator_support_rocket_boost_decdb315.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -759,7 +759,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:a998abe021be9897683df160914b9fe2d0c5276515110b15bd238022b4572bcc",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:87d17f11545399f81739cc950418460298f6e63ea42cd310ff93df88f4471fd8"
     },
     {
       "giftId": "gift_creator_support_spotlight_6723b9a9",
@@ -819,8 +819,8 @@
         "particles": false,
         "durationMs": 1900
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_creator_support_thumbs_up_28f8ba68.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -828,7 +828,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:a8bae13199489c3495bd9ee5f053cc2468f73ad0adf2ee9e66da7bdc6cc6d030",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:644d10c5c62ed81a6f52a9a55e01623d02f9c341dae50596adff84a97bccfcef"
     },
     {
       "giftId": "gift_flowers_romance_diamond_heart_d3d7a021",
@@ -888,8 +888,8 @@
         "particles": false,
         "durationMs": 2700
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_flowers_romance_heart_petals_19df6b7e.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -897,7 +897,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:7701fbc4e2332151a6f942b2163772d2f8a885b873837828c827de42ce2b1d7f",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:ecbed76ceb1a82b83eae7c9e54f773ca1e2154c05cb677012532101fc8f4120c"
     },
     {
       "giftId": "gift_flowers_romance_hibiscus_bloom_4ee091a6",
@@ -911,8 +911,8 @@
         "particles": false,
         "durationMs": 2300
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_flowers_romance_hibiscus_bloom_4ee091a6.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -920,7 +920,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:9a2fa404a7124dd8ca7856980ee14a989b48a568a35765f816e8d8d64235550f",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:afe35c624640176f7d07d3cbf2a9f4f7ea6425a7041839b8d1a6675a32199f25"
     },
     {
       "giftId": "gift_flowers_romance_lily_basket_68f81a82",
@@ -934,8 +934,8 @@
         "particles": false,
         "durationMs": 2300
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_flowers_romance_lily_basket_68f81a82.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -943,7 +943,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:eba60c6fa584a5eece3b472b431a117b40be4cd467803740c99c6b76a4b5e2fd",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:815fbc2aa0c5f83ed262716f154a1684e0d7fd09c7f009015897df871a2c3c95"
     },
     {
       "giftId": "gift_flowers_romance_love_constellation_d5ea89e5",
@@ -980,8 +980,8 @@
         "particles": false,
         "durationMs": 2700
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_flowers_romance_orchid_spray_5b15a262.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -989,7 +989,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:c312b9960d2c3e7ebfb68b62d4c5ec050faf5ffb6b649c93f3a9349d5a4c8575",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:abfc1c9facf1c66d100bd81f4231a2292d8df05ab1473a41655e0d3cd0483733"
     },
     {
       "giftId": "gift_flowers_romance_rose_bouquet_5bf05a24",
@@ -1003,8 +1003,8 @@
         "particles": false,
         "durationMs": 2300
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_flowers_romance_rose_bouquet_5bf05a24.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -1012,7 +1012,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:af5b2d944a401eee4d5fc6cb94e002c0a3fb4f433ed716212e72fce12451d587",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:8b708c78747197d05a7a011825ed20a33d9d880bb8f0d72dbae0140c52b73064"
     },
     {
       "giftId": "gift_flowers_romance_single_rose_02968e43",
@@ -1026,8 +1026,8 @@
         "particles": false,
         "durationMs": 1900
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_flowers_romance_single_rose_02968e43.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -1035,7 +1035,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:58b9a1e84ba6694156d9eb4b219eb5d16dae84326b1c62c10c521972c6df232d",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:ac4638e4d27bb5f1612697115a1e8509308a92a9f64e9e07f8d2c2e802565039"
     },
     {
       "giftId": "gift_flowers_romance_sunflower_field_40667f7c",
@@ -1049,8 +1049,8 @@
         "particles": false,
         "durationMs": 2700
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_flowers_romance_sunflower_field_40667f7c.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -1058,7 +1058,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:735d68b3800efb52c7d0e6acac9501e0addd1641902dd3efc912aa9a6fbb933d",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:6df2845fbbc4eb7a47d3a25aef2c187907576013ac44d5b6155b810397752683"
     },
     {
       "giftId": "gift_jamaica_culture_ackee___saltfish_8cc49dc0",
@@ -1072,8 +1072,8 @@
         "particles": false,
         "durationMs": 2300
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_jamaica_culture_ackee___saltfish_8cc49dc0.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -1081,7 +1081,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:ca36fed56fcc6590ae61cd8e46fe6e0a52ee974836fa8aafd2050c69ff51fd08",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:4153768332bfc70000658955dfa5cde7c8dc6a6ad1cd948e42d89acd62868552"
     },
     {
       "giftId": "gift_jamaica_culture_bamboo_raft_fadfef44",
@@ -1095,8 +1095,8 @@
         "particles": false,
         "durationMs": 2700
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_jamaica_culture_bamboo_raft_fadfef44.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -1104,7 +1104,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:1a293dec1d0cd7c41ecef92c319ac82ee0df1ad0c9bb3aa958cbda9c3892ec3e",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:057d41b6d5449e7dfbd72938f383e9c329ff265aaad7bdf97e7824448e62956d"
     },
     {
       "giftId": "gift_jamaica_culture_blue_mountain_peak_cf8d0205",
@@ -1141,8 +1141,8 @@
         "particles": false,
         "durationMs": 2700
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_jamaica_culture_festival_kite_8c03afe7.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -1150,7 +1150,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:e323085ec9d39693b9c882c98749bd5ae736646f09bd0f1f4b2c397054fd62b0",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:56893d6c1d02d227316948c38a20be0416171607fdaa1ab326f8c3d657b13a4f"
     },
     {
       "giftId": "gift_jamaica_culture_market_basket_9a72dbc4",
@@ -1164,8 +1164,8 @@
         "particles": false,
         "durationMs": 2300
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_jamaica_culture_market_basket_9a72dbc4.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -1173,7 +1173,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:1f03c1e30e8bf9e4a337cbded1faac0d6a2a25b2c9a5aa0417fb59970ec49e11",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:da64db14f70de1842d96aa1faacbc820bfd2a82fc37c7fa6d7066145b2430017"
     },
     {
       "giftId": "gift_jamaica_culture_reggae_sunsplash_c385d11a",
@@ -1210,8 +1210,8 @@
         "particles": false,
         "durationMs": 2700
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_jamaica_culture_steel_drum_39363e77.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -1219,7 +1219,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:84febd944d8071e833eb08745991a935b2c585244fa9adcd6a743ac2bcba39bf",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:fce5f28d3b6115a7361a7a8087a61c1cd4c99d48fb2fe040aa54949fb5d3b1ed"
     },
     {
       "giftId": "gift_jamaica_parish_clarendon_8c2c296a",
@@ -1233,8 +1233,8 @@
         "particles": false,
         "durationMs": 2700
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_jamaica_parish_clarendon_8c2c296a.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -1242,7 +1242,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:b835dcd050083a7bba96ee913a5e4eae5cb45a38223e7162b2a5f4dc1b5646b2",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:8fa8980640937d141ace553f9e3d0863dc79d919930fa6a73894219aa34353fd"
     },
     {
       "giftId": "gift_jamaica_parish_hanover_c999af42",
@@ -1256,8 +1256,8 @@
         "particles": false,
         "durationMs": 2700
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_jamaica_parish_hanover_c999af42.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -1265,7 +1265,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:d212fc699e6cfbb215e19883e9b2b4c07c5f1b70b62dde0e953355e52bbe7897",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:e285661bf894dc8628d28fdec99f9958c50c05b5e8b80dbd13b49bad9db508b4"
     },
     {
       "giftId": "gift_jamaica_parish_kingston_8b4e16b2",
@@ -1279,8 +1279,8 @@
         "particles": false,
         "durationMs": 2700
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_jamaica_parish_kingston_8b4e16b2.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -1288,7 +1288,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:9b779a97c399945c7efbea4456f08de7ff9a897896cd5025b25938f2c60edc85",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:6910443975a6d15ab09c7f3955f88877b9d055e9106645a9576db1e27650583a"
     },
     {
       "giftId": "gift_jamaica_parish_manchester_aa3acefb",
@@ -1302,8 +1302,8 @@
         "particles": false,
         "durationMs": 2700
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_jamaica_parish_manchester_aa3acefb.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -1311,7 +1311,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:d82d236218959dc0c1ac36b87baee9496b4a643b7c2dce62b492fb3bf2b4eb09",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:aab0e01202624aad58f0e4a6ac115da2ad32bb03968ee45182d65665ea97d715"
     },
     {
       "giftId": "gift_jamaica_parish_montego_bay_57ae24d0",
@@ -1348,8 +1348,8 @@
         "particles": false,
         "durationMs": 2700
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_jamaica_parish_portland_251d7021.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -1357,7 +1357,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:8c7c3bbb519007d6f16968b20c598b2dd600fb9abc6a08417fbef65bd7b65c5b",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:0acadeb3d1977da28bbfe56386d1db441780824b5a418aa34ce4e239b0d0fe23"
     },
     {
       "giftId": "gift_jamaica_parish_st__andrew_ab63935d",
@@ -1371,8 +1371,8 @@
         "particles": false,
         "durationMs": 2700
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_jamaica_parish_st__andrew_ab63935d.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -1380,7 +1380,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:ff7202a68e25919a87677ce9e8f078b72e8496468dfba085efa74c26b071ca9a",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:dcf6d69e238f2ede79d98ecb5d57eafebfb6a9ce1cbc373c801c16433b7682b4"
     },
     {
       "giftId": "gift_jamaica_parish_st__ann_082cc86c",
@@ -1394,8 +1394,8 @@
         "particles": false,
         "durationMs": 2700
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_jamaica_parish_st__ann_082cc86c.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -1403,7 +1403,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:cc7b97674294c8d2592eeaaacc751e15b35f07a435a666e8b2dcc53db871b4c3",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:e910c74bc5bcea85e6a05c3a74687875b3e032d6ce9e083504737d353cab1d0a"
     },
     {
       "giftId": "gift_jamaica_parish_st__catherine_7945ebe8",
@@ -1417,8 +1417,8 @@
         "particles": false,
         "durationMs": 2700
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_jamaica_parish_st__catherine_7945ebe8.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -1426,7 +1426,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:f5faf1dea77e1dc426b8464e920f17f9572ce1bffd828a15ae5b823cec79621e",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:9469e6a5d0f01d09341c3ff9d6e12f764052f2f549caab00267a09f767806dcf"
     },
     {
       "giftId": "gift_jamaica_parish_st__elizabeth_7be7d502",
@@ -1440,8 +1440,8 @@
         "particles": false,
         "durationMs": 2700
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_jamaica_parish_st__elizabeth_7be7d502.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -1449,7 +1449,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:ef1f0a77a9e24cb1af2c3e21dcb47fe37fc6bc51033ed524a585e5d22918cced",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:306849b67f2f164c55959a244d2f8d0bf7985aab07da7e3c1f031acba35f5ec9"
     },
     {
       "giftId": "gift_jamaica_parish_st__mary_02960d83",
@@ -1463,8 +1463,8 @@
         "particles": false,
         "durationMs": 2700
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_jamaica_parish_st__mary_02960d83.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -1472,7 +1472,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:108fd15fe181f36679461c9da9b43907aa4249b72dd11af494ea553975cb0d32",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:14800ceb65d5261624cfd4eab7f06956b8e9129d229f17c061c58511ca7000c4"
     },
     {
       "giftId": "gift_jamaica_parish_st__thomas_57a086d5",
@@ -1486,8 +1486,8 @@
         "particles": false,
         "durationMs": 2700
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_jamaica_parish_st__thomas_57a086d5.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -1495,7 +1495,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:4276bdce35d303615c04d1171a20e6d77a5fdadaa49712623842077209ac8c8d",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:628700f7d9a7d718e30edb089f52fbf59a8e3a219c3515960e083b91e42c06e5"
     },
     {
       "giftId": "gift_jamaica_parish_trelawny_7c6d726e",
@@ -1509,8 +1509,8 @@
         "particles": false,
         "durationMs": 2700
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_jamaica_parish_trelawny_7c6d726e.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -1518,7 +1518,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:791c680027ef9031c7a8a06d80cee8565724534573fe0178f60392327409f1cb",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:f08412772d9435bfd19da460a35b4f957c6efa96b20a76e87d7309566682ae84"
     },
     {
       "giftId": "gift_jamaica_parish_westmoreland_5296325c",
@@ -1532,8 +1532,8 @@
         "particles": false,
         "durationMs": 2700
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_jamaica_parish_westmoreland_5296325c.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -1541,7 +1541,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:eda23eaec8ac194294793304b4681b36b749a0e7ccf0abeb3132da8b2244df06",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:5bdcdc9ef6f2bc354b5450137d7fb190befb587124111fab1f65c3f2b42fa6c3"
     },
     {
       "giftId": "gift_luxury_crown_jewel_9e76c324",
@@ -1785,8 +1785,8 @@
         "particles": false,
         "durationMs": 2300
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_music_perf_microphone_ce3d2b9f.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -1794,7 +1794,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:1d354e1f34dd38e033988d0b04d709716ae98e6354f9888c252e04bf237381dc",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:97eac34c6b534519b53776904a86fab2a50db878f52fec3b627839eab20ccd90"
     },
     {
       "giftId": "gift_music_perf_neon_dj_deck_eaf6c5fc",
@@ -1854,8 +1854,8 @@
         "particles": false,
         "durationMs": 2700
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_music_perf_vinyl_spin_cc84fd5b.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -1863,7 +1863,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:5c7fe44565de924f776798d3e59edbe00cf058ce455a86e3ebcacae04dd33228",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:8bdb4e22fad1d5ad5508a4461b8ba6c44868b13ab4f3e1b13df5b5f411e7e018"
     },
     {
       "giftId": "gift_premium_animated_aurora_wings_61465d9e",
@@ -2038,8 +2038,8 @@
         "particles": false,
         "durationMs": 2700
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_seasonal_fireflies_392b5e64.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -2047,7 +2047,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:57822c0c41e5ac043369b742a974419fb1909d92f249784b052db09b806ac7f0",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:0124e3ab4246dd618143d92b417a4a09dee54d891f59cf0c89a9ce71a3f4e81b"
     },
     {
       "giftId": "gift_seasonal_harvest_moon_9fa4c353",
@@ -2130,8 +2130,8 @@
         "particles": false,
         "durationMs": 2700
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_seasonal_pumpkin_glow_fef92b47.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -2139,7 +2139,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:70e01278dabc16ee1a1c1b1c966900cca032e31f05075fcb94182f7cf083e1f0",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:e7c9adcb28dc06ac44f3fde9b5b50102362cfb318679dd22c76ca705d7784c41"
     },
     {
       "giftId": "gift_seasonal_snowflake_98d6f42b",
@@ -2153,8 +2153,8 @@
         "particles": false,
         "durationMs": 2300
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_seasonal_snowflake_98d6f42b.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -2162,7 +2162,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:6c8c18edda5b1ca91824dd5feb0392f955219d0ba2d46eacbe4d059c86a383d2",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:beb8fa63605edb87513a75feadcfbcbe10e29b3bacf54d08d521cfb04b009540"
     },
     {
       "giftId": "gift_seasonal_spring_blossom_caf27e85",
@@ -2176,8 +2176,8 @@
         "particles": false,
         "durationMs": 2300
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_seasonal_spring_blossom_caf27e85.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -2185,7 +2185,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:95ada1904463efc3128e57a584c2640d16255f37879e93d200ec36c0ea2ca100",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:c5ab1bcbe7a53457e996acbe48e26fbce563bfcce5c54bf0bfe425e0ae90e0fd"
     },
     {
       "giftId": "gift_seasonal_summer_sun_4a37c14a",
@@ -2199,8 +2199,8 @@
         "particles": false,
         "durationMs": 2700
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_seasonal_summer_sun_4a37c14a.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -2208,7 +2208,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:472230bb1f9d2c039212c5e3d07d0c55cda8230c11a7da5f13c7004369c32128",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:1dbacb8a860655eebe492f761bdd5a81b106bf693f6d57a7728571ec594d7fff"
     },
     {
       "giftId": "gift_vehicles_hover_bike_2230dda4",
@@ -2314,8 +2314,8 @@
         "particles": false,
         "durationMs": 2300
       },
-      "audioPath": null,
-      "audioStatus": "unresolved",
+      "audioPath": "assets/gift-audio/gift_vehicles_scooter_7d25c88d.wav",
+      "audioStatus": "resolved",
       "assetVersion": "1.0.0",
       "deviceRequirements": {
         "webgl": false,
@@ -2323,7 +2323,7 @@
       },
       "license": "ZUNO-Original (procedurally generated, platform-owned)",
       "modelChecksum": "sha256:4e9748f846fed149d9ca2bf8516787243e333ff5f10bafb75401cf93afc5b2d8",
-      "audioReason": "Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned."
+      "audioChecksum": "sha256:25556b396cc23cc22810316101118eb6a2d913aa74e7a6461f1c71210c6ce5ff"
     },
     {
       "giftId": "gift_vehicles_sports_car_90f34038",

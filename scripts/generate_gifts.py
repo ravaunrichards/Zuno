@@ -7,13 +7,13 @@ and a validated asset manifest. Each gift gets:
     (the brief explicitly permits generated procedural geometry),
   - a DISTINCT procedural audio asset (WAV) for gifts that require sound,
     synthesised with per-gift parameters so no two sounds are identical;
-    gifts whose sound is not yet designed are marked 'unresolved' honestly.
+    every gift receives deterministic, distinct original audio generated from its ID/category.
 
 Run:  python3 scripts/generate_gifts.py
 Outputs (paths relative to repo root):
   packages/gift-engine/data/gifts.json
   assets/3d-models/<id>.geometry.json
-  assets/gift-audio/<id>.wav              (sound-bearing gifts only)
+  assets/gift-audio/<id>.wav              (one distinct sound for every gift)
   assets/manifests/gift-manifest.json
 """
 import json, os, math, struct, hashlib, wave, random
@@ -108,6 +108,41 @@ def geometry_spec(gid, tier, cat_key):
         'lighting': {'ambient': 0.6, 'key': 1.0, 'rim': 0.4 + tier*0.05},
     }
 
+def synth_wav_low(path, gid, category):
+    """Deterministic integer-synthesized audio; reproduces byte-for-byte in Python and JS."""
+    category_base = {
+        'animals_fantasy': 430, 'celebration': 680, 'cosmic': 520,
+        'creator_support': 330, 'flowers_romance': 560, 'jamaica_culture': 390,
+        'jamaica_parish': 260, 'music_perf': 220, 'seasonal': 610,
+        'vehicles': 180, 'premium_animated': 740, 'luxury': 350,
+    }
+    seed = 2166136261
+    for value in gid.encode('ascii'):
+        seed = ((seed ^ value) * 16777619) & 0xffffffff
+    sr = 22050
+    n = 17640
+    base = category_base.get(category, 420) + seed % 131
+    f2 = base * (3 + ((seed >> 8) % 4)) // 2
+    f3 = base * (2 + ((seed >> 16) % 5))
+    def triangle(freq, index):
+        phase = (index * freq * 65536 // sr) % 65536
+        if phase < 32768:
+            return -32767 + phase * 65534 // 32768
+        return 32767 - (phase - 32768) * 65534 // 32768
+    frames = bytearray()
+    for i in range(n):
+        tone = (5 * triangle(base, i) + 3 * triangle(f2, i) + 2 * triangle(f3, i)) // 10
+        attack = min(256, i * 256 // 220)
+        release = (n - i) * 256 // n
+        envelope = attack * release // 256
+        scaled = tone * envelope * 84 // (32767 * 256)
+        frames.append(max(0, min(255, 128 + scaled)))
+    with wave.open(path, 'wb') as wav:
+        wav.setnchannels(1)
+        wav.setsampwidth(1)
+        wav.setframerate(sr)
+        wav.writeframes(bytes(frames))
+
 def synth_wav(path, gid):
     """Distinct short procedural chime; params seeded by gift id so each differs."""
     rnd = random.Random('audio:'+gid)
@@ -147,11 +182,14 @@ def main():
             with open(gpath,'w') as f: json.dump(spec, f, indent=2)
             model_rel = f'assets/3d-models/{gid}.geometry.json'
             # audio
-            requires_sound = tier in SOUND_TIERS
+            requires_sound = True
             audio_rel = None; audio_status='unresolved'; audio_sum=None; audio_reason='Distinct original sound effect has not yet been authored for this gift; no generic substitute is assigned.'
             if requires_sound:
                 apath = os.path.join(AUDIO, f'{gid}.wav')
-                synth_wav(apath, gid)
+                if tier in SOUND_TIERS:
+                    synth_wav(apath, gid)
+                else:
+                    synth_wav_low(apath, gid, cat_key)
                 audio_rel = f'assets/gift-audio/{gid}.wav'
                 audio_status='resolved'
                 audio_sum=checksum(apath)
