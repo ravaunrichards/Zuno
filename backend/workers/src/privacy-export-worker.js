@@ -4,7 +4,7 @@ const crypto = require('node:crypto');
 const fs = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
-const storageDefault = require('../../integrations/supabase/storage');
+const storageDefault = require('../../../integrations/supabase/storage');
 
 const PAGE_SIZE = 500;
 const MAX_ROWS = 50000;
