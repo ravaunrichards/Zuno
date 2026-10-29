@@ -131,8 +131,9 @@ export function mountGiftPreviews(grid) {
     const cards = visibleCards();
     const visible = new Set(cards.map(card => card.dataset.giftId));
     for (const [id, group] of groupCache) group.visible = false;
+    renderer.setScissorTest(false);
+    renderer.clear(true, true, true);
     renderer.setScissorTest(true);
-    renderer.clear();
     for (const card of cards) {
       const id = card.dataset.giftId;
       const group = groupCache.get(id);
