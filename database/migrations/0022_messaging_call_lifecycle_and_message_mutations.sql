@@ -79,19 +79,23 @@ returns table(call_id uuid,provider_room text,call_type text,state text,particip
 language plpgsql security definer set search_path=public,pg_temp as $$
 declare v_call public.call_sessions%rowtype; v_part public.call_participants%rowtype; v_count integer;
 begin
- select * into v_call from public.call_sessions where id=p_call_id for update;
+ select c.* into v_call from public.call_sessions AS c where c.id=p_call_id for update;
  if not found then raise exception 'CALL_NOT_FOUND'; end if;
- select * into v_part from public.call_participants where call_id=p_call_id and profile_id=p_profile_id for update;
+ select cp.* into v_part from public.call_participants AS cp
+ where cp.call_id=p_call_id and cp.profile_id=p_profile_id for update;
  if not found then raise exception 'CALL_INVITATION_REQUIRED'; end if;
  if v_part.last_state in ('declined','missed','left') or v_part.left_at is not null then raise exception 'CALL_PARTICIPATION_CLOSED'; end if;
  if v_call.state not in ('ringing','active') then raise exception 'CALL_NOT_JOINABLE'; end if;
- select count(*) into v_count from public.call_participants where call_id=p_call_id and left_at is null and last_state='joined';
+ select count(*) into v_count from public.call_participants AS cp
+ where cp.call_id=p_call_id and cp.left_at is null and cp.last_state='joined';
  if v_part.last_state<>'joined' and v_count>=8 then raise exception 'CALL_FULL'; end if;
- update public.call_participants set joined_at=coalesce(joined_at,now()),left_at=null,last_state='joined' where call_id=p_call_id and profile_id=p_profile_id;
- update public.call_sessions set state='active',started_at=coalesce(started_at,now()) where id=p_call_id;
+ update public.call_participants AS cp
+ set joined_at=coalesce(cp.joined_at,now()),left_at=null,last_state='joined'
+ where cp.call_id=p_call_id and cp.profile_id=p_profile_id;
+ update public.call_sessions AS cs set state='active',started_at=coalesce(cs.started_at,now()) where cs.id=p_call_id;
  return query select c.id,c.provider_room,c.call_type,c.state,
-  (select count(*)::integer from public.call_participants cp where cp.call_id=c.id and cp.left_at is null and cp.last_state='joined')
- from public.call_sessions c where c.id=p_call_id;
+  (select count(*)::integer from public.call_participants AS cp where cp.call_id=c.id and cp.left_at is null and cp.last_state='joined')
+ from public.call_sessions AS c where c.id=p_call_id;
 end;
 $$;
 revoke all on function public.join_call_session(uuid,uuid) from public,anon,authenticated;
