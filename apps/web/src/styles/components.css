@@ -56,8 +56,12 @@
 .gift-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px}
 .gift-card{padding:14px 13px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(140deg,#181824,#14141f);min-width:0;transition:transform .18s,border-color .18s}
 .gift-card:hover{transform:translateY(-2px);border-color:rgba(245,205,120,.32)}
-.gift-visual{height:87px;display:grid;place-items:center;border-radius:13px;margin-bottom:10px;background:radial-gradient(ellipse at 50% 95%,rgba(154,124,255,.17),transparent 65%),rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.04)}
-.gift-glyph{font-size:34px;color:var(--gold);filter:drop-shadow(0 5px 16px rgba(245,205,120,.2))}
+.gift-visual{height:124px;display:grid;place-items:center;border-radius:15px;margin-bottom:10px;overflow:hidden;background:radial-gradient(ellipse at 50% 92%,rgba(154,124,255,.15),transparent 68%),linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,.008));border:1px solid rgba(255,255,255,.06)}
+.gift-artwork{display:block;width:100%;height:100%;max-width:148px;max-height:124px;margin:auto;overflow:visible;filter:drop-shadow(0 7px 15px rgba(0,0,0,.18));animation:gift-art-float 4.2s ease-in-out infinite}
+.gift-artwork-compact{width:64px;height:64px;max-width:64px;max-height:64px;animation:none}
+@keyframes gift-art-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+.gift-detail-art{display:grid;place-items:center;flex-shrink:0;width:112px;height:112px;border-radius:19px;border:1px solid rgba(255,255,255,.07);background:radial-gradient(circle,rgba(154,124,255,.12),rgba(255,255,255,.015) 70%)}
+.gift-detail-art .gift-artwork{width:112px;height:112px;max-width:112px;max-height:112px;animation:none}
 .gift-name{font-size:10px;font-weight:750;line-height:1.4;min-height:28px}.gift-meta{display:flex;align-items:center;justify-content:space-between;gap:5px;margin-top:8px}
 .gift-price{font-size:10px;color:var(--gold);font-weight:800}.gift-tier{font-size:8px;color:var(--muted);padding:3px 6px;border-radius:6px;background:rgba(255,255,255,.05)}
 .gift-inspect{width:100%;margin-top:10px;border:1px solid var(--line);border-radius:9px;padding:7px;background:rgba(255,255,255,.02);font-size:9px;color:#cbc5e4}
@@ -304,13 +308,8 @@
 .subscription-empty{grid-column:1/-1;font-size:10px;line-height:1.7;color:var(--muted);padding:12px;border:1px dashed var(--line);border-radius:12px}
 @media(max-width:640px){.creator-tier-results,.my-subscription-results{grid-template-columns:1fr}}
 
-.gift-preview-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2}
-.gift-visual{position:relative;isolation:isolate;overflow:hidden}
-.gift-visual .gift-glyph{position:relative;z-index:0;transition:opacity .15s}
-.gift-visual.gift-3d-ready .gift-glyph{opacity:0}
-.gift-visual.gift-3d-fallback .gift-glyph{opacity:1}
-.gift-preview-unavailable .gift-preview-canvas{display:none}
-@media(prefers-reduced-motion:reduce){.gift-visual{scroll-behavior:auto}}
+.gift-visual{position:relative;isolation:isolate}
+@media(prefers-reduced-motion:reduce){.gift-artwork{animation:none}.gift-visual{scroll-behavior:auto}}
 
 .messaging-dialog{width:min(1180px,calc(100% - 22px));max-width:1180px;max-height:94vh;overflow:hidden;background:#11111b;color:var(--text)}
 .messaging-dialog-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding-bottom:12px;border-bottom:1px solid var(--line)}
@@ -490,7 +489,9 @@ body.zuno-reduced-motion *,body.zuno-reduced-motion *::before,body.zuno-reduced-
 .marketplace-fulfillment-status.is-error{color:#ff9bb0}
 
 .live-gift-picker-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;max-height:48vh;overflow:auto;padding:2px}
-.live-gift-picker-item{display:grid;gap:6px;text-align:left;padding:11px;border:1px solid var(--line);border-radius:11px;background:rgba(255,255,255,.025);color:var(--text)}
-.live-gift-picker-item strong{font-size:10px;line-height:1.4}.live-gift-picker-item span{font-size:9px;color:var(--gold);font-weight:800}
+.live-gift-picker-item{display:grid;grid-template-columns:58px minmax(0,1fr);grid-template-rows:auto auto;align-items:center;column-gap:9px;row-gap:4px;text-align:left;padding:8px;border:1px solid var(--line);border-radius:13px;background:rgba(255,255,255,.025);color:var(--text);min-width:0}
+.live-gift-picker-art{display:grid;place-items:center;grid-column:1;grid-row:1 / span 2;width:58px;height:58px;border-radius:11px;background:rgba(255,255,255,.025);overflow:hidden}
+.live-gift-picker-art .gift-artwork{width:58px;height:58px;max-width:58px;max-height:58px}
+.live-gift-picker-item strong{grid-column:2;align-self:end;font-size:10px;line-height:1.4;overflow-wrap:anywhere}.live-gift-picker-item .live-gift-picker-price{grid-column:2;align-self:start;font-size:9px;color:var(--gold);font-weight:800}
 .live-gift-picker-item:hover{border-color:rgba(245,205,120,.45);background:rgba(245,205,120,.05)}
 @media(max-width:480px){.live-gift-picker-grid{grid-template-columns:1fr}}
