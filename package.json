@@ -31,7 +31,8 @@
     "build": "node scripts/build.js",
     "build:web": "node scripts/build-web.js",
     "package": "node scripts/package.js",
-    "platforms:validate": "node scripts/validate-platforms.js"
+    "platforms:validate": "node scripts/validate-platforms.js",
+    "db:test": "bash scripts/test-migrations.sh"
   },
   "devDependencies": {
     "turbo": "^1.13.0",

@@ -8,7 +8,6 @@ language sql stable security definer
 set search_path = public, pg_temp as $
   select id from public.profiles where auth_user_id = auth.uid()
 $;
-
 create or replace function is_conversation_member(p_conversation_id uuid) returns boolean
 language sql stable security definer set search_path = public, pg_temp as $
   select exists (select 1 from public.conversation_members m where m.conversation_id = p_conversation_id and m.profile_id = public.current_profile_id())
@@ -34,7 +33,6 @@ language sql stable security definer set search_path = public, pg_temp as $
       (b.blocker_id = public.current_profile_id() and b.blocked_id = (select p2.author_id from public.posts p2 where p2.id=p_post_id)) or
       (b.blocked_id = public.current_profile_id() and b.blocker_id = (select p3.author_id from public.posts p3 where p3.id=p_post_id)))
 $;
-
 -- profiles --------------------------------------------------------------
 alter table profiles enable row level security;
 drop policy if exists profiles_select on profiles;
@@ -55,16 +53,7 @@ create policy profiles_insert on profiles for insert
 -- posts -----------------------------------------------------------------
 alter table posts enable row level security;
 drop policy if exists posts_select on posts;
-create policy posts_select on posts for select
-  using (
-    deleted_at is null and (
-      audience = 'public'
-      or author_id = current_profile_id()
-      or (audience = 'followers' and exists (
-        select 1 from follows f where f.follower_id = current_profile_id() and f.followee_id = posts.author_id))
-    )
-    and not exists (select 1 from blocks b where b.blocker_id = posts.author_id and b.blocked_id = current_profile_id())
-  );
+create policy posts_select on posts for select using (can_view_post(id));
 drop policy if exists posts_write on posts;
 create policy posts_write on posts for all
   using (author_id = current_profile_id()) with check (author_id = current_profile_id());

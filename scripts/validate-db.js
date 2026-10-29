@@ -10,7 +10,13 @@ for(const name of expected)if(!migrations.includes(name))problems.push('missing 
 const sqlFiles=migrations.map((name)=>path.join(migrationDir,name));
 const seedsDir=path.join(DB,'seeds');
 if(fs.existsSync(seedsDir))for(const name of fs.readdirSync(seedsDir).filter((name)=>name.endsWith('.sql')).sort())sqlFiles.push(path.join(seedsDir,name));
-const sql=sqlFiles.map((file)=>fs.readFileSync(file,'utf8')).join('\n');
+const contents=sqlFiles.map((file)=>({file,sql:fs.readFileSync(file,'utf8')}));
+for(const item of contents){
+  if(/\\bas\\s+\\$(?:\\s|$)/m.test(item.sql)||/^\\s*\\$;\\s*$/m.test(item.sql))problems.push('malformed dollar-quoted SQL function body: '+path.relative(DB,item.file));
+  const quoteCount=(item.sql.match(/\\$\\$/g)||[]).length;
+  if(quoteCount%2!==0)problems.push('unbalanced $ delimiters: '+path.relative(DB,item.file));
+}
+const sql=contents.map((item)=>item.sql).join('\n');
 const tableMatches=[...sql.matchAll(/create\s+table\s+if\s+not\s+exists\s+([a-z_][a-z0-9_]*)/gi)].map((m)=>m[1].toLowerCase());
 const tables=[...new Set(tableMatches)];
 for(const name of new Set(tableMatches.filter((name,index)=>tableMatches.indexOf(name)!==index)))problems.push('duplicate table definition: '+name);

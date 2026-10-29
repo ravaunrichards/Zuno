@@ -13,6 +13,22 @@ permissions:
 jobs:
   source-and-domain-checks:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: zuno
+          POSTGRES_PASSWORD: zuno_test_password
+          POSTGRES_DB: zuno_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U zuno -d zuno_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgres://zuno:zuno_test_password@localhost:5432/zuno_test
     timeout-minutes: 15
     steps:
       - name: Checkout
@@ -37,5 +53,7 @@ jobs:
         run: pnpm assets:validate
       - name: Database static checks
         run: pnpm db:validate
+      - name: Apply every migration on clean PostgreSQL and test RLS
+        run: pnpm db:test
       - name: Web package build
         run: pnpm --filter @zuno/web build
