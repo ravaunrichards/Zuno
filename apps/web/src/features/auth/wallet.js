@@ -276,6 +276,7 @@ export function mountWallet() {
     beginCheckout({customAmountUSD:amount,button:$id('custom-recharge-submit')});
   });
   $id('wallet-refresh')?.addEventListener('click',async()=>{await refreshWallet();await loadPackages();});
+  window.addEventListener('zuno:wallet-refresh',refreshWallet);
   window.addEventListener('zuno:session-change',async()=>{
     await refreshWallet();
     await handlePaymentReturn();
