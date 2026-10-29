@@ -1001,6 +1001,243 @@ const server = http.createServer(async (req, res) => {
       }});
     }
 
+    if (req.method === 'GET' && url.pathname === '/api/notifications/preferences') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const queryPrefs = {
+        select: 'profile_id,preferences,quiet_hours_start,quiet_hours_end,updated_at',
+        profile_id: 'eq.' + session.profile.id, limit: '1'
+      };
+      const found = await rowsForUser(session, 'notification_preferences', queryPrefs);
+      if (!found.ok || !Array.isArray(found.data)) return badDatabase(res, found, 'NOTIFICATION_PREFERENCES_UNAVAILABLE');
+      let prefs = found.data[0];
+      if (!prefs) {
+        const created = await rowsForUser(session, 'notification_preferences', {
+          select: 'profile_id,preferences,quiet_hours_start,quiet_hours_end,updated_at'
+        }, { method: 'POST', body: { profile_id: session.profile.id } });
+        if (!created.ok || !Array.isArray(created.data) || !created.data[0]) return badDatabase(res, created, 'NOTIFICATION_PREFERENCES_CREATE_FAILED');
+        prefs = created.data[0];
+      }
+      return json(res, 200, { ok: true, preferences: {
+        values: prefs.preferences || {},
+        quietHoursStart: prefs.quiet_hours_start || null,
+        quietHoursEnd: prefs.quiet_hours_end || null,
+        updatedAt: prefs.updated_at
+      }});
+    }
+
+    if (req.method === 'PATCH' && url.pathname === '/api/notifications/preferences') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const body = await readBody(req);
+      const allowedFlags = new Set(['push','email','messages','live','creator','communities','events','marketing']);
+      if (body.preferences !== undefined && (!body.preferences || typeof body.preferences !== 'object' || Array.isArray(body.preferences))) {
+        return error(res, 400, 'INVALID_NOTIFICATION_PREFERENCES');
+      }
+      const requested = body.preferences || {};
+      if (Object.keys(requested).some(key => !allowedFlags.has(key) || typeof requested[key] !== 'boolean')) {
+        return error(res, 400, 'INVALID_NOTIFICATION_PREFERENCES', 'Use boolean values for supported notification categories only.');
+      }
+      const timePattern = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
+      for (const key of ['quietHoursStart','quietHoursEnd']) {
+        if (body[key] !== undefined && body[key] !== null && (typeof body[key] !== 'string' || !timePattern.test(body[key]))) {
+          return error(res, 400, 'INVALID_QUIET_HOURS');
+        }
+      }
+      if ((body.quietHoursStart === null) !== (body.quietHoursEnd === null) &&
+          (body.quietHoursStart === null || body.quietHoursEnd === null)) return error(res, 400, 'QUIET_HOURS_PAIR_REQUIRED');
+      const current = await rowsForUser(session, 'notification_preferences', {
+        select: 'profile_id,preferences,quiet_hours_start,quiet_hours_end',
+        profile_id: 'eq.' + session.profile.id, limit: '1'
+      });
+      if (!current.ok || !Array.isArray(current.data)) return badDatabase(res, current, 'NOTIFICATION_PREFERENCES_LOOKUP_FAILED');
+      const prior = current.data[0] || { preferences: { push:true,email:false,messages:true,live:true,creator:true }, quiet_hours_start:null, quiet_hours_end:null };
+      const updates = {
+        preferences: { ...(prior.preferences || {}), ...requested },
+        updated_at: new Date().toISOString()
+      };
+      if (body.quietHoursStart !== undefined) updates.quiet_hours_start = body.quietHoursStart;
+      if (body.quietHoursEnd !== undefined) updates.quiet_hours_end = body.quietHoursEnd;
+      const saved = current.data[0]
+        ? await rowsForUser(session,'notification_preferences',{select:'profile_id,preferences,quiet_hours_start,quiet_hours_end,updated_at',profile_id:'eq.'+session.profile.id},{method:'PATCH',body:updates})
+        : await rowsForUser(session,'notification_preferences',{select:'profile_id,preferences,quiet_hours_start,quiet_hours_end,updated_at'},{method:'POST',body:{profile_id:session.profile.id,...updates}});
+      if (!saved.ok || !Array.isArray(saved.data) || !saved.data[0]) return badDatabase(res, saved, 'NOTIFICATION_PREFERENCES_SAVE_FAILED');
+      return json(res, 200, { ok:true, preferences:{
+        values:saved.data[0].preferences || {}, quietHoursStart:saved.data[0].quiet_hours_start || null,
+        quietHoursEnd:saved.data[0].quiet_hours_end || null, updatedAt:saved.data[0].updated_at
+      }});
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api/privacy/consents') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const rows = await rowsForUser(session,'privacy_consents',{
+        select:'id,purpose,status,policy_version,recorded_at,idempotency_key',
+        profile_id:'eq.'+session.profile.id,order:'recorded_at.desc',limit:'250'
+      });
+      if(!rows.ok||!Array.isArray(rows.data))return badDatabase(res,rows,'PRIVACY_CONSENTS_UNAVAILABLE');
+      return json(res,200,{ok:true,consents:rows.data.map(item=>({
+        id:item.id,purpose:item.purpose,status:item.status,policyVersion:item.policy_version,recordedAt:item.recorded_at
+      }))});
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/privacy/consents') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const body = await readBody(req);
+      const purposes = new Set(['personalization','analytics','personalized_ads','marketing','third_party_measurement','notifications']);
+      if (!purposes.has(body.purpose)) return error(res,400,'INVALID_CONSENT_PURPOSE');
+      if (!['granted','denied','withdrawn'].includes(body.status)) return error(res,400,'INVALID_CONSENT_STATUS');
+      const policyVersion=typeof body.policyVersion==='string'?body.policyVersion.trim():'';
+      if(!/^[A-Za-z0-9._:-]{1,80}$/.test(policyVersion))return error(res,400,'INVALID_POLICY_VERSION');
+      const key=String(req.headers['idempotency-key']||body.idempotencyKey||'');
+      if(!/^[A-Za-z0-9._:-]{16,180}$/.test(key))return error(res,400,'IDEMPOTENCY_KEY_REQUIRED');
+      const prior=await rowsForUser(session,'privacy_consents',{
+        select:'id,purpose,status,policy_version,recorded_at',
+        profile_id:'eq.'+session.profile.id,idempotency_key:'eq.'+key,limit:'1'
+      });
+      if(!prior.ok||!Array.isArray(prior.data))return badDatabase(res,prior,'PRIVACY_CONSENT_LOOKUP_FAILED');
+      if(prior.data[0])return json(res,200,{ok:true,idempotent:true,consent:{
+        id:prior.data[0].id,purpose:prior.data[0].purpose,status:prior.data[0].status,
+        policyVersion:prior.data[0].policy_version,recordedAt:prior.data[0].recorded_at
+      }});
+      const saved=await rowsForUser(session,'privacy_consents',{select:'id,purpose,status,policy_version,recorded_at'},{
+        method:'POST',body:{profile_id:session.profile.id,purpose:body.purpose,status:body.status,policy_version:policyVersion,idempotency_key:key}
+      });
+      if(!saved.ok||!Array.isArray(saved.data)||!saved.data[0])return badDatabase(res,saved,'PRIVACY_CONSENT_SAVE_FAILED');
+      return json(res,201,{ok:true,consent:{
+        id:saved.data[0].id,purpose:saved.data[0].purpose,status:saved.data[0].status,
+        policyVersion:saved.data[0].policy_version,recordedAt:saved.data[0].recorded_at
+      }});
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api/privacy/data-requests') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const rows=await rowsForUser(session,'data_requests',{
+        select:'id,request_type,state,requested_at,updated_at,completed_at,result_storage_path,resolution_code,request_reason',
+        profile_id:'eq.'+session.profile.id,order:'requested_at.desc',limit:'100'
+      });
+      if(!rows.ok||!Array.isArray(rows.data))return badDatabase(res,rows,'DATA_REQUESTS_UNAVAILABLE');
+      return json(res,200,{ok:true,requests:rows.data.map(item=>({
+        id:item.id,requestType:item.request_type,state:item.state,requestedAt:item.requested_at,updatedAt:item.updated_at,
+        completedAt:item.completed_at,resultAvailable:Boolean(item.result_storage_path),resolutionCode:item.resolution_code,
+        reason:item.request_reason||null
+      }))});
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/privacy/data-requests') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const body=await readBody(req);
+      const requestType=String(body.requestType||'');
+      if(!['export','deletion','correction','restriction'].includes(requestType))return error(res,400,'INVALID_DATA_REQUEST_TYPE');
+      const reason=typeof body.reason==='string'?body.reason.trim():'';
+      if(reason.length>2000)return error(res,400,'DATA_REQUEST_REASON_TOO_LONG');
+      const key=String(req.headers['idempotency-key']||body.idempotencyKey||'');
+      if(!/^[A-Za-z0-9._:-]{16,180}$/.test(key))return error(res,400,'IDEMPOTENCY_KEY_REQUIRED');
+      const prior=await rowsForUser(session,'data_requests',{
+        select:'id,request_type,state,requested_at,updated_at,completed_at,result_storage_path,resolution_code,request_reason',
+        profile_id:'eq.'+session.profile.id,idempotency_key:'eq.'+key,limit:'1'
+      });
+      if(!prior.ok||!Array.isArray(prior.data))return badDatabase(res,prior,'DATA_REQUEST_LOOKUP_FAILED');
+      if(prior.data[0])return json(res,200,{ok:true,idempotent:true,request:{
+        id:prior.data[0].id,requestType:prior.data[0].request_type,state:prior.data[0].state,
+        requestedAt:prior.data[0].requested_at,resultAvailable:Boolean(prior.data[0].result_storage_path)
+      }});
+      const open=await rowsForUser(session,'data_requests',{
+        select:'id,request_type,state,requested_at',profile_id:'eq.'+session.profile.id,
+        request_type:'eq.'+requestType,state:'in.(submitted,reviewing,processing)',limit:'1'
+      });
+      if(!open.ok||!Array.isArray(open.data))return badDatabase(res,open,'DATA_REQUEST_OPEN_LOOKUP_FAILED');
+      if(open.data[0])return json(res,200,{ok:true,existingOpenRequest:true,request:{
+        id:open.data[0].id,requestType:open.data[0].request_type,state:open.data[0].state,requestedAt:open.data[0].requested_at
+      },message:'An open request of this type already exists. It has not been marked completed.'});
+      const saved=await rowsForUser(session,'data_requests',{select:'id,request_type,state,requested_at,updated_at,request_reason'},{
+        method:'POST',body:{profile_id:session.profile.id,request_type:requestType,request_reason:reason||null,idempotency_key:key,state:'submitted'}
+      });
+      if(!saved.ok||!Array.isArray(saved.data)||!saved.data[0])return badDatabase(res,saved,'DATA_REQUEST_CREATE_FAILED');
+      return json(res,202,{ok:true,request:{
+        id:saved.data[0].id,requestType:saved.data[0].request_type,state:saved.data[0].state,requestedAt:saved.data[0].requested_at
+      },message:'Request recorded. It is pending processing; no export, deletion or restriction is claimed completed yet.'});
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api/reports/mine') {
+      const session=await requireSession(req,res);
+      if(!session.ok)return;
+      const result=await rowsForUser(session,'reports',{
+        select:'id,target_type,target_id,reason,state,created_at',
+        reporter_id:'eq.'+session.profile.id,order:'created_at.desc',limit:'100'
+      });
+      if(!result.ok||!Array.isArray(result.data))return badDatabase(res,result,'REPORTS_UNAVAILABLE');
+      return json(res,200,{ok:true,reports:result.data});
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/reports') {
+      const session=await requireSession(req,res);
+      if(!session.ok)return;
+      const body=await readBody(req);
+      const targetType=String(body.targetType||'');
+      const targetId=String(body.targetId||'');
+      const reason=typeof body.reason==='string'?body.reason.trim():'';
+      const targetTable={profile:'profiles',post:'posts',comment:'comments',live_room:'live_rooms',community:'communities',message:'messages',marketplace_listing:'marketplace_listings'};
+      if(!targetTable[targetType]||!uuid(targetId))return error(res,400,'INVALID_REPORT_TARGET');
+      if(reason.length<1||reason.length>2000)return error(res,400,'INVALID_REPORT_REASON');
+      const exists=await rowsForUser(session,targetTable[targetType],{select:'id',id:'eq.'+targetId,limit:'1'});
+      if(!exists.ok||!Array.isArray(exists.data)||!exists.data[0])return error(res,404,'REPORT_TARGET_NOT_FOUND');
+      const saved=await rowsForUser(session,'reports',{select:'id,target_type,target_id,reason,state,created_at'},{
+        method:'POST',body:{reporter_id:session.profile.id,target_type:targetType,target_id:targetId,reason,state:'open'}
+      });
+      if(!saved.ok||!Array.isArray(saved.data)||!saved.data[0])return badDatabase(res,saved,'REPORT_CREATE_FAILED');
+      return json(res,201,{ok:true,report:saved.data[0]});
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api/moderation/appeals/mine') {
+      const session=await requireSession(req,res);
+      if(!session.ok)return;
+      const rows=await rowsForUser(session,'moderation_appeals',{
+        select:'id,report_id,target_type,target_id,reason,state,resolution_note,created_at,resolved_at',
+        appellant_id:'eq.'+session.profile.id,order:'created_at.desc',limit:'100'
+      });
+      if(!rows.ok||!Array.isArray(rows.data))return badDatabase(res,rows,'MODERATION_APPEALS_UNAVAILABLE');
+      return json(res,200,{ok:true,appeals:rows.data});
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/moderation/appeals') {
+      const session=await requireSession(req,res);
+      if(!session.ok)return;
+      const body=await readBody(req);
+      const targetType=String(body.targetType||''),targetId=String(body.targetId||'');
+      const reason=typeof body.reason==='string'?body.reason.trim():'';
+      const key=String(req.headers['idempotency-key']||body.idempotencyKey||'');
+      if(!['profile','post','comment','live_room','community','marketplace_listing'].includes(targetType)||!uuid(targetId))return error(res,400,'INVALID_APPEAL_TARGET');
+      if(reason.length<1||reason.length>4000)return error(res,400,'INVALID_APPEAL_REASON');
+      if(!/^[A-Za-z0-9._:-]{16,180}$/.test(key))return error(res,400,'IDEMPOTENCY_KEY_REQUIRED');
+      let owns=false;
+      if(targetType==='profile')owns=targetId===session.profile.id;
+      else{
+        const ownerTable={post:['posts','author_id'],comment:['comments','author_id'],live_room:['live_rooms','host_id'],community:['communities','owner_id'],marketplace_listing:['marketplace_listings','seller_id']}[targetType];
+        const check=await rowsForUser(session,ownerTable[0],{select:'id,'+ownerTable[1],id:'eq.'+targetId,limit:'1'});
+        owns=Boolean(check.ok&&Array.isArray(check.data)&&check.data[0]&&check.data[0][ownerTable[1]]===session.profile.id);
+      }
+      if(!owns)return error(res,403,'APPEAL_TARGET_NOT_OWNED','You can only appeal moderation actions on content or accounts you own.');
+      let reportId=null;
+      if(body.reportId){
+        if(!uuid(String(body.reportId)))return error(res,400,'INVALID_APPEAL_REPORT_ID');
+        const report=await selectAdminRows(config,'reports',query({select:'id,target_type,target_id',id:'eq.'+body.reportId,limit:'1'}));
+        if(!report.ok||!report.rows[0]||report.rows[0].target_type!==targetType||report.rows[0].target_id!==targetId)return error(res,404,'APPEAL_REPORT_NOT_FOUND');
+        reportId=report.rows[0].id;
+      }
+      const prior=await rowsForUser(session,'moderation_appeals',{select:'id,target_type,target_id,state',appellant_id:'eq.'+session.profile.id,idempotency_key:'eq.'+key,limit:'1'});
+      if(!prior.ok||!Array.isArray(prior.data))return badDatabase(res,prior,'MODERATION_APPEAL_LOOKUP_FAILED');
+      if(prior.data[0])return json(res,200,{ok:true,idempotent:true,appeal:prior.data[0]});
+      const saved=await rowsForUser(session,'moderation_appeals',{select:'id,report_id,target_type,target_id,reason,state,created_at'},{
+        method:'POST',body:{appellant_id:session.profile.id,report_id:reportId,target_type:targetType,target_id:targetId,reason,state:'submitted',idempotency_key:key}
+      });
+      if(!saved.ok||!Array.isArray(saved.data)||!saved.data[0])return badDatabase(res,saved,'MODERATION_APPEAL_CREATE_FAILED');
+      return json(res,201,{ok:true,appeal:saved.data[0]});
+    }
+
     if (req.method === 'GET' && url.pathname === '/api/profile/me') {
       const session = await requireSession(req, res);
       if (!session.ok) return;

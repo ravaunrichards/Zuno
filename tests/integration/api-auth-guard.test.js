@@ -90,6 +90,26 @@ test('community creation rejects unauthenticated requests',async()=>{
  const response=await post(await start(),'/api/communities');
  ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
 });
+test('notification preferences reject unauthenticated requests',async()=>{
+ const response=await get(await start(),'/api/notifications/preferences');
+ ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
+});
+test('privacy data requests reject unauthenticated requests',async()=>{
+ const response=await post(await start(),'/api/privacy/data-requests');
+ ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
+});
+test('privacy consent changes reject unauthenticated requests',async()=>{
+ const response=await post(await start(),'/api/privacy/consents');
+ ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
+});
+test('content reports reject unauthenticated requests',async()=>{
+ const response=await post(await start(),'/api/reports');
+ ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
+});
+test('moderation appeals reject unauthenticated requests',async()=>{
+ const response=await post(await start(),'/api/moderation/appeals');
+ ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
+});
 test('creator subscriber dashboard rejects unauthenticated requests',async()=>{
  const response=await get(await start(),'/api/creator/subscriptions');
  ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
