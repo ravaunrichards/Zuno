@@ -12,19 +12,13 @@
 const http = require('http');
 const { load, validateRequired } = require('../../../config');
 const livekit = require('../../../integrations/livekit');
-const paypal = require('../../../integrations/paypal');
-const { Ledger } = require('../../../packages/shared/src/ledger');
-const { sendGift } = require('../../../packages/gift-engine/src/delivery');
-const { getPackage } = require('../../../packages/payments/src/coins');
+const { authenticateProfile, selectAdminRows } = require('./auth');
 const { loadGifts } = require('../../../packages/gift-engine/src/catalog');
 
 const config = load();
 const envCheck = validateRequired(config);
 if (!envCheck.ok) console.warn('[config] problems:', envCheck.problems.join('; '));
 
-// Dev fallback ledger (replaced by Postgres in a wired deployment).
-const ledger = new Ledger();
-ledger.openAccount('mint', 'mint');
 
 function json(res, status, body) {
   const data = JSON.stringify(body);
@@ -72,33 +66,62 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, { status: 'ok', configured: config.configured, ts: new Date().toISOString() });
     }
 
-    // Mint a LiveKit token (server-side only). Auth check omitted here for the
-    // sandbox; production validates the caller's session + room permission.
+    // Sensitive routes derive identity from a provider-verified Supabase session.
     if (req.method === 'POST' && url.pathname === '/api/livekit/token') {
+      const session = await authenticateProfile(req, config);
+      if (!session.ok) return json(res, session.status, { ok: false, code: session.code, message: session.message });
       const body = await readBody(req);
-      const out = livekit.mintToken(config.livekit, {
-        identity: body.identity, room: body.room,
-        canPublish: Boolean(body.canPublish), ttlSeconds: body.ttlSeconds,
+      const roomId = String(body.roomId || '');
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(roomId)) {
+        return json(res, 400, { ok: false, code: 'INVALID_ROOM_ID' });
+      }
+      const roomParams = new URLSearchParams({ id: 'eq.' + roomId, select: 'id,host_id,state,is_private' });
+      const rooms = await selectAdminRows(config, 'live_rooms', roomParams);
+      if (!rooms.ok) return json(res, 503, { ok: false, code: rooms.code, message: 'Room authorization data is unavailable.' });
+      if (!rooms.rows.length) return json(res, 404, { ok: false, code: 'ROOM_NOT_FOUND' });
+      const room = rooms.rows[0];
+      const profileId = session.profile.id;
+      const host = room.host_id === profileId;
+      const participantParams = new URLSearchParams({
+        room_id: 'eq.' + roomId,
+        profile_id: 'eq.' + profileId,
+        left_at: 'is.null',
+        select: 'role'
       });
+      const participantRows = await selectAdminRows(config, 'live_participants', participantParams);
+      if (!participantRows.ok) return json(res, 503, { ok: false, code: participantRows.code });
+      const membership = participantRows.rows[0] || null;
+      if (room.state === 'ended') return json(res, 409, { ok: false, code: 'ROOM_ENDED' });
+      if (room.is_private && !host && !membership) return json(res, 403, { ok: false, code: 'ROOM_ACCESS_DENIED' });
+      if (room.state !== 'live' && !host) return json(res, 409, { ok: false, code: 'ROOM_NOT_LIVE' });
+
+      const canPublish = host || Boolean(membership && membership.role === 'guest');
+      if (canPublish && !host && membership && membership.role === 'guest') {
+        const activeParams = new URLSearchParams({ room_id: 'eq.' + roomId, left_at: 'is.null', select: 'profile_id,role' });
+        const active = await selectAdminRows(config, 'live_participants', activeParams);
+        if (!active.ok) return json(res, 503, { ok: false, code: active.code });
+        const publisherIds = new Set(active.rows.filter((row) => row.role === 'host' || row.role === 'guest').map((row) => row.profile_id));
+        publisherIds.add(room.host_id);
+        if (publisherIds.size > 8) return json(res, 409, { ok: false, code: 'PUBLISHER_CAPACITY_EXCEEDED' });
+      }
+      const ttlSeconds = Number.isInteger(body.ttlSeconds) ? Math.max(60, Math.min(3600, body.ttlSeconds)) : 900;
+      const out = livekit.mintToken(config.livekit, { identity: profileId, room: room.id, canPublish, ttlSeconds });
       return json(res, out.ok ? 200 : out.status || 500, out);
     }
 
-    // Send a gift (server decides price + balance).
+    // These operations stay disabled rather than use an in-process demo ledger or
+    // create an untracked payment order that could be mistaken for a settled transaction.
     if (req.method === 'POST' && url.pathname === '/api/gifts/send') {
-      const body = await readBody(req);
-      if (!ledger.accounts.has(body.senderId)) ledger.openAccount(body.senderId);
-      if (!ledger.accounts.has(body.recipientId)) ledger.openAccount(body.recipientId);
-      const result = sendGift({ ledger }, body);
-      return json(res, result.ok ? 200 : 400, result);
+      const session = await authenticateProfile(req, config);
+      if (!session.ok) return json(res, session.status, { ok: false, code: session.code, message: session.message });
+      return json(res, 503, { ok: false, code: 'PERSISTENT_GIFT_DELIVERY_NOT_READY',
+        message: 'Gift delivery is disabled until the persistent database transaction and delivery record are connected. No wallet balance was changed.' });
     }
-
-    // Create a PayPal recharge order.
     if (req.method === 'POST' && url.pathname === '/api/payments/order') {
-      const body = await readBody(req);
-      const pkg = getPackage(body.packageId);
-      if (!pkg) return json(res, 400, { ok: false, code: 'UNKNOWN_PACKAGE' });
-      const out = await paypal.createOrder(config.paypal, { amountUSD: pkg.priceUSD, referenceId: body.packageId });
-      return json(res, out.ok ? 200 : out.status || 502, out);
+      const session = await authenticateProfile(req, config);
+      if (!session.ok) return json(res, session.status, { ok: false, code: session.code, message: session.message });
+      return json(res, 503, { ok: false, code: 'PAYMENT_WORKFLOW_NOT_READY',
+        message: 'Checkout is disabled until persistent order storage, capture verification, signed webhooks, idempotent coin credit, refunds and reconciliation are connected. No payment was created.' });
     }
 
     return json(res, 404, { ok: false, code: 'NOT_FOUND' });
@@ -109,6 +132,6 @@ const server = http.createServer(async (req, res) => {
 });
 
 if (require.main === module) {
-  server.listen(config.apiPort, '0.0.0.0', () => console.log(`ZUNO API on 127.0.0.1:${config.apiPort}`));
+  server.listen(config.apiPort, '0.0.0.0', () => console.log(`ZUNO API listening on port ${config.apiPort}`));
 }
 module.exports = { server, config };

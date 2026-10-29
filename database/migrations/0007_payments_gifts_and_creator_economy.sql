@@ -234,3 +234,9 @@ $$;
 
 -- Ranking periods are scheduled by a server-side worker using America/Jamaica.
 -- Closing a period preserves prior aggregates; current monthly rankings reset by period key, not deletion.
+
+-- SECURITY DEFINER money-moving functions must not be callable directly by anonymous clients.
+revoke all on function post_gift(uuid,uuid,bigint,text) from public;
+revoke all on function post_gift(uuid,uuid,bigint,text) from anon;
+revoke all on function post_gift(uuid,uuid,bigint,text) from authenticated;
+grant execute on function post_gift(uuid,uuid,bigint,text) to service_role;

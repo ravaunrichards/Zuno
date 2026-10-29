@@ -46,7 +46,7 @@ function load(env = process.env) {
     },
   };
   config.configured = {
-    supabase: Boolean(supabase.url && supabase.serviceRoleKey),
+    supabase: Boolean(supabase.url && supabase.anonKey && supabase.serviceRoleKey),
     livekit: Boolean(livekit.url && livekit.apiKey && livekit.apiSecret),
     paypal: Boolean(paypal.clientId && paypal.clientSecret),
   };

@@ -169,7 +169,7 @@ create policy community_members_self_leave on community_members for delete using
 create policy events_public_read on events for select using (true);
 create policy events_host_insert on events for insert with check (host_id = current_profile_id());
 create policy events_host_update on events for update using (host_id = current_profile_id()) with check (host_id = current_profile_id());
-create policy live_participants_room_read on live_participants for select using (profile_id = current_profile_id() or is_live_room_participant(room_id) or exists (select 1 from live_rooms r where r.id = room_id and not r.is_private));
+create policy live_participants_room_read on live_participants for select using (profile_id = current_profile_id() or is_live_room_participant(room_id));
 create policy guest_requests_participant_read on guest_requests for select using (requester_id = current_profile_id() or exists (select 1 from live_rooms r where r.id = room_id and r.host_id = current_profile_id()));
 create policy guest_requests_self_insert on guest_requests for insert with check (requester_id = current_profile_id() and exists (select 1 from live_rooms r where r.id = room_id and r.state = 'live'));
 create policy guest_requests_host_update on guest_requests for update using (exists (select 1 from live_rooms r where r.id = room_id and r.host_id = current_profile_id())) with check (exists (select 1 from live_rooms r where r.id = room_id and r.host_id = current_profile_id()));
