@@ -31,7 +31,7 @@ export function mountAuth() {
   const passwordField = document.getElementById('auth-password-field');
   const recoveryFields = document.getElementById('auth-recovery-fields');
   const confirmPassword = document.getElementById('auth-confirm-password');
-  const modeTabs = document.querySelector('.auth-mode-tabs');
+  const modeTabs = document.querySelector('.auth-mode-tabs, .admin-auth-modes, .studio-auth-modes');
   const forgotButton = document.getElementById('auth-forgot-password');
   const resendButton = document.getElementById('auth-resend-confirmation');
   if (!dialog || !trigger || !form) return;
