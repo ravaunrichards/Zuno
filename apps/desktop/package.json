@@ -5,9 +5,9 @@
   "description": "Hardened Electron shell for ZUNO's web client",
   "main": "main.cjs",
   "scripts": {
-    "start": "electron .",
-    "pack": "electron-builder --dir",
-    "dist": "electron-builder"
+    "start": "node ../../scripts/build-web.js && electron .",
+    "pack": "node ../../scripts/build-web.js && electron-builder --dir",
+    "dist": "node ../../scripts/build-web.js && electron-builder"
   },
   "devDependencies": {
     "electron": "^42.11.16",
@@ -19,8 +19,7 @@
     "files": [
       "main.cjs",
       "preload.cjs",
-      "../web/**/*",
-      "!../web/gifts.json"
+      "package.json"
     ],
     "directories": {
       "output": "release"
@@ -39,6 +38,15 @@
       "target": [
         "dmg"
       ]
-    }
+    },
+    "extraResources": [
+      {
+        "from": "../../dist/web",
+        "to": "zuno-web",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ]
   }
 }

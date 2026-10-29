@@ -36,6 +36,14 @@ for(const group of packageRoots){
   if(!fs.existsSync(path.join(name,'package.json')) && !(group==='apps'&&['android','ios'].includes(entry.name)))missingManifests.push(path.relative(root,name));
  }
 }
+const desktopMain=fs.readFileSync(path.join(root,'apps/desktop/main.cjs'),'utf8');
+const desktopPackage=JSON.parse(fs.readFileSync(path.join(root,'apps/desktop/package.json'),'utf8'));
+const desktopBundleConfigured=desktopMain.includes("path.resolve(__dirname, '../../dist/web')") &&
+ desktopMain.includes("path.join(process.resourcesPath, 'zuno-web')") &&
+ Array.isArray(desktopPackage.build.extraResources) &&
+ desktopPackage.build.extraResources.some(item=>item.to==='zuno-web'&&item.from==='../../dist/web');
+if(!desktopBundleConfigured)missing.push('desktop production web bundle is not configured');
+if(!desktopMain.includes('contextIsolation: true')||!desktopMain.includes('nodeIntegration: false')||!desktopMain.includes('sandbox: true'))missing.push('desktop renderer security settings are incomplete');
 const result={ok:missing.length===0&&placeholders.length===0&&missingManifests.length===0,requiredChecked:required.length,missing,placeholderFiles:placeholders,missingWorkspaceManifests:missingManifests};
 console.log(JSON.stringify(result,null,2));
 process.exit(result.ok?0:1);

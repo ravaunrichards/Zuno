@@ -1,6 +1,10 @@
 'use strict';
 const { app, BrowserWindow, shell } = require('electron');
 const path = require('node:path');
+function webBundleDirectory() {
+  if (app.isPackaged) return path.join(process.resourcesPath, 'zuno-web');
+  return path.resolve(__dirname, '../../dist/web');
+}
 function createWindow() {
   const win = new BrowserWindow({
     width: 1440, height: 960, minWidth: 360, minHeight: 640,
@@ -22,7 +26,8 @@ function createWindow() {
     const allowed = url.startsWith('file://') || url.startsWith('http://localhost:');
     if (!allowed) event.preventDefault();
   });
-  win.loadFile(path.resolve(__dirname, '../web/index.html'));
+  const bundleIndex = path.join(webBundleDirectory(), 'index.html');
+  win.loadFile(bundleIndex);
 }
 app.whenReady().then(() => {
   createWindow();
