@@ -840,6 +840,81 @@ const server = http.createServer(async (req, res) => {
       return json(res, token.ok ? 200 : token.status || 500, token);
     }
 
+    if (req.method === 'GET' && url.pathname === '/api/admin/overview') {
+      const session=await requireStaffSession(req,res,['admin','moderator','finance','support']);
+      if(!session)return;
+      const result=await adminRpc(config,'get_admin_overview',{});
+      if(!result.ok)return badDatabase(res,result,'ADMIN_OVERVIEW_UNAVAILABLE');
+      const row=Array.isArray(result.data)?result.data[0]:result.data;
+      if(!row)return error(res,503,'ADMIN_OVERVIEW_UNAVAILABLE');
+      return json(res,200,{ok:true,overview:{
+        profiles:Number(row.profile_count||0),posts:Number(row.post_count||0),liveRooms:Number(row.live_room_count||0),
+        openReports:Number(row.open_report_count||0),reviewingReports:Number(row.reviewing_report_count||0),
+        failedPaymentEvents:Number(row.failed_payment_event_count||0),pendingRefunds:Number(row.pending_refund_count||0),
+        pendingPayouts:Number(row.pending_payout_count||0)
+      }});
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api/admin/reports') {
+      const session=await requireStaffSession(req,res,['admin','moderator']);
+      if(!session)return;
+      const state=url.searchParams.get('state')||'open';
+      if(!['open','reviewing','appealed','actioned','dismissed','all'].includes(state))return error(res,400,'INVALID_REPORT_STATE');
+      const limit=asSafeInt(url.searchParams.get('limit'),50,1,100);
+      const params={select:'id,reporter_id,target_type,target_id,reason,state,created_at,resolved_at,resolution_code,resolution_note',order:'created_at.desc',limit:String(limit)};
+      if(state!=='all')params.state='eq.'+state;
+      const result=await selectAdminRows(config,'reports',query(params));
+      if(!result.ok)return badDatabase(res,result,'MODERATION_QUEUE_UNAVAILABLE');
+      return json(res,200,{ok:true,reports:result.rows.map(row=>({
+        id:row.id,reporterId:row.reporter_id,targetType:row.target_type,targetId:row.target_id,
+        reason:row.reason||'',state:row.state,createdAt:row.created_at,resolvedAt:row.resolved_at||null,
+        resolutionCode:row.resolution_code||null,resolutionNote:row.resolution_note||null
+      }))});
+    }
+
+    const adminResolveReportMatch=url.pathname.match(/^\/api\/admin\/reports\/([0-9a-f-]+)\/resolve$/i);
+    if(req.method==='POST'&&adminResolveReportMatch){
+      const session=await requireStaffSession(req,res,['admin','moderator']);
+      if(!session)return;
+      const reportId=adminResolveReportMatch[1];
+      if(!uuid(reportId))return error(res,400,'INVALID_REPORT_ID');
+      const body=await readBody(req);
+      const decision=['dismiss','mark_reviewing','remove_content'].includes(body.decision)?body.decision:null;
+      const reasonCode=typeof body.reasonCode==='string'?body.reasonCode.trim():'';
+      const note=typeof body.note==='string'?body.note.trim():null;
+      if(!decision)return error(res,400,'MODERATION_DECISION_INVALID');
+      if(!/^[A-Za-z0-9_.:-]{2,80}$/.test(reasonCode))return error(res,400,'MODERATION_REASON_INVALID');
+      if(note&&note.length>500)return error(res,400,'MODERATION_NOTE_TOO_LONG');
+      const resolved=await adminRpc(config,'resolve_moderation_report',{
+        p_report_id:reportId,p_moderator_profile_id:session.profile.id,p_decision:decision,p_reason_code:reasonCode,p_note:note
+      });
+      if(!resolved.ok)return badDatabase(res,resolved,'MODERATION_RESOLUTION_FAILED');
+      const row=Array.isArray(resolved.data)?resolved.data[0]:resolved.data;
+      if(!row)return error(res,503,'MODERATION_RESOLUTION_UNCONFIRMED');
+      return json(res,200,{ok:true,report:{id:row.report_id,state:row.new_state},moderationActionId:row.moderation_action_id});
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api/admin/audit') {
+      const session=await requireStaffSession(req,res,['admin']);
+      if(!session)return;
+      const rows=await selectAdminRows(config,'audit_events',query({
+        select:'id,actor_id,action,detail,created_at',order:'created_at.desc',limit:String(asSafeInt(url.searchParams.get('limit'),50,1,100))
+      }));
+      if(!rows.ok)return badDatabase(res,rows,'ADMIN_AUDIT_UNAVAILABLE');
+      return json(res,200,{ok:true,events:rows.rows.map(row=>({id:row.id,actorId:row.actor_id,action:row.action,detail:row.detail||{},createdAt:row.created_at}))});
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api/admin/integrations') {
+      const session=await requireStaffSession(req,res,['admin','finance','support']);
+      if(!session)return;
+      return json(res,200,{ok:true,integrations:{
+        supabase:{configured:Boolean(config.configured.supabase),status:config.configured.supabase?'configured':'not_configured'},
+        livekit:{configured:Boolean(config.configured.livekit),status:config.configured.livekit?'configured':'not_configured'},
+        paypal:{configured:Boolean(config.configured.paypal),environment:config.paypal.env,status:config.configured.paypal?'configured':'not_configured',productionPaymentsEnabled:Boolean(config.features.productionPayments&&config.paypal.env==='live'&&config.paypal.webhookId)},
+        payouts:{enabled:false,status:'disabled_until_provider_eligibility_and_reconciliation_are_verified'}
+      }});
+    }
+
     if (req.method === 'GET' && url.pathname === '/api/profile/me') {
       const session = await requireSession(req, res);
       if (!session.ok) return;
