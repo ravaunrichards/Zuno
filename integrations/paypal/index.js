@@ -295,4 +295,59 @@ async function cancelBillingSubscription(cfg, providerSubscriptionId, reason = '
   }
 }
 
-module.exports = { getAccessToken, createOrder, captureOrder, refundCapture, verifyWebhook, createSubscriptionPlan, createBillingSubscription, getBillingSubscription, cancelBillingSubscription, notConfigured, HOSTS };
+
+async function createPayout(cfg, { senderBatchId, amountMinor, recipientEmail, requestId }) {
+  if (!cfg || !cfg.clientId || !cfg.clientSecret || cfg.payoutsEnabled !== true) {
+    return { ok: false, status: 503, code: 'PAYPAL_PAYOUTS_NOT_ENABLED', uncertain: false };
+  }
+  const amount = Number(amountMinor);
+  const email = typeof recipientEmail === 'string' ? recipientEmail.trim() : '';
+  if (!/^[A-Za-z0-9._:%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(email) || email.length > 127 ||
+      !Number.isSafeInteger(amount) || amount <= 0 ||
+      typeof senderBatchId !== 'string' || !/^[A-Za-z0-9_-]{16,128}$/.test(senderBatchId)) {
+    return { ok: false, status: 400, code: 'PAYPAL_PAYOUT_INPUT_INVALID', uncertain: false };
+  }
+  const token = await getAccessToken(cfg);
+  if (!token.ok) return { ...token, uncertain: true };
+  const host = HOSTS[cfg.env] || HOSTS.sandbox;
+  const body = {
+    sender_batch_header: {
+      sender_batch_id: senderBatchId,
+      email_subject: 'Your ZUNO creator payout',
+      email_message: 'Your creator earnings payout has been submitted. Provider processing status determines when it is complete.'
+    },
+    items: [{
+      recipient_type: 'EMAIL',
+      amount: { value: (amount / 100).toFixed(2), currency: 'USD' },
+      receiver: email,
+      sender_item_id: senderBatchId,
+      note: 'ZUNO creator earnings payout'
+    }]
+  };
+  try {
+    const result = await request(host, '/v1/payments/payouts', 'POST', {
+      Authorization: 'Bearer ' + token.accessToken,
+      ...(requestId ? { 'PayPal-Request-Id': String(requestId).slice(0, 38) } : {})
+    }, body);
+    const header = result.body && result.body.batch_header || {};
+    const batchId = header.payout_batch_id || result.body && result.body.payout_batch_id || null;
+    const state = String(header.batch_status || result.body && result.body.batch_status || '').toUpperCase();
+    if (result.status >= 200 && result.status < 300 && batchId) {
+      return { ok: true, batchId, status: state || 'PENDING', requestId: requestId || null };
+    }
+    // PayPal prevents duplicate sender_batch_id dispatches for 30 days. If a retry
+    // reports a duplicate, recover the original batch id from its HATEOAS URL.
+    const detail = result.body && (result.body.details || []);
+    const duplicate = Array.isArray(detail) && detail.some(x => /duplicate.*sender_batch_id|sender_batch_id.*duplicate/i.test(String(x.issue || '')+' '+String(x.description || '')));
+    const links = Array.isArray(result.body && result.body.links) ? result.body.links : [];
+    const originalLink = links.find(x => x && typeof x.href === 'string' && /\/v1\/payments\/payouts\//.test(x.href));
+    const linkMatch = originalLink && originalLink.href.match(/\/v1\/payments\/payouts\/([A-Za-z0-9_-]{5,128})(?:\?|$)/);
+    if (duplicate && linkMatch) return { ok: true, batchId: linkMatch[1], status: 'PENDING', recoveredDuplicate: true };
+    const uncertain = result.status >= 500 || result.status === 408 || result.status === 429 || duplicate;
+    return { ok: false, status: result.status || 502, code: uncertain ? 'PAYPAL_PAYOUT_OUTCOME_UNCERTAIN' : 'PAYPAL_PAYOUT_REJECTED', uncertain };
+  } catch (_) {
+    return { ok: false, status: 503, code: 'PAYPAL_PAYOUT_OUTCOME_UNCERTAIN', uncertain: true };
+  }
+}
+
+module.exports = { getAccessToken, createOrder, captureOrder, refundCapture, createPayout, verifyWebhook, createSubscriptionPlan, createBillingSubscription, getBillingSubscription, cancelBillingSubscription, notConfigured, HOSTS };

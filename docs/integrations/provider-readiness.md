@@ -21,6 +21,15 @@
 - [ ] Verify real provider webhook delivery, refunds, reversals and reconciliation end to end.
 - [ ] Keep production payments and payouts disabled until reviewed.
 
+## Creator PayPal Payouts
+- [x] Encrypt recipient addresses at rest with server-only AES-256-GCM key.
+- [x] Finance/admin review gates recipient, country eligibility, identity, compliance and risk hold.
+- [x] Reserve available creator earnings atomically and idempotently before provider dispatch.
+- [x] PayPal Payouts requests use a stable sender batch ID; uncertain provider outcomes keep earnings reserved.
+- [x] A verified item-success webhook is required to mark earnings paid; definitive failures release reservations.
+- [ ] Verify sandbox payout recipient onboarding, batch status/item webhooks and account-country eligibility with real PayPal Developer credentials.
+- [ ] Production dispatch remains disabled until finance, provider and compliance sign-off.
+
 ## Marketplace fulfillment
 - [x] Seller-authorized fulfillment state changes are mediated by a service-role-only transaction function.
 - [x] Buyer and seller read policies expose only their own shipment/tracking records.

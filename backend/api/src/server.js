@@ -18,6 +18,8 @@ const { monthlyPeriodStart, weeklyPeriodStart } = require('../../../packages/gif
 const { authenticateProfile, userRest, adminRest, adminRpc, selectAdminRows, profileProjection } = require('./auth');
 const storage = require('../../../integrations/supabase/storage');
 const { validateUploadMetadata, MIME_TO_EXTENSION } = require('../../media-processing/src/file-validation');
+const payoutRecipient = require('../../payouts/src/recipient');
+const { evaluatePayoutEligibility } = require('../../payouts/src/eligibility');
 
 const config = load();
 const envCheck = validateRequired(config);
@@ -444,9 +446,59 @@ const server = http.createServer(async (req, res) => {
             });
             processing = 'failed'; errorCode = 'PAYPAL_CAPTURE_REVERSED';
           }
-        } else {
-          processing = 'ignored';
-        }
+        } else if (body.event_type && /^PAYMENT\.PAYOUTS(?:BATCH|ITEM)\./.test(body.event_type)) {
+          const batchHeader=resource.batch_header||resource.sender_batch_header||{};
+          const payoutBatchId=String(resource.payout_batch_id||batchHeader.payout_batch_id||resource.batch_id||'');
+          const payoutItemId=String(resource.payout_item_id||resource.item_id||'');
+          const eventType=body.event_type;
+          if(!payoutBatchId){
+            processing='failed';errorCode='PAYOUT_WEBHOOK_BATCH_ID_MISSING';
+          } else {
+            const match=await selectAdminRows(config,'payouts',query({
+              select:'id,creator_id,amount_minor,currency,state,provider_batch_id,provider_item_id',
+              provider_batch_id:'eq.'+payoutBatchId,limit:'1'
+            }));
+            if(!match.ok){processing='failed';errorCode='PAYOUT_WEBHOOK_LOOKUP_FAILED';}
+            else if(!match.rows[0]){processing='failed';errorCode='PAYOUT_BATCH_NOT_FOUND';}
+            else {
+              const payout=match.rows[0];
+              if(eventType==='PAYMENT.PAYOUTS-ITEM.SUCCEEDED'){
+                const payoutItem=resource.payout_item||resource;
+                const amountObj=payoutItem.amount||resource.amount||{};
+                const observedAmount=Number(amountObj.value);
+                const observedCurrency=String(amountObj.currency||amountObj.currency_code||'');
+                const observedMinor=Math.round(observedAmount*100);
+                if(!payoutItemId||!Number.isFinite(observedAmount)||observedCurrency!=='USD'){
+                  processing='failed';errorCode='PAYOUT_SUCCESS_AMOUNT_MISSING';
+                }else if(observedMinor!==Number(payout.amount_minor)){
+                  await adminRest(config,'payout_reconciliation_records',new URLSearchParams(),'POST',{
+                    payout_id:payout.id,provider_batch_id:payoutBatchId,provider_item_id:payoutItemId,
+                    expected_minor:Number(payout.amount_minor),observed_minor:observedMinor,state:'mismatch',
+                    checked_at:new Date().toISOString(),resolution_note:'Verified PayPal payout success amount or currency mismatch; reserved earnings remain held.'
+                  });
+                  processing='failed';errorCode='PAYOUT_AMOUNT_MISMATCH';
+                }else{
+                  const completed=await adminRpc(config,'complete_creator_payout',{
+                    p_payout_id:payout.id,p_provider_batch_id:payoutBatchId,p_provider_item_id:payoutItemId,p_observed_minor:observedMinor
+                  });
+                  if(!completed.ok){processing='failed';errorCode=completed.code||'PAYOUT_COMPLETION_RECONCILIATION_FAILED';}
+                }
+              }else if(['PAYMENT.PAYOUTS-ITEM.FAILED','PAYMENT.PAYOUTS-ITEM.BLOCKED','PAYMENT.PAYOUTSBATCH.DENIED'].includes(eventType)){
+                const released=await adminRpc(config,'release_creator_payout',{
+                  p_payout_id:payout.id,p_failure_code:eventType.replace(/[^A-Za-z0-9_.:-]/g,'_')
+                });
+                if(!released.ok){processing='failed';errorCode=released.code||'PAYOUT_RELEASE_RECONCILIATION_FAILED';}
+              }else{
+                // A batch-level SUCCESS is not an item-level success signal. PENDING,
+                // ONHOLD and UNCLAIMED do not release money or mark earnings paid.
+                if(payout.state==='requested'){
+                  const attached=await adminRpc(config,'attach_creator_payout_batch',{p_payout_id:payout.id,p_provider_batch_id:payoutBatchId});
+                  if(!attached.ok){processing='failed';errorCode=attached.code||'PAYOUT_BATCH_RECONCILIATION_FAILED';}
+                }
+              }
+            }
+          }
+
       } catch (_) {
         processing = 'failed';
         errorCode = 'WEBHOOK_PROCESSING_FAILED';
@@ -924,6 +976,202 @@ const server = http.createServer(async (req, res) => {
       const ttlSeconds = Number.isInteger(body.ttlSeconds) ? Math.max(60, Math.min(3600, body.ttlSeconds)) : 900;
       const token = livekit.mintToken(config.livekit, { identity: currentId, room: room.id, canPublish, canSubscribe: true, ttlSeconds });
       return json(res, token.ok ? 200 : token.status || 500, token);
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/payouts/destination') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      if (!session.profile.is_creator) return error(res, 403, 'CREATOR_REQUIRED');
+      const body = await readBody(req);
+      const countryCode = typeof body.countryCode === 'string' ? body.countryCode.trim().toUpperCase() : '';
+      if (!/^[A-Z]{2}$/.test(countryCode)) return error(res, 400, 'PAYOUT_COUNTRY_CODE_INVALID');
+      const encrypted = payoutRecipient.encryptRecipientEmail(body.paypalEmail, config.payouts.recipientEncryptionKey);
+      if (!encrypted.ok) return error(res, encrypted.code==='PAYOUT_EMAIL_INVALID'?400:503, encrypted.code);
+      const row = {
+        creator_id: session.profile.id,
+        recipient_ciphertext: encrypted.ciphertext, recipient_nonce: encrypted.nonce, recipient_tag: encrypted.tag,
+        recipient_hash: encrypted.hash, recipient_masked: encrypted.masked, country_code: countryCode,
+        country_eligibility: 'pending', provider_recipient_ready: false, identity_verified_at: null,
+        compliance_state: 'pending', risk_hold: false, reviewed_by: null, reviewed_at: null, review_note: null,
+        updated_at: new Date().toISOString()
+      };
+      const existing = await selectAdminRows(config,'creator_payout_profiles',query({select:'creator_id',creator_id:'eq.'+session.profile.id,limit:'1'}));
+      if (!existing.ok) return error(res,503,'PAYOUT_DESTINATION_STORE_UNAVAILABLE');
+      const saved = existing.rows.length
+        ? await adminRest(config,'creator_payout_profiles',query({creator_id:'eq.'+session.profile.id}),'PATCH',row)
+        : await adminRest(config,'creator_payout_profiles',new URLSearchParams(),'POST',{...row,created_at:new Date().toISOString()});
+      if (!saved.ok) return error(res,503,'PAYOUT_DESTINATION_SAVE_FAILED');
+      return json(res,200,{ok:true,destination:{maskedEmail:encrypted.masked,countryCode,countryEligibility:'pending',providerRecipientReady:false},message:'PayPal recipient saved encrypted. A finance/admin review must verify recipient readiness, country eligibility, identity and compliance before any payout can be sent.'});
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api/payouts/mine') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const profile = await selectAdminRows(config,'creator_payout_profiles',query({
+        select:'recipient_masked,country_code,country_eligibility,provider_recipient_ready,identity_verified_at,compliance_state,risk_hold',
+        creator_id:'eq.'+session.profile.id,limit:'1'
+      }));
+      if (!profile.ok) return error(res,503,'PAYOUT_PROFILE_UNAVAILABLE');
+      const earnings = await selectAdminRows(config,'creator_earning_entries',query({
+        select:'creator_share_minor,state,currency,available_at',
+        creator_id:'eq.'+session.profile.id,currency:'eq.USD',state:'eq.available',available_at:'lte.'+new Date().toISOString(),limit:'10000'
+      }));
+      if (!earnings.ok) return error(res,503,'PAYOUT_EARNINGS_UNAVAILABLE');
+      const availableMinor = earnings.rows.reduce((total,row)=>total+Number(row.creator_share_minor||0),0);
+      const profileRow=profile.rows[0]||null;
+      const eligibility=evaluatePayoutEligibility({
+        identityVerified:Boolean(profileRow&&profileRow.identity_verified_at),
+        providerRecipientReady:Boolean(profileRow&&profileRow.provider_recipient_ready),
+        countryEligible:Boolean(profileRow&&profileRow.country_eligibility==='eligible'),
+        kycAndComplianceClear:Boolean(profileRow&&profileRow.compliance_state==='cleared'),
+        riskHold:Boolean(profileRow&&profileRow.risk_hold),
+        availableMinor,minimumMinor:config.payouts.minimumMinor
+      });
+      if (!config.features.payouts || !config.paypal.payoutsEnabled || !config.configured.paypal || !config.payouts.recipientEncryptionKey) {
+        eligibility.eligible=false;
+        for(const reason of ['PAYOUTS_DISABLED_BY_CONFIGURATION']) if(!eligibility.reasons.includes(reason))eligibility.reasons.push(reason);
+      }
+      const history=await selectAdminRows(config,'payouts',query({
+        select:'id,amount_minor,currency,state,provider_batch_id,provider_item_id,failure_code,created_at,updated_at',
+        creator_id:'eq.'+session.profile.id,order:'created_at.desc',limit:'30'
+      }));
+      if(!history.ok)return error(res,503,'PAYOUT_HISTORY_UNAVAILABLE');
+      return json(res,200,{
+        ok:true,
+        destination:profileRow?{maskedEmail:profileRow.recipient_masked,countryCode:profileRow.country_code,
+          countryEligibility:profileRow.country_eligibility,providerRecipientReady:Boolean(profileRow.provider_recipient_ready),
+          identityVerified:Boolean(profileRow.identity_verified_at),complianceState:profileRow.compliance_state,
+          riskHold:Boolean(profileRow.risk_hold)}:null,
+        available:{amountMinor:availableMinor,currency:'USD',formatted:(availableMinor/100).toFixed(2)},
+        minimum:{amountMinor:config.payouts.minimumMinor,currency:'USD'},
+        eligibility,
+        payouts:history.rows.map(row=>({id:row.id,amountMinor:Number(row.amount_minor),currency:row.currency,state:row.state,
+          providerBatchId:row.provider_batch_id||null,providerItemId:row.provider_item_id||null,
+          failureCode:row.failure_code||null,createdAt:row.created_at,updatedAt:row.updated_at}))
+      });
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/payouts/request') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      if (!session.profile.is_creator) return error(res,403,'CREATOR_REQUIRED');
+      if (!config.features.payouts || !config.paypal.payoutsEnabled || !config.configured.paypal ||
+          !config.payouts.recipientEncryptionKey || !Number.isSafeInteger(config.payouts.minimumMinor) || config.payouts.minimumMinor<=0) {
+        return error(res,503,'PAYOUTS_DISABLED_BY_CONFIGURATION','Payout dispatch is off until PayPal Payouts, encryption, minimum and compliance settings are configured.');
+      }
+      if (config.paypal.env==='live' && (!config.features.productionPayments || !config.paypal.webhookId)) {
+        return error(res,503,'PRODUCTION_PAYOUTS_DISABLED','Live payout dispatch requires the production payment gate and verified PayPal webhook configuration.');
+      }
+      const rawKey=String(req.headers['idempotency-key']||'');
+      if (!/^[A-Za-z0-9._:-]{16,150}$/.test(rawKey)) return error(res,400,'PAYOUT_IDEMPOTENCY_KEY_INVALID');
+      const found=await selectAdminRows(config,'creator_payout_profiles',query({
+        select:'creator_id,recipient_ciphertext,recipient_nonce,recipient_tag,recipient_hash,recipient_masked,country_code,country_eligibility,provider_recipient_ready,identity_verified_at,compliance_state,risk_hold',
+        creator_id:'eq.'+session.profile.id,limit:'1'
+      }));
+      if(!found.ok)return error(res,503,'PAYOUT_PROFILE_UNAVAILABLE');
+      const destination=found.rows[0];
+      const availableRows=await selectAdminRows(config,'creator_earning_entries',query({
+        select:'creator_share_minor',creator_id:'eq.'+session.profile.id,currency:'eq.USD',state:'eq.available',
+        available_at:'lte.'+new Date().toISOString(),limit:'10000'
+      }));
+      if(!availableRows.ok)return error(res,503,'PAYOUT_EARNINGS_UNAVAILABLE');
+      const availableMinor=availableRows.rows.reduce((total,row)=>total+Number(row.creator_share_minor||0),0);
+      const eligibility=evaluatePayoutEligibility({
+        identityVerified:Boolean(destination&&destination.identity_verified_at),
+        providerRecipientReady:Boolean(destination&&destination.provider_recipient_ready),
+        countryEligible:Boolean(destination&&destination.country_eligibility==='eligible'),
+        kycAndComplianceClear:Boolean(destination&&destination.compliance_state==='cleared'),
+        riskHold:Boolean(destination&&destination.risk_hold),
+        availableMinor,minimumMinor:config.payouts.minimumMinor
+      });
+      if(!eligibility.eligible)return error(res,409,'PAYOUT_NOT_ELIGIBLE','Payout is not eligible: '+eligibility.reasons.join(', '));
+      const decrypted=payoutRecipient.decryptRecipientEmail(destination,config.payouts.recipientEncryptionKey);
+      if(!decrypted.ok)return error(res,503,decrypted.code,'The encrypted payout recipient could not be verified; no payout was requested.');
+      const idempotencyKey=session.profile.id+':paypal-payout:'+rawKey;
+      const requested=await adminRpc(config,'request_creator_payout',{
+        p_creator_profile_id:session.profile.id,p_minimum_minor:config.payouts.minimumMinor,p_idempotency_key:idempotencyKey
+      });
+      if(!requested.ok)return badDatabase(res,requested,'PAYOUT_REQUEST_FAILED');
+      const payoutId=typeof requested.data==='string'?requested.data:Array.isArray(requested.data)?requested.data[0]:requested.data&&requested.data.request_creator_payout;
+      if(!uuid(String(payoutId||'')))return error(res,503,'PAYOUT_REQUEST_RESULT_INVALID');
+      const payoutLookup=await selectAdminRows(config,'payouts',query({
+        select:'id,creator_id,amount_minor,currency,state,provider_batch_id,provider_item_id,failure_code',
+        id:'eq.'+payoutId,creator_id:'eq.'+session.profile.id,limit:'1'
+      }));
+      if(!payoutLookup.ok||!payoutLookup.rows[0])return error(res,503,'PAYOUT_READBACK_UNAVAILABLE');
+      const payout=payoutLookup.rows[0];
+      if(payout.state==='paid')return json(res,200,{ok:true,idempotent:true,payout:{id:payout.id,state:'paid',amountMinor:Number(payout.amount_minor),currency:payout.currency}});
+      if(payout.state==='failed')return error(res,409,'PAYOUT_PREVIOUS_ATTEMPT_FAILED','The previous payout attempt failed and reserved earnings were released. Use a new Idempotency-Key to retry.');
+      if(payout.state==='processing'&&payout.provider_batch_id)return json(res,202,{ok:true,idempotent:true,payout:{id:payout.id,state:'processing',amountMinor:Number(payout.amount_minor),currency:payout.currency,providerBatchId:payout.provider_batch_id},message:'Payout is pending provider confirmation.'});
+      const provider=await paypal.createPayout(config.paypal,{
+        senderBatchId:payout.id,amountMinor:Number(payout.amount_minor),recipientEmail:decrypted.email,
+        requestId:payout.id.replace(/-/g,'')
+      });
+      if(!provider.ok){
+        if(provider.uncertain)return json(res,202,{ok:true,payout:{id:payout.id,state:payout.state,amountMinor:Number(payout.amount_minor),currency:payout.currency},code:'PAYOUT_PROVIDER_RECONCILIATION_PENDING',message:'Provider outcome is uncertain. Earnings remain reserved; retry with the same Idempotency-Key or wait for a verified PayPal webhook.'});
+        const released=await adminRpc(config,'release_creator_payout',{p_payout_id:payout.id,p_failure_code:provider.code||'PAYPAL_PAYOUT_REJECTED'});
+        if(!released.ok)return error(res,503,'PAYOUT_RELEASE_RECONCILIATION_REQUIRED','PayPal rejected the payout but reserved earnings could not be released. Finance reconciliation is required.');
+        return error(res,409,provider.code||'PAYPAL_PAYOUT_REJECTED','PayPal rejected the payout. Reserved earnings were released.');
+      }
+      const attached=await adminRpc(config,'attach_creator_payout_batch',{p_payout_id:payout.id,p_provider_batch_id:provider.batchId});
+      if(!attached.ok)return json(res,202,{ok:true,payout:{id:payout.id,state:'requested',amountMinor:Number(payout.amount_minor),currency:payout.currency},code:'PAYOUT_BATCH_RECONCILIATION_PENDING',message:'PayPal accepted the request but its batch reference could not yet be saved. Earnings remain reserved; do not create another payout.'});
+      return json(res,202,{ok:true,payout:{id:payout.id,state:'processing',amountMinor:Number(payout.amount_minor),currency:payout.currency,providerBatchId:provider.batchId,providerStatus:provider.status},message:'PayPal accepted the payout request. It is not marked paid until a verified provider item-success event is reconciled.'});
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api/admin/payout-profiles') {
+      const staff=await requireStaffSession(req,res,['admin','finance']);
+      if(!staff)return;
+      const profiles=await selectAdminRows(config,'creator_payout_profiles',query({
+        select:'creator_id,recipient_masked,country_code,country_eligibility,provider_recipient_ready,identity_verified_at,compliance_state,risk_hold,reviewed_by,reviewed_at,review_note,updated_at',
+        order:'updated_at.asc',limit:'200'
+      }));
+      if(!profiles.ok)return error(res,503,'PAYOUT_REVIEW_QUEUE_UNAVAILABLE');
+      return json(res,200,{ok:true,profiles:profiles.rows.map(row=>({
+        creatorId:row.creator_id,recipientMasked:row.recipient_masked,countryCode:row.country_code,
+        countryEligibility:row.country_eligibility,providerRecipientReady:Boolean(row.provider_recipient_ready),
+        identityVerified:Boolean(row.identity_verified_at),complianceState:row.compliance_state,riskHold:Boolean(row.risk_hold),
+        reviewedBy:row.reviewed_by||null,reviewedAt:row.reviewed_at||null,reviewNote:row.review_note||null,updatedAt:row.updated_at
+      }))});
+    }
+
+    const payoutProfileReviewMatch=url.pathname.match(/^\/api\/admin\/payout-profiles\/([0-9a-f-]+)\/review$/i);
+    if(req.method==='PATCH'&&payoutProfileReviewMatch){
+      const staff=await requireStaffSession(req,res,['admin','finance']);
+      if(!staff)return;
+      const creatorId=payoutProfileReviewMatch[1];
+      if(!uuid(creatorId))return error(res,400,'INVALID_CREATOR_ID');
+      const body=await readBody(req);
+      for(const key of ['identityVerified','countryEligible','complianceClear','providerRecipientReady','riskHold']){
+        if(typeof body[key]!=='boolean')return error(res,400,'PAYOUT_REVIEW_FLAGS_REQUIRED');
+      }
+      const note=body.reviewNote==null?'':String(body.reviewNote);
+      if(note.length>500)return error(res,400,'PAYOUT_REVIEW_NOTE_TOO_LONG');
+      if(body.providerRecipientReady&&(!body.identityVerified||!body.countryEligible||!body.complianceClear||body.riskHold)){
+        return error(res,400,'PAYOUT_REVIEW_GATE_CONFLICT');
+      }
+      const prior=await selectAdminRows(config,'creator_payout_profiles',query({
+        select:'creator_id,recipient_masked,country_code',creator_id:'eq.'+creatorId,limit:'1'
+      }));
+      if(!prior.ok)return error(res,503,'PAYOUT_PROFILE_UNAVAILABLE');
+      if(!prior.rows[0])return error(res,404,'PAYOUT_DESTINATION_REQUIRED');
+      const now=new Date().toISOString();
+      const updated=await adminRest(config,'creator_payout_profiles',query({creator_id:'eq.'+creatorId}),'PATCH',{
+        country_eligibility:body.countryEligible?'eligible':'ineligible',
+        provider_recipient_ready:body.providerRecipientReady,
+        identity_verified_at:body.identityVerified?now:null,
+        compliance_state:body.complianceClear?'cleared':'held',
+        risk_hold:body.riskHold,reviewed_by:staff.profile.id,reviewed_at:now,review_note:note||null,updated_at:now
+      });
+      if(!updated.ok)return error(res,503,'PAYOUT_REVIEW_SAVE_FAILED');
+      await adminRest(config,'audit_events',new URLSearchParams(),'POST',{
+        actor_id:staff.profile.id,action:'creator_payout_profile.reviewed',
+        detail:{creatorId,countryCode:prior.rows[0].country_code,identityVerified:body.identityVerified,
+          countryEligible:body.countryEligible,complianceClear:body.complianceClear,
+          providerRecipientReady:body.providerRecipientReady,riskHold:body.riskHold,reviewNote:note||null}
+      });
+      return json(res,200,{ok:true,creatorId,countryEligibility:body.countryEligible?'eligible':'ineligible',
+        providerRecipientReady:body.providerRecipientReady,identityVerified:body.identityVerified,
+        complianceState:body.complianceClear?'cleared':'held',riskHold:body.riskHold,reviewedAt:now});
     }
 
     if (req.method === 'GET' && url.pathname === '/api/admin/overview') {

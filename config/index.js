@@ -43,6 +43,10 @@ function load(env = process.env) {
     supabase,
     livekit,
     paypal,
+    payouts: {
+      recipientEncryptionKey: env.PAYOUT_RECIPIENT_ENCRYPTION_KEY || '',
+      minimumMinor: Number(env.PAYOUT_MINIMUM_MINOR || 1000)
+    },
     notifications: {
       pushVapidPublicKey: env.WEB_PUSH_VAPID_PUBLIC_KEY || '',
       pushVapidPrivateKey: env.WEB_PUSH_VAPID_PRIVATE_KEY || '',
