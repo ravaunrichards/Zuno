@@ -232,4 +232,75 @@ BEGIN
 END
 $moderation_checks$;
 
-SELECT 'ZUNO PostgreSQL migration + RLS + economy + moderation smoke checks passed' AS verification;
+
+DO $conversation_community_checks$
+DECLARE
+  v_creator uuid := '10000000-0000-4000-8000-000000000001';
+  v_other uuid := '10000000-0000-4000-8000-000000000002';
+  v_third uuid := '20000000-0000-4000-8000-000000000003';
+  v_direct_one uuid;
+  v_direct_two uuid;
+  v_group_one uuid;
+  v_group_two uuid;
+  v_community_one uuid;
+  v_community_two uuid;
+BEGIN
+  SELECT public.create_conversation(
+    v_creator, array[v_other], false, 'zuno-ci-direct-conversation-0001'
+  ) INTO v_direct_one;
+  SELECT public.create_conversation(
+    v_creator, array[v_other], false, 'zuno-ci-direct-conversation-0001'
+  ) INTO v_direct_two;
+  IF v_direct_one IS DISTINCT FROM v_direct_two THEN
+    RAISE EXCEPTION 'Direct conversation idempotency key returned different IDs';
+  END IF;
+  IF (SELECT count(*) FROM conversation_members WHERE conversation_id=v_direct_one)<>2 THEN
+    RAISE EXCEPTION 'Direct conversation did not add exactly two members';
+  END IF;
+  IF (SELECT count(*) FROM conversations WHERE id=v_direct_one)<>1 THEN
+    RAISE EXCEPTION 'Direct conversation was not persisted';
+  END IF;
+
+  SELECT public.create_conversation(
+    v_creator, array[v_other,v_third], true, 'zuno-ci-group-conversation-0001'
+  ) INTO v_group_one;
+  SELECT public.create_conversation(
+    v_creator, array[v_third,v_other], true, 'zuno-ci-group-conversation-0001'
+  ) INTO v_group_two;
+  IF v_group_one IS DISTINCT FROM v_group_two THEN
+    RAISE EXCEPTION 'Group conversation retry was not idempotent';
+  END IF;
+  IF (SELECT count(*) FROM conversation_members WHERE conversation_id=v_group_one)<>3 THEN
+    RAISE EXCEPTION 'Group conversation did not add all members';
+  END IF;
+
+  INSERT INTO blocks(blocker_id,blocked_id) VALUES(v_creator,v_other) ON CONFLICT DO NOTHING;
+  BEGIN
+    PERFORM public.create_conversation(
+      v_creator, array[v_other], false, 'zuno-ci-blocked-conversation-0001'
+    );
+    RAISE EXCEPTION 'Direct conversation allowed a new blocked pair';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM NOT LIKE '%DIRECT_MESSAGE_BLOCKED%' THEN RAISE; END IF;
+  END;
+  DELETE FROM blocks WHERE blocker_id=v_creator AND blocked_id=v_other;
+
+  SELECT public.create_community_with_owner(
+    '70000000-0000-4000-8000-000000000001',v_creator,'CI Conversation Community','public','zuno-ci-community-create-0001'
+  ) INTO v_community_one;
+  SELECT public.create_community_with_owner(
+    '70000000-0000-4000-8000-000000000002',v_creator,'CI Conversation Community','public','zuno-ci-community-create-0001'
+  ) INTO v_community_two;
+  IF v_community_one IS DISTINCT FROM v_community_two THEN
+    RAISE EXCEPTION 'Community creation did not preserve idempotency';
+  END IF;
+  IF NOT EXISTS(SELECT 1 FROM community_members WHERE community_id=v_community_one AND profile_id=v_creator AND role='owner') THEN
+    RAISE EXCEPTION 'Community owner membership was not created';
+  END IF;
+  IF NOT EXISTS(SELECT 1 FROM community_channels WHERE community_id=v_community_one AND slug='general') THEN
+    RAISE EXCEPTION 'Community general channel was not created';
+  END IF;
+END
+$conversation_community_checks$;
+
+SELECT 'ZUNO PostgreSQL migration + RLS + economy + moderation + messaging/community smoke checks passed' AS verification;
