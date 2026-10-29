@@ -95,5 +95,5 @@ export function giftArtwork(gift, compact) {
     '<rect x="8" y="7" width="112" height="114" rx="29" fill="url(#art-bg)" stroke="#fff" stroke-opacity=".12"/>' +
     '<circle cx="64" cy="61" r="44" fill="' + primary + '" opacity=".065"/><circle cx="26" cy="26" r="2.3" fill="#fff" opacity=".85"/><circle cx="101" cy="29" r="1.7" fill="' + accent + '"/><circle cx="99" cy="99" r="2.1" fill="' + secondary + '"/>' +
     '<g filter="url(#art-shadow)">' + scene + '</g><path d="M22 108 Q64 116 106 108" stroke="' + primary + '" stroke-opacity=".3" stroke-width="1.2" fill="none"/></svg>';
-  return svg.replace(/id="art-([a-z]+)"/g, 'id="zuno-' + key + '-art-$1').replace(/url\(#art-([a-z]+)\)/g, 'url(#zuno-' + key + '-art-$1)');
+  return svg.replace(/id="art-([a-z]+)"/g, 'id="zuno-' + key + '-art-$1"').replace(/url\(#art-([a-z]+)\)/g, 'url(#zuno-' + key + '-art-$1)');
 }
