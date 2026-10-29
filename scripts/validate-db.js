@@ -5,7 +5,7 @@ const DB=path.join(__dirname,'..','database');
 const migrationDir=path.join(DB,'migrations');
 const problems=[];
 const migrations=fs.existsSync(migrationDir)?fs.readdirSync(migrationDir).filter((name)=>/^\d{4}_[a-z0-9_-]+\.sql$/i.test(name)).sort():[];
-const expected=['0001_core_schema.sql','0002_rls_policies.sql','0003_economy_functions.sql','0004_content_and_discovery.sql','0005_messaging_communities_and_calls.sql','0006_livestreaming_interactions.sql','0007_payments_gifts_and_creator_economy.sql','0008_commerce_ads_and_privacy.sql','0009_operational_jobs_and_delivery.sql','0010_close_friends_gifter_progression_and_earnings.sql','0011_auth_profile_privileges_and_block_guards.sql'];
+const expected=['0001_core_schema.sql','0002_rls_policies.sql','0003_economy_functions.sql','0004_content_and_discovery.sql','0005_messaging_communities_and_calls.sql','0006_livestreaming_interactions.sql','0007_payments_gifts_and_creator_economy.sql','0008_commerce_ads_and_privacy.sql','0009_operational_jobs_and_delivery.sql','0010_close_friends_gifter_progression_and_earnings.sql','0011_auth_profile_privileges_and_block_guards.sql','0012_media_processing_queue_and_private_storage.sql'];
 for(const name of expected)if(!migrations.includes(name))problems.push('missing migration '+name);
 const sqlFiles=migrations.map((name)=>path.join(migrationDir,name));
 const seedsDir=path.join(DB,'seeds');
@@ -27,6 +27,7 @@ if(!/create\s+constraint\s+trigger\s+ledger_postings_balanced/i.test(sql))proble
 if(!/unique\s*\(provider\s*,\s*provider_event_id\)/i.test(sql))problems.push('provider webhook event idempotency constraint missing');
 if(!/America\/Jamaica/.test(sql))problems.push('ranking timezone requirement America/Jamaica missing');
 if(!/grant\s+execute\s+on\s+function\s+claim_background_job/i.test(sql))problems.push('worker job claim function is not explicitly service-role gated');
+if(!/grant\s+execute\s+on\s+function\s+queue_media_processing_job/i.test(sql))problems.push('media queue function is not service-role gated');
 if(!/create policy posts_select on posts for select using\s*\(can_view_post\(id\)\)/i.test(sql))problems.push('posts SELECT policy must enforce audience and bilateral block rules');
 console.log(JSON.stringify({ok:problems.length===0,migrationFiles:migrations.length,sqlFiles:sqlFiles.length,tables:tables.length,rlsTables:enabled.size,problems},null,2));
 process.exit(problems.length===0?0:1);

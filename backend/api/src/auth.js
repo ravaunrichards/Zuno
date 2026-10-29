@@ -25,7 +25,7 @@ const ADMIN_TABLES = new Set([
   'creator_earning_entries','creator_earnings','payouts','recharge_purchases','creator_subscriptions',
   'marketplace_listings','commerce_orders','ad_campaigns','reports','moderation_actions','audit_events'
 ]);
-const ADMIN_RPCS = new Set(['accept_live_guest_request','refresh_gifter_progress','claim_background_job','finish_background_job','fail_background_job']);
+const ADMIN_RPCS = new Set(['accept_live_guest_request','refresh_gifter_progress','claim_background_job','finish_background_job','fail_background_job','queue_media_processing_job']);
 
 function readBearerToken(req) {
   const value = req && req.headers ? req.headers.authorization : '';
