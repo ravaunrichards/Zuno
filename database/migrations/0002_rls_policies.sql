@@ -5,34 +5,34 @@
 -- Helper: current profile id from the Supabase auth JWT.
 create or replace function current_profile_id() returns uuid
 language sql stable security definer
-set search_path = public, pg_temp as $
+set search_path = public, pg_temp as $$
   select id from public.profiles where auth_user_id = auth.uid()
-$;
+$$;
 create or replace function is_conversation_member(p_conversation_id uuid) returns boolean
-language sql stable security definer set search_path = public, pg_temp as $
+language sql stable security definer set search_path = public, pg_temp as $$
   select exists (select 1 from public.conversation_members m where m.conversation_id = p_conversation_id and m.profile_id = public.current_profile_id())
-$;
+$$;
 create or replace function is_live_room_participant(p_room_id uuid) returns boolean
-language sql stable security definer set search_path = public, pg_temp as $
+language sql stable security definer set search_path = public, pg_temp as $$
   select exists (select 1 from public.live_participants p where p.room_id = p_room_id and p.profile_id = public.current_profile_id())
-$;
+$$;
 create or replace function is_community_member(p_community_id uuid) returns boolean
-language sql stable security definer set search_path = public, pg_temp as $
+language sql stable security definer set search_path = public, pg_temp as $$
   select exists (select 1 from public.community_members m where m.community_id = p_community_id and m.profile_id = public.current_profile_id())
-$;
+$$;
 create or replace function is_moderator_or_admin() returns boolean
-language sql stable security definer set search_path = public, pg_temp as $
+language sql stable security definer set search_path = public, pg_temp as $$
   select exists (select 1 from public.roles r where r.profile_id = public.current_profile_id() and r.role in ('moderator','admin','support'))
-$;
+$$;
 create or replace function can_view_post(p_post_id uuid) returns boolean
-language sql stable security definer set search_path = public, pg_temp as $
+language sql stable security definer set search_path = public, pg_temp as $$
   select exists (select 1 from public.posts p where p.id = p_post_id and p.deleted_at is null and
     (p.audience = 'public' or p.author_id = public.current_profile_id() or
     (p.audience = 'followers' and exists (select 1 from public.follows f where f.follower_id = public.current_profile_id() and f.followee_id = p.author_id)))
     and not exists (select 1 from public.blocks b where
       (b.blocker_id = public.current_profile_id() and b.blocked_id = (select p2.author_id from public.posts p2 where p2.id=p_post_id)) or
       (b.blocked_id = public.current_profile_id() and b.blocker_id = (select p3.author_id from public.posts p3 where p3.id=p_post_id)))
-$;
+$$;
 -- profiles --------------------------------------------------------------
 alter table profiles enable row level security;
 drop policy if exists profiles_select on profiles;
