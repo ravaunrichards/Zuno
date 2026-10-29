@@ -228,7 +228,7 @@ async function connectRoom({roomId,title,token,url,role,isHost,privateRoom=false
   }
   const room = new Room({adaptiveStream:true,dynacast:true,stopLocalTrackOnUnpublish:true});
   active = {
-    room, roomId, title, role:role||'viewer', isHost:Boolean(isHost), privateRoom, hostUsername:hostUsername||'',
+    room, roomId, title, role:role||'viewer', isHost:Boolean(isHost), privateRoom, hostUsername: typeof hostUsername==='string'?hostUsername:'', hostUsername:hostUsername||'',
     state:'connecting', micEnabled:false, cameraEnabled:false,
     tiles:new Map(), pollTimer:null, guestRequestState:null
   };
@@ -292,7 +292,7 @@ async function createHostRoom(form) {
     if(form)form.reset();
     await connectRoom({
       roomId:result.room.id,title:result.room.title,token:result.livekit.token,url:result.livekit.url,
-      role:'host',isHost:true,privateRoom:isPrivate,startAfterConnect:true
+      role:'host',isHost:true,privateRoom:isPrivate,startAfterConnect:true,hostUsername:''
     });
   } catch(error) {
     setSectionStatus(error.message||'Could not start LIVE.');
@@ -315,7 +315,7 @@ async function joinRoom(roomData) {
     if(!joined.livekit||!joined.livekit.token||!joined.livekit.url)throw new Error('The API did not issue a LiveKit viewer token.');
     await connectRoom({
       roomId:roomData.id,title:roomData.title,token:joined.livekit.token,url:joined.livekit.url,
-      role:joined.role||'viewer',isHost:joined.role==='host',privateRoom:Boolean(roomData.isPrivate),hostUsername:roomData.host?.username||''
+      role:joined.role||'viewer',isHost:joined.role==='host',privateRoom:Boolean(roomData.isPrivate),hostUsername:roomData.host?.username||roomData.hostUsername||'',hostUsername:roomData.host?.username||''
     });
   } catch(error) {
     setSectionStatus(error.message||'Could not join this LIVE room.');
@@ -639,6 +639,11 @@ function mountDialogControls() {
   byId('live-chat-form')?.addEventListener('submit',sendChat);
   byId('live-refresh-chat')?.addEventListener('click',refreshChat);
   byId('live-guest-request')?.addEventListener('click',guestButtonClick);
+  byId('live-send-gift')?.addEventListener('click',()=>{
+    if(!active){say('Join a LIVE room before sending a LIVE gift.',true);return;}
+    if(!mustBeSignedIn())return;
+    window.dispatchEvent(new CustomEvent('zuno:live-open-gift-picker',{detail:{roomId:active.roomId,hostUsername:active.hostUsername||''}}));
+  });
   byId('live-send-gift')?.addEventListener('click',openLiveGiftCatalog);
   byId('live-leave-button')?.addEventListener('click',()=>leaveActive());
   byId('live-room-close')?.addEventListener('click',()=>leaveActive());

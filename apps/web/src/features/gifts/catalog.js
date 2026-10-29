@@ -91,7 +91,7 @@ function showDetails(gift, group) {
     '<li><span>Audio status</span><strong>' + safeText(gift.audioStatus || 'not specified') + '</strong></li>' +
     '<li><span>Model asset</span><strong>' + safeText(gift.modelPath || 'Not specified') + '</strong></li></ul>' + audioPanel + '<button class="button button-primary button-small" id="gift-detail-send-open" type="button">Send this gift · ' + safeText(gift.priceCoins) + ' Z Coins</button>';
   content.querySelector('#gift-detail-send-open')?.addEventListener('click',openGiftSendForm);
-  if (typeof dialog.showModal === 'function') dialog.showModal(); else dialog.setAttribute('open', '');
+  if (typeof dialog.showModal === 'function') { if (!dialog.open) dialog.showModal(); } else dialog.setAttribute('open', '');
 }
 function createCard(gift) {
   const group = family(gift.category);
@@ -143,7 +143,42 @@ export async function mountGiftCatalog() {
     activeLiveRecipientUsername=typeof event.detail?.hostUsername==='string'?event.detail.hostUsername:'';
     const liveInput=document.getElementById('gift-send-live-room');if(liveInput)liveInput.value=activeLiveRoomId||'';
   });
-  const filters = document.getElementById('gift-filters');
+  window.addEventListener('zuno:live-open-gift-picker',event=>{
+    const roomId=typeof event.detail?.roomId==='string'?event.detail.roomId:'';
+    if(!roomId)return;
+    activeLiveRoomId=roomId;
+    activeLiveRecipientUsername=typeof event.detail?.hostUsername==='string'?event.detail.hostUsername:'';
+    const dialog=document.getElementById('gift-dialog');
+    const title=document.getElementById('gift-detail-title');
+    const content=document.getElementById('gift-detail-content');
+    const form=document.getElementById('gift-send-form');
+    if(!dialog||!content)return;
+    selectedGift=null;
+    if(form){form.hidden=true;form.reset();}
+    if(title)title.textContent='Choose a LIVE gift';
+    content.replaceChildren();
+    const intro=document.createElement('p');
+    intro.className='fine-print';
+    intro.textContent=activeLiveRecipientUsername
+      ?'Choose a gift to send to @'+activeLiveRecipientUsername+'. The server will confirm the current room and charge only the catalogue price.'
+      :'Choose a gift and enter the recipient username. The server will verify room membership and wallet balance.';
+    content.append(intro);
+    const picker=document.createElement('div');
+    picker.className='live-gift-picker-grid';
+    matchingGifts().forEach(gift=>{
+      const button=document.createElement('button');
+      button.type='button';
+      button.className='live-gift-picker-item';
+      const name=document.createElement('strong');name.textContent=gift.name;
+      const price=document.createElement('span');price.textContent=Number(gift.priceCoins).toLocaleString()+' Z Coins';
+      button.append(name,price);
+      button.addEventListener('click',()=>showDetails(gift,family(gift.category)));
+      picker.append(button);
+    });
+    content.append(picker);
+    if(typeof dialog.showModal==='function'){if(!dialog.open)dialog.showModal();}else dialog.setAttribute('open','');
+  });
+    const filters = document.getElementById('gift-filters');
   if (filters) filters.addEventListener('click', (event) => {
     const button = event.target.closest('[data-gift-category]');
     if (!button) return;

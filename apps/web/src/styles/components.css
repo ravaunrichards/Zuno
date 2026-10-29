@@ -488,3 +488,9 @@ body.zuno-reduced-motion *,body.zuno-reduced-motion *::before,body.zuno-reduced-
 .marketplace-fulfillment-side-actions{display:flex;gap:7px;flex-wrap:wrap}
 .marketplace-fulfillment-status{margin:0;font-size:10px;color:var(--muted)}
 .marketplace-fulfillment-status.is-error{color:#ff9bb0}
+
+.live-gift-picker-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;max-height:48vh;overflow:auto;padding:2px}
+.live-gift-picker-item{display:grid;gap:6px;text-align:left;padding:11px;border:1px solid var(--line);border-radius:11px;background:rgba(255,255,255,.025);color:var(--text)}
+.live-gift-picker-item strong{font-size:10px;line-height:1.4}.live-gift-picker-item span{font-size:9px;color:var(--gold);font-weight:800}
+.live-gift-picker-item:hover{border-color:rgba(245,205,120,.45);background:rgba(245,205,120,.05)}
+@media(max-width:480px){.live-gift-picker-grid{grid-template-columns:1fr}}
