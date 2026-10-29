@@ -1,40 +1,40 @@
-'use strict';
-// ZUNO PWA shell logic. CSP-safe: no inline handlers, same-origin assets only.
-// Loads the gift catalog from the packaged manifest and pings the API /health.
-(function () {
-  var API = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
-    ? 'http://localhost:4000' : '';
+import { mountNavigation } from './src/components/navigation.js';
+import { mountSearch } from './src/features/search/search.js';
+import { mountComposer } from './src/features/creation/composer.js';
+import { mountGiftCatalog } from './src/features/gifts/catalog.js';
+import { mountLiveRooms } from './src/features/livestreaming/live-room.js';
+import { mountActions } from './src/features/actions.js';
+import { mountAuth } from './src/features/auth/auth-ui.js';
+import { mountFeed } from './src/features/feed/feed.js';
+import { mountWallet } from './src/features/auth/wallet.js';
+import { mountCommunities } from './src/features/communities/communities.js';
+import { mountMarketplace } from './src/features/marketplace/marketplace.js';
+import { mountSubscriptions } from './src/features/subscriptions/subscriptions.js';
+import { mountMessaging } from './src/features/messaging.js';
+import { mountProfileSettings } from './src/features/profile/profile-settings.js';
+import { mountStories } from './src/features/stories/stories.js';
+import { mountNotifications } from './src/features/notifications/notifications.js';
 
-  function esc(s) {
-    return String(s).replace(/[&<>"']/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-    });
-  }
+mountNavigation();
+mountSearch();
+mountComposer();
+mountActions();
+mountAuth();
+mountFeed();
+mountWallet();
+mountCommunities();
+mountMarketplace();
+mountSubscriptions();
+mountMessaging();
+mountProfileSettings();
+mountStories();
+mountNotifications();
+mountGiftCatalog();
+mountLiveRooms();
 
-  function renderGifts(gifts) {
-    var grid = document.getElementById('gifts');
-    document.getElementById('count').textContent = '(' + gifts.length + ' gifts)';
-    grid.innerHTML = '';
-    gifts.slice(0, 120).forEach(function (g) {
-      var el = document.createElement('div');
-      el.className = 'card';
-      el.innerHTML =
-        '<div class="name">' + esc(g.name) + '</div>' +
-        '<div class="cat">' + esc(g.categoryLabel || g.category) + '</div>' +
-        '<div class="price">\u25C9 ' + esc(g.priceCoins) + '</div>' +
-        '<span class="badge">tier ' + esc(g.tier) + ' \u00B7 ' + esc(g.fx) + '</span>';
-      grid.appendChild(el);
-    });
-  }
-
-  // Catalog is bundled with the app for offline-first display.
-  fetch('./gifts.json').then(function (r) { return r.json(); })
-    .then(renderGifts)
-    .catch(function () { document.getElementById('gifts').innerHTML = '<div class="status">Could not load catalog.</div>'; });
-
-  fetch(API + '/health').then(function (r) { return r.json(); })
-    .then(function (h) { document.getElementById('health').textContent = 'API: ' + h.status; })
-    .catch(function () { document.getElementById('health').textContent = 'API offline'; });
-
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(function () {});
-})();
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  navigator.serviceWorker.register('./sw.js').catch(() => {
+    const source = document.getElementById('gift-source');
+    if (source) source.textContent += ' · Offline cache unavailable';
+  });
+}

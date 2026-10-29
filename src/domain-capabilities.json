@@ -1,0 +1,14 @@
+{
+  "product": "ZUNO",
+  "version": 1,
+  "capabilities": [
+    { "id": "social-content", "domains": ["feed", "video", "photos", "stories", "comments", "reactions", "reposts", "saved-content"], "sourceOfTruth": "backend/api + database" },
+    { "id": "communication", "domains": ["direct-messages", "group-messages", "calls", "read-receipts", "notifications"], "sourceOfTruth": "backend/api + backend/realtime + database" },
+    { "id": "communities", "domains": ["groups", "channels", "events", "memberships"], "sourceOfTruth": "backend/api + database" },
+    { "id": "live", "domains": ["rooms", "participants", "guest-requests", "polls", "questions", "live-gifts"], "sourceOfTruth": "backend/realtime + LiveKit + database" },
+    { "id": "creator-economy", "domains": ["gift-catalog", "z-coins", "ledger", "subscriptions", "rankings", "earnings", "payouts"], "sourceOfTruth": "database + backend/payments + backend/payouts" },
+    { "id": "commerce-and-ads", "domains": ["products", "orders", "refunds", "campaigns", "placements", "impressions"], "sourceOfTruth": "backend/api + database" },
+    { "id": "safety", "domains": ["reports", "appeals", "moderation-actions", "privacy-requests", "audit"], "sourceOfTruth": "backend/moderation + database" }
+  ],
+  "notes": "This is a domain ownership registry, not a claim that every capability is already implemented or deployed."
+}

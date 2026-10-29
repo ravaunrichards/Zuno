@@ -1,0 +1,59 @@
+name: ZUNO CI
+
+on:
+  push:
+    branches: [main, "zuno-**"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-and-domain-checks:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: zuno
+          POSTGRES_PASSWORD: zuno_test_password
+          POSTGRES_DB: zuno_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U zuno -d zuno_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgres://zuno:zuno_test_password@localhost:5432/zuno_test
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Setup pnpm
+        run: corepack enable && corepack prepare pnpm@9.15.9 --activate
+      - name: Install
+        run: pnpm install --no-frozen-lockfile
+      - name: Lint JavaScript source
+        run: pnpm lint
+      - name: Unit and integration tests
+        run: pnpm test
+      - name: Platform entrypoint and placeholder audit
+        run: pnpm platforms:validate
+      - name: Web interaction checks
+        run: node scripts/test-web.js
+      - name: Gift asset integrity
+        run: pnpm assets:validate
+      - name: Database static checks
+        run: pnpm db:validate
+      - name: Apply every migration on clean PostgreSQL and test RLS
+        run: pnpm db:test
+      - name: Web package build
+        run: pnpm --filter @zuno/web build

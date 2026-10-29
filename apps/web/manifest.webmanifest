@@ -1,13 +1,11 @@
 {
-  "name": "ZUNO",
+  "name": "ZUNO — Unified Social and Creator Ecosystem",
   "short_name": "ZUNO",
-  "description": "Unified social, LIVE, creator and commerce platform.",
+  "description": "Social discovery, video, communities, LIVE and creator tools in one connected space.",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#0d0d12",
-  "theme_color": "#5b2be0",
-  "icons": [
-    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
-  ]
+  "background_color": "#0d0d15",
+  "theme_color": "#11111b",
+  "icons": [{ "src": "./icons/zuno-mark.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
 }

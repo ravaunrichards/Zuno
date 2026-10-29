@@ -1,0 +1,2 @@
+:root{--zuno-bg:#0d0d15;--zuno-panel:#171725;--zuno-line:rgba(210,210,255,.11);--zuno-text:#f7f6ff;--zuno-muted:#a5a3bd;--zuno-violet:#9a7cff;--zuno-cyan:#76e5e1;--zuno-pink:#ff8ac8;--zuno-gold:#f5cd78;--zuno-radius-sm:12px;--zuno-radius-md:18px;--zuno-radius-lg:26px}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}

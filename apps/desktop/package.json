@@ -1,0 +1,52 @@
+{
+  "name": "@zuno/desktop",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Hardened Electron shell for ZUNO's web client",
+  "main": "main.cjs",
+  "scripts": {
+    "start": "node ../../scripts/build-web.js && electron .",
+    "pack": "node ../../scripts/build-web.js && electron-builder --dir",
+    "dist": "node ../../scripts/build-web.js && electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^42.11.16",
+    "electron-builder": "^26.15.0"
+  },
+  "build": {
+    "appId": "com.zuno.desktop",
+    "productName": "ZUNO",
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "package.json"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ]
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ]
+    },
+    "extraResources": [
+      {
+        "from": "../../dist/web",
+        "to": "zuno-web",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ]
+  }
+}

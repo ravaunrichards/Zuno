@@ -1,23 +1,54 @@
 'use strict';
-// ZUNO service worker: offline-first cache of the app shell + bundled catalog.
-var CACHE = 'zuno-shell-v1';
-var ASSETS = ['./index.html', './app.js', './manifest.webmanifest', './gifts.json'];
-
-self.addEventListener('install', function (e) {
-  e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(ASSETS); }));
-  self.skipWaiting();
+const CACHE = 'zuno-shell-v2';
+const SHELL = ['./index.html','./runtime-config.js','./app.js','./manifest.webmanifest','./gifts.json','./src/styles/main.css','./src/styles/tokens.css','./src/styles/layout.css','./src/styles/components.css','./src/styles/responsive.css','./src/services/api-client.js','./src/components/navigation.js','./src/features/search/search.js','./src/features/creation/composer.js','./src/features/auth/session.js','./src/features/notifications/notifications.js','./src/features/auth/wallet.js','./src/features/communities/communities.js','./src/features/marketplace/marketplace.js','./src/features/messaging.js','./src/features/subscriptions/subscriptions.js','./src/features/profile/profile-settings.js','./src/features/stories/stories.js','./src/features/creation/media-upload.js','./src/features/gifts/catalog.js','./src/features/livestreaming/live-preview.js','./src/features/livestreaming/live-room.js','./src/features/actions.js','./src/features/auth/session.js','./src/features/auth/auth-ui.js','./src/features/feed/feed.js','./icons/zuno-mark.svg'];
+self.addEventListener('install', (event) => { event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL))); self.skipWaiting(); });
+self.addEventListener('activate', (event) => { event.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key))))); self.clients.claim(); });
+self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET' || new URL(event.request.url).origin !== self.location.origin) return;
+  event.respondWith(caches.match(event.request).then((cached) => {
+    if (cached) return cached;
+    return fetch(event.request).then((response) => {
+      if (response.ok && response.type === 'basic') { const copy = response.clone(); caches.open(CACHE).then((cache) => cache.put(event.request, copy)); }
+      return response;
+    }).catch(() => caches.match('./index.html'));
+  }));
 });
 
-self.addEventListener('activate', function (e) {
-  e.waitUntil(caches.keys().then(function (keys) {
-    return Promise.all(keys.filter(function (k) { return k !== CACHE; }).map(function (k) { return caches.delete(k); }));
-  }));
-  self.clients.claim();
-});
 
-self.addEventListener('fetch', function (e) {
-  if (e.request.method !== 'GET') return;
-  e.respondWith(caches.match(e.request).then(function (hit) {
-    return hit || fetch(e.request).catch(function () { return caches.match('./index.html'); });
+self.addEventListener('push', event => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch (_) {}
+  const title = typeof data.title === 'string' ? data.title.slice(0,120) : 'ZUNO update';
+  const body = typeof data.body === 'string' ? data.body.slice(0,500) : 'There is an update in your ZUNO account.';
+  let target = '/';
+  if (typeof data.url === 'string') {
+    try {
+      const parsed = new URL(data.url, self.location.origin);
+      if (parsed.origin === self.location.origin) target = parsed.pathname + parsed.search + parsed.hash;
+    } catch (_) {}
+  }
+  event.waitUntil(self.registration.showNotification(title, {
+    body, tag: typeof data.notificationId === 'string' ? 'zuno-' + data.notificationId : 'zuno-notification',
+    data: { target }
   }));
+});
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const requested = event.notification && event.notification.data && typeof event.notification.data.target === 'string'
+    ? event.notification.data.target : '/';
+  let target = '/';
+  try {
+    const parsed = new URL(requested, self.location.origin);
+    if (parsed.origin === self.location.origin) target = parsed.pathname + parsed.search + parsed.hash;
+  } catch (_) {}
+  event.waitUntil((async () => {
+    const items = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const client of items) {
+      if (new URL(client.url).origin === self.location.origin) {
+        if ('navigate' in client) await client.navigate(target);
+        return client.focus();
+      }
+    }
+    return self.clients.openWindow(target);
+  })());
 });

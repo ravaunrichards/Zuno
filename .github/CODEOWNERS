@@ -1,0 +1,5 @@
+# Repository owner review is recommended for security and financial changes.
+/database/ @ravaunrichards
+/integrations/ @ravaunrichards
+/backend/payments/ @ravaunrichards
+/backend/payouts/ @ravaunrichards

@@ -1,32 +1,33 @@
 'use strict';
-/** Static validation of the SQL migration chain (no DB connection required):
- *  - required migrations exist and are ordered,
- *  - every create table has a matching enable-RLS somewhere for exposed tables,
- *  - no obviously destructive statement (drop table / truncate) in migrations. */
-const fs = require('fs');
-const path = require('path');
-
-const DB = path.join(__dirname, '..', 'database');
-const files = [
-  'migrations/0001_core_schema.sql',
-  'policies/0002_rls_policies.sql',
-  'functions/0003_economy_functions.sql',
-  'seeds/0001_dev_seed.sql',
-];
-const problems = [];
-let allSql = '';
-for (const f of files) {
-  const p = path.join(DB, f);
-  if (!fs.existsSync(p)) { problems.push('missing ' + f); continue; }
-  allSql += fs.readFileSync(p, 'utf8') + '\n';
+const fs=require('node:fs');
+const path=require('node:path');
+const DB=path.join(__dirname,'..','database');
+const migrationDir=path.join(DB,'migrations');
+const problems=[];
+const migrations=fs.existsSync(migrationDir)?fs.readdirSync(migrationDir).filter((name)=>/^\d{4}_[a-z0-9_-]+\.sql$/i.test(name)).sort():[];
+const expected=['0001_core_schema.sql','0002_rls_policies.sql','0003_economy_functions.sql','0004_content_and_discovery.sql','0005_messaging_communities_and_calls.sql','0006_livestreaming_interactions.sql','0007_payments_gifts_and_creator_economy.sql','0008_commerce_ads_and_privacy.sql','0009_operational_jobs_and_delivery.sql','0010_close_friends_gifter_progression_and_earnings.sql','0011_auth_profile_privileges_and_block_guards.sql','0012_media_processing_queue_and_private_storage.sql','0013_durable_gifts_payments_and_coin_catalog.sql','0014_refund_reservations_and_wallet_restrictions.sql','0015_live_room_lifecycle_and_guest_workflows.sql','0016_creator_analytics_aggregation.sql','0017_moderation_operations_and_admin_overview.sql','0018_conversation_and_community_transactions.sql','0019_marketplace_inventory_and_orders.sql','0020_creator_subscription_provider_lifecycle.sql','0021_privacy_data_rights_and_notification_history.sql','0022_messaging_call_lifecycle_and_message_mutations.sql','0023_atomic_social_relationship_controls.sql','0024_feed_interaction_idempotency.sql','0025_notification_outbox_delivery_and_push.sql','0026_notification_channel_retry_queue.sql','0027_privacy_data_export_processing.sql','0028_privacy_deletion_processing.sql','0029_search_index_and_indexing_queue.sql','0030_marketplace_fulfillment_and_tracking.sql','0031_creator_payouts_and_provider_reconciliation.sql','0032_payout_recipient_snapshot.sql'];
+for(const name of expected)if(!migrations.includes(name))problems.push('missing migration '+name);
+const sqlFiles=migrations.map((name)=>path.join(migrationDir,name));
+const seedsDir=path.join(DB,'seeds');
+if(fs.existsSync(seedsDir))for(const name of fs.readdirSync(seedsDir).filter((name)=>name.endsWith('.sql')).sort())sqlFiles.push(path.join(seedsDir,name));
+const contents=sqlFiles.map((file)=>({file,sql:fs.readFileSync(file,'utf8')}));
+for(const item of contents){
+  if(/\bas\s+\$(?:\s|$)/m.test(item.sql)||/^\s*\$;\s*$/m.test(item.sql))problems.push('malformed dollar-quoted SQL function body: '+path.relative(DB,item.file));
+  const quoteCount=(item.sql.match(/\$\$/g)||[]).length;
+  if(quoteCount%2!==0)problems.push('unbalanced $$ delimiters: '+path.relative(DB,item.file));
 }
-const tables = [...allSql.matchAll(/create table if not exists (\w+)/g)].map((m) => m[1]);
-const rlsEnabled = new Set([...allSql.matchAll(/alter table (\w+) enable row level security/g)].map((m) => m[1]));
-const sensitive = ['profiles','posts','messages','notifications','wallet_accounts','ledger_entries','ledger_postings','recharge_purchases','live_rooms','gift_definitions'];
-for (const t of sensitive) if (tables.includes(t) && !rlsEnabled.has(t)) problems.push('RLS not enabled on ' + t);
-// destructive guard (ignore drop policy, which is intentional/idempotent)
-const destructive = [...allSql.matchAll(/\b(drop table|truncate)\b/gi)];
-if (destructive.length) problems.push('destructive statement found in migrations');
-
-console.log(JSON.stringify({ ok: problems.length === 0, tables: tables.length, rlsTables: rlsEnabled.size, problems }, null, 2));
-process.exit(problems.length === 0 ? 0 : 1);
+const sql=contents.map((item)=>item.sql).join('\n');
+const tableMatches=[...sql.matchAll(/create\s+table\s+if\s+not\s+exists\s+(?:public\.)?([a-z_][a-z0-9_]*)/gi)].map((m)=>m[1].toLowerCase());
+const tables=[...new Set(tableMatches)];
+for(const name of new Set(tableMatches.filter((name,index)=>tableMatches.indexOf(name)!==index)))problems.push('duplicate table definition: '+name);
+const enabled=new Set([...sql.matchAll(/alter\s+table\s+(?:public\.)?([a-z_][a-z0-9_]*)\s+enable\s+row\s+level\s+security/gi)].map((m)=>m[1].toLowerCase()));
+for(const table of tables)if(!enabled.has(table))problems.push('RLS not enabled on '+table);
+if(/\b(drop\s+table|truncate)\b/i.test(sql))problems.push('destructive table operation found in migrations/seeds');
+if(!/create\s+constraint\s+trigger\s+ledger_postings_balanced/i.test(sql))problems.push('balanced-ledger deferred constraint trigger missing');
+if(!/unique\s*\(provider\s*,\s*provider_event_id\)/i.test(sql))problems.push('provider webhook event idempotency constraint missing');
+if(!/America\/Jamaica/.test(sql))problems.push('ranking timezone requirement America/Jamaica missing');
+if(!/grant\s+execute\s+on\s+function\s+claim_background_job/i.test(sql))problems.push('worker job claim function is not explicitly service-role gated');
+if(!/grant\s+execute\s+on\s+function\s+(?:public\.)?queue_media_processing_job/i.test(sql) || !/grant\s+execute\s+on\s+function\s+(?:public\.)?queue_media_processing_job\([^;]+\)\s+to\s+service_role/i.test(sql))problems.push('media queue function is not service-role gated');
+if(!/create policy posts_select on posts for select using\s*\(can_view_post\(id\)\)/i.test(sql))problems.push('posts SELECT policy must enforce audience and bilateral block rules');
+console.log(JSON.stringify({ok:problems.length===0,migrationFiles:migrations.length,sqlFiles:sqlFiles.length,tables:tables.length,rlsTables:enabled.size,problems},null,2));
+process.exit(problems.length===0?0:1);

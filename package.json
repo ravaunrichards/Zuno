@@ -1,36 +1,56 @@
 {
   "name": "zuno",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "ZUNO — unified global social, entertainment, communication, livestreaming, commerce and creator ecosystem.",
   "license": "SEE LICENSE IN LICENSE",
-  "packageManager": "pnpm@8.15.0",
-  "engines": { "node": ">=16" },
+  "packageManager": "pnpm@9.15.9",
+  "engines": {
+    "node": ">=20"
+  },
   "workspaces": [
     "apps/*",
     "backend/*",
-    "packages/*"
+    "packages/*",
+    "integrations/*"
   ],
   "scripts": {
     "dev": "node scripts/dev.js",
     "check:env": "node scripts/check-env.js",
-    "typecheck": "tsc -b || true",
     "lint": "node scripts/lint.js",
-    "format": "node scripts/lint.js",
     "test": "node scripts/run-tests.js",
-    "test:unit": "node scripts/run-tests.js",
-    "test:integration": "node scripts/run-tests.js",
-    "test:e2e": "node scripts/run-tests.js",
-    "test:security": "node scripts/run-tests.js",
+    "test:unit": "node scripts/run-tests.js unit",
+    "test:integration": "node scripts/run-tests.js integration",
+    "test:e2e": "node scripts/run-tests.js e2e",
+    "test:security": "node scripts/run-tests.js security",
     "gifts:generate": "python3 scripts/generate_gifts.py",
     "assets:validate": "node scripts/validate-assets.js",
     "db:validate": "node scripts/validate-db.js",
     "verify": "node scripts/verify.js",
-    "build": "turbo run build || node scripts/build.js",
-    "package": "node scripts/package.js"
+    "build": "node scripts/build.js",
+    "build:web": "node scripts/build-web.js",
+    "package": "node scripts/package.js",
+    "platforms:validate": "node scripts/validate-platforms.js",
+    "db:test": "bash scripts/test-migrations.sh",
+    "check:source": "node scripts/lint.js",
+    "test:payments": "node scripts/run-tests.js payments",
+    "test:accessibility": "node scripts/run-tests.js accessibility",
+    "serve:web": "pnpm build:web && pnpm build:apps && node scripts/serve-static.js --root dist --port 3000",
+    "serve:admin": "pnpm build:web && node scripts/build-static-apps.js admin && node scripts/serve-static.js --root dist --port 3002",
+    "serve:creator": "pnpm build:web && node scripts/build-static-apps.js creator-studio && node scripts/serve-static.js --root dist --port 3003",
+    "serve:tv": "pnpm build:web && node scripts/build-static-apps.js tv && node scripts/serve-static.js --root dist --port 3004",
+    "build:apps": "node scripts/build-static-apps.js",
+    "build:creator": "node scripts/build-static-apps.js creator-studio"
   },
   "devDependencies": {
     "turbo": "^1.13.0",
-    "typescript": "^5.4.0"
+    "typescript": "^5.4.0",
+    "esbuild": "^0.28.2"
+  },
+  "pnpm": {
+    "overrides": {
+      "tar@<=7.5.20": "^7.5.21",
+      "@electron-internal/extract-zip": "1.0.6"
+    }
   }
 }

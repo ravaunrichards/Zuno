@@ -1,0 +1,11 @@
+{
+  "name": "@zuno/backend-notifications",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Notification payload safety and durable outbox dispatcher",
+  "main": "src/payload.js",
+  "scripts": {
+    "check": "node --check src/payload.js && node --check ../workers/src/notification-worker.js",
+    "start": "node ../workers/src/notification-worker.js"
+  }
+}

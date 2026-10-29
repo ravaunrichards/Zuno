@@ -1,0 +1,15 @@
+{
+  "name": "@zuno/web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "ZUNO responsive web and PWA client",
+  "scripts": {
+    "build": "node ../../scripts/build-web.js",
+    "test": "node ../../scripts/test-web.js"
+  },
+  "dependencies": {
+    "livekit-client": "^2.23.0",
+    "three": "^0.180.0"
+  }
+}

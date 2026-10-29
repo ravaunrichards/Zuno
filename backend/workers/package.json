@@ -1,0 +1,14 @@
+{
+  "name": "@zuno/backend-workers",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Durable ZUNO event outbox worker",
+  "main": "src/job-policy.js",
+  "scripts": {
+    "check": "node --check src/job-policy.js && node --check src/notification-worker.js && node --check src/notification-delivery-worker.js && node --check src/privacy-export-worker.js && node --check src/privacy-deletion-worker.js && node --check src/search-index-worker.js",
+    "start": "node src/notification-dispatcher.js"
+  },
+  "dependencies": {
+    "web-push": "^3.6.7"
+  }
+}

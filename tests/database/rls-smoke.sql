@@ -1,0 +1,543 @@
+\set ON_ERROR_STOP on
+-- This file intentionally uses deterministic, clearly synthetic test identities.
+
+-- Auth user creation trigger provisions a default ZUNO profile and least-privilege role.
+INSERT INTO auth.users(id,email,raw_user_meta_data) VALUES
+('20000000-0000-4000-8000-000000000003','zuno_trigger_test@example.invalid','{"username":"trigger_test","display_name":"Trigger Test"}'::jsonb)
+ON CONFLICT(id) DO NOTHING;
+DO $auth_trigger_check$
+BEGIN
+ IF NOT EXISTS(SELECT 1 FROM profiles WHERE auth_user_id='20000000-0000-4000-8000-000000000003' AND username='trigger_test') THEN RAISE EXCEPTION 'auth trigger did not provision profile'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM roles r JOIN profiles p ON p.id=r.profile_id WHERE p.auth_user_id='20000000-0000-4000-8000-000000000003' AND r.role='user') THEN RAISE EXCEPTION 'auth trigger did not assign default user role'; END IF;
+END
+$auth_trigger_check$;
+
+INSERT INTO profiles (id, auth_user_id, username, display_name, visibility) VALUES
+('10000000-0000-4000-8000-000000000001','20000000-0000-4000-8000-000000000001','zuno_test_owner','Test owner','private'),
+('10000000-0000-4000-8000-000000000002','20000000-0000-4000-8000-000000000002','zuno_test_viewer','Test viewer','private')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO posts (id,author_id,kind,caption,audience) VALUES
+('30000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000001','text','private test content','private'),
+('30000000-0000-4000-8000-000000000002','10000000-0000-4000-8000-000000000001','text','public but blocked test content','public')
+ON CONFLICT(id) DO NOTHING;
+
+INSERT INTO blocks(blocker_id,blocked_id)
+VALUES('10000000-0000-4000-8000-000000000002','10000000-0000-4000-8000-000000000001')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO conversations(id,is_group) VALUES('40000000-0000-4000-8000-000000000001',false) ON CONFLICT(id) DO NOTHING;
+INSERT INTO conversation_members(conversation_id,profile_id) VALUES
+('40000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000001')
+ON CONFLICT DO NOTHING;
+INSERT INTO messages(id,conversation_id,sender_id,body) VALUES
+('50000000-0000-4000-8000-000000000001','40000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000001','private test message')
+ON CONFLICT(id) DO NOTHING;
+
+SET ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub','20000000-0000-4000-8000-000000000002',false);
+DO $viewer_checks$
+BEGIN
+  IF EXISTS(SELECT 1 FROM posts WHERE id='30000000-0000-4000-8000-000000000001') THEN
+    RAISE EXCEPTION 'RLS failed: viewer read another account private post';
+  END IF;
+  IF EXISTS(SELECT 1 FROM posts WHERE id='30000000-0000-4000-8000-000000000002') THEN
+    RAISE EXCEPTION 'RLS failed: blocked viewer read blocked creator content';
+  END IF;
+  IF EXISTS(SELECT 1 FROM profiles WHERE id='10000000-0000-4000-8000-000000000001') THEN
+    RAISE EXCEPTION 'RLS failed: viewer read private profile';
+  END IF;
+  IF EXISTS(SELECT 1 FROM messages WHERE id='50000000-0000-4000-8000-000000000001') THEN
+    RAISE EXCEPTION 'RLS failed: non-member read private conversation message';
+  END IF;
+  IF has_table_privilege(current_user,'public.wallet_accounts','SELECT') THEN
+    RAISE EXCEPTION 'RLS failed: authenticated role has direct SELECT privilege on protected wallet accounts';
+  END IF;
+END
+$viewer_checks$;
+
+SELECT set_config('request.jwt.claim.sub','20000000-0000-4000-8000-000000000001',false);
+DO $owner_checks$
+BEGIN
+  IF NOT EXISTS(SELECT 1 FROM posts WHERE id='30000000-0000-4000-8000-000000000001') THEN
+    RAISE EXCEPTION 'RLS failed: owner cannot read own private post';
+  END IF;
+  IF NOT EXISTS(SELECT 1 FROM profiles WHERE id='10000000-0000-4000-8000-000000000001') THEN
+    RAISE EXCEPTION 'RLS failed: owner cannot read own private profile';
+  END IF;
+  IF NOT EXISTS(SELECT 1 FROM messages WHERE id='50000000-0000-4000-8000-000000000001') THEN
+    RAISE EXCEPTION 'RLS failed: conversation member cannot read own message';
+  END IF;
+END
+$owner_checks$;
+RESET ROLE;
+
+-- Money-moving integration smoke tests use synthetic CI fixtures and PostgreSQL transactions only.
+DO $economy_checks$
+DECLARE
+  v_sender uuid := '10000000-0000-4000-8000-000000000001';
+  v_receiver uuid := '10000000-0000-4000-8000-000000000002';
+  v_sender_account uuid;
+  v_receiver_account uuid;
+  v_mint_account uuid;
+  v_funding_entry uuid;
+  v_delivery_one uuid;
+  v_delivery_two uuid;
+  v_credit_one uuid;
+  v_credit_replay uuid;
+  v_credit_two uuid;
+  v_refund_one uuid;
+  v_refund_two uuid;
+  v_balance bigint;
+  v_balance_before bigint;
+  v_gifter_total bigint;
+  v_order_state text;
+BEGIN
+  INSERT INTO gift_definitions(id,name,category,tier,price_coins,unlock_rule,model_path,audio_status,asset_version,license)
+  VALUES('zuno_ci_atomic_gift','CI Atomic Gift','ci',1,5,'none','ci/geometry.json','not_required','ci-1','CI synthetic fixture only')
+  ON CONFLICT(id) DO UPDATE SET price_coins=excluded.price_coins,unlock_rule='none';
+
+  INSERT INTO wallet_accounts(profile_id,kind) VALUES(v_sender,'user'),(v_receiver,'user')
+  ON CONFLICT(profile_id) DO NOTHING;
+  SELECT id INTO v_sender_account FROM wallet_accounts WHERE profile_id=v_sender AND kind='user';
+  SELECT id INTO v_receiver_account FROM wallet_accounts WHERE profile_id=v_receiver AND kind='user';
+  SELECT id INTO v_mint_account FROM wallet_accounts WHERE kind='mint' ORDER BY id LIMIT 1;
+  IF v_sender_account IS NULL OR v_receiver_account IS NULL OR v_mint_account IS NULL THEN
+    RAISE EXCEPTION 'CI fixture wallet accounts were not provisioned';
+  END IF;
+
+  INSERT INTO ledger_entries(idempotency_key,unit,type)
+  VALUES('zuno-ci-funding-entry-00000001','coins','ci_fixture_funding')
+  ON CONFLICT(idempotency_key) DO NOTHING;
+  SELECT id INTO v_funding_entry FROM ledger_entries WHERE idempotency_key='zuno-ci-funding-entry-00000001';
+  IF NOT EXISTS(SELECT 1 FROM ledger_postings WHERE entry_id=v_funding_entry) THEN
+    INSERT INTO ledger_postings(entry_id,account_id,delta,unit)
+    VALUES(v_funding_entry,v_mint_account,-20,'coins'),(v_funding_entry,v_sender_account,20,'coins');
+  END IF;
+
+  SELECT public.deliver_gift(v_sender,v_receiver,'zuno_ci_atomic_gift',NULL,'CI smoke test','zuno-ci-gift-idempotency-key-0001')
+    INTO v_delivery_one;
+  SELECT public.deliver_gift(v_sender,v_receiver,'zuno_ci_atomic_gift',NULL,'CI smoke test','zuno-ci-gift-idempotency-key-0001')
+    INTO v_delivery_two;
+  IF v_delivery_one IS DISTINCT FROM v_delivery_two THEN
+    RAISE EXCEPTION 'Gift idempotent retry returned different delivery IDs';
+  END IF;
+  SELECT coalesce(sum(delta),0)::bigint INTO v_balance FROM ledger_postings
+    WHERE account_id=v_sender_account AND unit='coins';
+  IF v_balance<>15 THEN RAISE EXCEPTION 'Gift retry double-debited or failed: sender balance %',v_balance; END IF;
+  IF (SELECT count(*) FROM gift_deliveries WHERE idempotency_key='zuno-ci-gift-idempotency-key-0001')<>1 THEN
+    RAISE EXCEPTION 'Gift retry created more than one delivery';
+  END IF;
+  SELECT eligible_lifetime_coins INTO v_gifter_total FROM gifter_progress WHERE profile_id=v_sender;
+  IF v_gifter_total<>5 THEN RAISE EXCEPTION 'Gifter progression did not record exactly 5 eligible coins: %',v_gifter_total; END IF;
+
+  SELECT coalesce(sum(delta),0)::bigint INTO v_balance_before FROM ledger_postings
+    WHERE account_id=v_receiver_account AND unit='coins';
+  INSERT INTO payment_orders(profile_id,package_id,custom_coins,amount_usd,currency,provider,idempotency_key,state,provider_order_id)
+  VALUES(v_receiver,'z_coins_60',NULL,0.99,'USD','paypal','zuno-ci-payment-order-release-0001','created','ZUNO-CI-ORDER-REFUND-RELEASE')
+  ON CONFLICT(idempotency_key) DO NOTHING;
+  SELECT public.credit_captured_coin_order('ZUNO-CI-ORDER-REFUND-RELEASE','ZUNO-CI-CAPTURE-RELEASE',0.99,'USD')
+    INTO v_credit_one;
+  SELECT public.credit_captured_coin_order('ZUNO-CI-ORDER-REFUND-RELEASE','ZUNO-CI-CAPTURE-RELEASE',0.99,'USD')
+    INTO v_credit_replay;
+  IF v_credit_one IS DISTINCT FROM v_credit_replay THEN RAISE EXCEPTION 'Capture retry changed ledger entry ID'; END IF;
+  SELECT coalesce(sum(delta),0)::bigint INTO v_balance FROM ledger_postings
+    WHERE account_id=v_receiver_account AND unit='coins';
+  IF v_balance<>v_balance_before+60 THEN RAISE EXCEPTION 'Capture retry double-credited or failed: expected %, got %',v_balance_before+60,v_balance; END IF;
+
+  SELECT public.reserve_coin_refund(
+    (SELECT id FROM payment_orders WHERE provider_order_id='ZUNO-CI-ORDER-REFUND-RELEASE'),
+    v_receiver,'zuno-ci-refund-release-idempotency-001','ci_test'
+  ) INTO v_refund_one;
+  SELECT coalesce(sum(delta),0)::bigint INTO v_balance FROM ledger_postings
+    WHERE account_id=v_receiver_account AND unit='coins';
+  IF v_balance<>v_balance_before THEN RAISE EXCEPTION 'Refund reservation did not reserve exactly the recharge coin quantity'; END IF;
+  IF public.finalize_coin_refund(v_refund_one,NULL,false,'PAYPAL_REFUND_REJECTED')<>'failed' THEN
+    RAISE EXCEPTION 'Definitively rejected refund was not finalized as failed';
+  END IF;
+  SELECT coalesce(sum(delta),0)::bigint INTO v_balance FROM ledger_postings
+    WHERE account_id=v_receiver_account AND unit='coins';
+  IF v_balance<>v_balance_before+60 THEN RAISE EXCEPTION 'Failed provider refund did not release its coin reservation'; END IF;
+  SELECT state INTO v_order_state FROM payment_orders WHERE provider_order_id='ZUNO-CI-ORDER-REFUND-RELEASE';
+  IF v_order_state<>'credited' THEN RAISE EXCEPTION 'A rejected refund incorrectly changed captured payment state to %',v_order_state; END IF;
+
+  INSERT INTO payment_orders(profile_id,package_id,custom_coins,amount_usd,currency,provider,idempotency_key,state,provider_order_id)
+  VALUES(v_receiver,'z_coins_60',NULL,0.99,'USD','paypal','zuno-ci-payment-order-success-0002','created','ZUNO-CI-ORDER-REFUND-SUCCESS')
+  ON CONFLICT(idempotency_key) DO NOTHING;
+  SELECT public.credit_captured_coin_order('ZUNO-CI-ORDER-REFUND-SUCCESS','ZUNO-CI-CAPTURE-SUCCESS',0.99,'USD')
+    INTO v_credit_two;
+  SELECT public.reserve_coin_refund(
+    (SELECT id FROM payment_orders WHERE provider_order_id='ZUNO-CI-ORDER-REFUND-SUCCESS'),
+    v_receiver,'zuno-ci-refund-success-idempotency-0002','ci_test'
+  ) INTO v_refund_two;
+  IF public.finalize_coin_refund(v_refund_two,'ZUNO-CI-REFUND-SUCCESS',true,NULL)<>'refunded' THEN
+    RAISE EXCEPTION 'Provider-confirmed refund was not finalized as refunded';
+  END IF;
+  SELECT coalesce(sum(delta),0)::bigint INTO v_balance FROM ledger_postings
+    WHERE account_id=v_receiver_account AND unit='coins';
+  IF v_balance<>v_balance_before+60 THEN RAISE EXCEPTION 'Completed refund failed to retain the reserved debit'; END IF;
+  SELECT state INTO v_order_state FROM payment_orders WHERE provider_order_id='ZUNO-CI-ORDER-REFUND-SUCCESS';
+  IF v_order_state<>'refunded' THEN RAISE EXCEPTION 'Completed refund left payment state %',v_order_state; END IF;
+END
+$economy_checks$;
+
+
+-- Moderator actions are single-transaction, role-gated and audit logged.
+DO $moderation_checks$
+DECLARE
+  v_moderator uuid := '10000000-0000-4000-8000-000000000001';
+  v_report_review uuid := '60000000-0000-4000-8000-000000000001';
+  v_report_remove uuid := '60000000-0000-4000-8000-000000000002';
+  v_state text;
+  v_action uuid;
+  v_overview record;
+BEGIN
+  INSERT INTO roles(profile_id,role) VALUES(v_moderator,'moderator') ON CONFLICT DO NOTHING;
+  INSERT INTO reports(id,reporter_id,target_type,target_id,reason,state)
+    VALUES(v_report_review,'10000000-0000-4000-8000-000000000002','post','30000000-0000-4000-8000-000000000001','Synthetic review workflow test','open')
+    ON CONFLICT(id) DO NOTHING;
+  SELECT new_state,moderation_action_id INTO v_state,v_action
+    FROM public.resolve_moderation_report(v_report_review,v_moderator,'mark_reviewing','ci_review','Synthetic review note');
+  IF v_state<>'reviewing' OR v_action IS NULL THEN
+    RAISE EXCEPTION 'Moderator review decision did not return the persisted transition';
+  END IF;
+  IF NOT EXISTS(SELECT 1 FROM reports WHERE id=v_report_review AND state='reviewing' AND resolution_code='ci_review') THEN
+    RAISE EXCEPTION 'Report state or resolution reason was not persisted';
+  END IF;
+  IF NOT EXISTS(SELECT 1 FROM moderation_actions WHERE id=v_action AND report_id=v_report_review AND moderator_id=v_moderator AND action='mark_reviewing') THEN
+    RAISE EXCEPTION 'Moderation action audit row was not persisted';
+  END IF;
+  SELECT new_state INTO v_state
+    FROM public.resolve_moderation_report(v_report_review,v_moderator,'dismiss','ci_dismiss','Synthetic final decision');
+  IF v_state<>'dismissed' OR NOT EXISTS(SELECT 1 FROM reports WHERE id=v_report_review AND state='dismissed' AND resolved_at IS NOT NULL) THEN
+    RAISE EXCEPTION 'Dismiss action did not resolve report';
+  END IF;
+
+  INSERT INTO reports(id,reporter_id,target_type,target_id,reason,state)
+    VALUES(v_report_remove,'10000000-0000-4000-8000-000000000002','post','30000000-0000-4000-8000-000000000002','Synthetic removal workflow test','open')
+    ON CONFLICT(id) DO NOTHING;
+  SELECT new_state INTO v_state
+    FROM public.resolve_moderation_report(v_report_remove,v_moderator,'remove_content','ci_remove','Synthetic removal action');
+  IF v_state<>'actioned' OR NOT EXISTS(SELECT 1 FROM posts WHERE id='30000000-0000-4000-8000-000000000002' AND deleted_at IS NOT NULL) THEN
+    RAISE EXCEPTION 'Post removal decision did not soft-delete target and action report';
+  END IF;
+  IF NOT EXISTS(SELECT 1 FROM audit_events WHERE actor_id=v_moderator AND action='moderation.report.remove_content' AND detail->>'reportId'=v_report_remove::text) THEN
+    RAISE EXCEPTION 'Removal was not written to the append-only audit trail';
+  END IF;
+
+  SELECT * INTO v_overview FROM public.get_admin_overview();
+  IF v_overview.profile_count<2 OR v_overview.post_count<1 THEN
+    RAISE EXCEPTION 'Protected admin overview returned inconsistent fixture counts';
+  END IF;
+END
+$moderation_checks$;
+
+
+DO $conversation_community_checks$
+DECLARE
+  v_creator uuid := '10000000-0000-4000-8000-000000000001';
+  v_other uuid := '10000000-0000-4000-8000-000000000002';
+  v_third uuid;
+  v_direct_one uuid;
+  v_direct_two uuid;
+  v_group_one uuid;
+  v_group_two uuid;
+  v_community_one uuid;
+  v_community_two uuid;
+BEGIN
+  -- Earlier RLS negative tests may have established a block for these shared fixtures.
+  -- Isolate this scenario, then re-add the block below and assert a direct-message denial.
+  DELETE FROM blocks
+  WHERE (blocker_id=v_creator AND blocked_id=v_other)
+     OR (blocker_id=v_other AND blocked_id=v_creator);
+
+  -- Auth user IDs and ZUNO profile IDs are intentionally distinct.
+  INSERT INTO auth.users(id,email,raw_user_meta_data)
+  VALUES('30000000-0000-4000-8000-000000000001','zuno_ci_group_member@example.invalid','{"username":"ci_group_member","display_name":"CI Group Member"}'::jsonb)
+  ON CONFLICT(id) DO NOTHING;
+  SELECT id INTO v_third FROM profiles
+  WHERE auth_user_id='30000000-0000-4000-8000-000000000001';
+  IF v_third IS NULL THEN RAISE EXCEPTION 'Auth trigger did not provision group member profile'; END IF;
+
+  SELECT public.create_conversation(
+    v_creator, array[v_other], false, 'zuno-ci-direct-conversation-0001'
+  ) INTO v_direct_one;
+  SELECT public.create_conversation(
+    v_creator, array[v_other], false, 'zuno-ci-direct-conversation-0001'
+  ) INTO v_direct_two;
+  IF v_direct_one IS DISTINCT FROM v_direct_two THEN
+    RAISE EXCEPTION 'Direct conversation idempotency key returned different IDs';
+  END IF;
+  IF (SELECT count(*) FROM conversation_members WHERE conversation_id=v_direct_one)<>2 THEN
+    RAISE EXCEPTION 'Direct conversation did not add exactly two members';
+  END IF;
+  IF (SELECT count(*) FROM conversations WHERE id=v_direct_one)<>1 THEN
+    RAISE EXCEPTION 'Direct conversation was not persisted';
+  END IF;
+
+  SELECT public.create_conversation(
+    v_creator, array[v_other,v_third], true, 'zuno-ci-group-conversation-0001'
+  ) INTO v_group_one;
+  SELECT public.create_conversation(
+    v_creator, array[v_third,v_other], true, 'zuno-ci-group-conversation-0001'
+  ) INTO v_group_two;
+  IF v_group_one IS DISTINCT FROM v_group_two THEN
+    RAISE EXCEPTION 'Group conversation retry was not idempotent';
+  END IF;
+  IF (SELECT count(*) FROM conversation_members WHERE conversation_id=v_group_one)<>3 THEN
+    RAISE EXCEPTION 'Group conversation did not add all members';
+  END IF;
+
+  INSERT INTO blocks(blocker_id,blocked_id) VALUES(v_creator,v_other) ON CONFLICT DO NOTHING;
+  BEGIN
+    PERFORM public.create_conversation(
+      v_creator, array[v_other], false, 'zuno-ci-blocked-conversation-0001'
+    );
+    RAISE EXCEPTION 'Direct conversation allowed a new blocked pair';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM NOT LIKE '%DIRECT_MESSAGE_BLOCKED%' THEN RAISE; END IF;
+  END;
+  DELETE FROM blocks WHERE blocker_id=v_creator AND blocked_id=v_other;
+
+  SELECT public.create_community_with_owner(
+    '70000000-0000-4000-8000-000000000001',v_creator,'CI Conversation Community','public','zuno-ci-community-create-0001'
+  ) INTO v_community_one;
+  SELECT public.create_community_with_owner(
+    '70000000-0000-4000-8000-000000000002',v_creator,'CI Conversation Community','public','zuno-ci-community-create-0001'
+  ) INTO v_community_two;
+  IF v_community_one IS DISTINCT FROM v_community_two THEN
+    RAISE EXCEPTION 'Community creation did not preserve idempotency';
+  END IF;
+  IF NOT EXISTS(SELECT 1 FROM community_members WHERE community_id=v_community_one AND profile_id=v_creator AND role='owner') THEN
+    RAISE EXCEPTION 'Community owner membership was not created';
+  END IF;
+  IF NOT EXISTS(SELECT 1 FROM community_channels WHERE community_id=v_community_one AND slug='general') THEN
+    RAISE EXCEPTION 'Community general channel was not created';
+  END IF;
+
+  -- Exercise the database-authoritative LiveKit call invitation and membership state.
+  DECLARE
+    v_call_id uuid := '80000000-0000-4000-8000-000000000001';
+    v_other_call uuid := '80000000-0000-4000-8000-000000000002';
+    v_joined record;
+    v_call_state text;
+    v_joined_count integer;
+  BEGIN
+    SELECT public.create_call_session(
+      v_call_id,v_group_one,v_creator,'video',array[v_other,v_third]
+    ) INTO v_call_id;
+    IF NOT EXISTS(
+      SELECT 1 FROM call_participants WHERE call_id=v_call_id AND profile_id=v_creator AND last_state='joined'
+    ) THEN RAISE EXCEPTION 'Call initiator was not persisted as joined'; END IF;
+    IF (SELECT count(*) FROM call_participants WHERE call_id=v_call_id AND last_state='ringing')<>2 THEN
+      RAISE EXCEPTION 'Call invitations were not persisted for all invited participants';
+    END IF;
+    BEGIN
+      PERFORM public.create_call_session(
+        v_other_call,v_group_one,v_creator,'audio',array[v_other]
+      );
+      RAISE EXCEPTION 'Database permitted a second active call in the same conversation';
+    EXCEPTION WHEN OTHERS THEN
+      IF SQLERRM NOT LIKE '%CALL_ALREADY_ACTIVE%' THEN RAISE; END IF;
+    END;
+    SELECT * INTO v_joined FROM public.join_call_session(v_call_id,v_other);
+    IF v_joined.provider_room<>'zuno-call-'||replace(v_call_id::text,'-','')
+       OR v_joined.participant_count<>2 OR v_joined.state<>'active' THEN
+      RAISE EXCEPTION 'First invited call participant did not join correctly';
+    END IF;
+    SELECT * INTO v_joined FROM public.join_call_session(v_call_id,v_third);
+    IF v_joined.participant_count<>3 THEN RAISE EXCEPTION 'Second invited call participant did not join'; END IF;
+    PERFORM public.leave_call_session(v_call_id,v_other,false);
+    SELECT count(*) INTO v_joined_count FROM call_participants WHERE call_id=v_call_id AND left_at IS NULL AND last_state='joined';
+    IF v_joined_count<>2 THEN RAISE EXCEPTION 'Leaving one call participant changed other participant states'; END IF;
+    PERFORM public.leave_call_session(v_call_id,v_third,false);
+    PERFORM public.leave_call_session(v_call_id,v_creator,false);
+    SELECT state INTO v_call_state FROM call_sessions WHERE id=v_call_id;
+    IF v_call_state<>'ended' THEN RAISE EXCEPTION 'Call did not end when all joined participants left'; END IF;
+    BEGIN
+      PERFORM public.join_call_session(v_call_id,v_other);
+      RAISE EXCEPTION 'Database permitted joining an ended call';
+    EXCEPTION WHEN OTHERS THEN
+      IF SQLERRM NOT LIKE '%CALL_NOT_JOINABLE%' THEN RAISE; END IF;
+    END;
+    IF has_function_privilege('authenticated','public.create_call_session(uuid,uuid,uuid,text,uuid[])','EXECUTE') THEN
+      RAISE EXCEPTION 'Authenticated clients can execute the privileged call creation RPC directly';
+    END IF;
+  END;
+
+END
+$conversation_community_checks$;
+
+DO $message_identity_checks$
+DECLARE
+  v_message uuid := '50000000-0000-4000-8000-000000000001';
+  v_other_conversation uuid := '40000000-0000-4000-8000-000000000099';
+BEGIN
+  INSERT INTO conversations(id,is_group) VALUES(v_other_conversation,false) ON CONFLICT(id) DO NOTHING;
+  BEGIN
+    UPDATE messages SET sender_id='10000000-0000-4000-8000-000000000002' WHERE id=v_message;
+    RAISE EXCEPTION 'Message sender identity mutation was allowed';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM NOT LIKE '%MESSAGE_IDENTITY_IMMUTABLE%' THEN RAISE; END IF;
+  END;
+  BEGIN
+    UPDATE messages SET conversation_id=v_other_conversation WHERE id=v_message;
+    RAISE EXCEPTION 'Message conversation mutation was allowed';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM NOT LIKE '%MESSAGE_IDENTITY_IMMUTABLE%' THEN RAISE; END IF;
+  END;
+END
+$message_identity_checks$;
+
+
+DO $search_index_checks$
+DECLARE
+  v_doc_id uuid := '60000000-0000-4000-8000-000000000001';
+  v_owner uuid := '10000000-0000-4000-8000-000000000001';
+  v_vector tsvector;
+  v_pending bigint;
+BEGIN
+  INSERT INTO search_documents(
+    entity_type,entity_id,owner_id,title,body,tags,visibility,metadata
+  ) VALUES (
+    'profile',v_doc_id,v_owner,'ZUNO SearchVector Trigger','Full text indexing smoke check',array['search-index','zuno'],'public','{"synthetic":true}'::jsonb
+  ) ON CONFLICT(entity_type,entity_id) DO UPDATE SET
+    title=excluded.title,body=excluded.body,tags=excluded.tags,visibility=excluded.visibility,metadata=excluded.metadata;
+
+  SELECT search_vector INTO v_vector FROM search_documents WHERE entity_type='profile' AND entity_id=v_doc_id;
+  IF v_vector IS NULL OR NOT (v_vector @@ plainto_tsquery('simple','SearchVector')) OR NOT (v_vector @@ plainto_tsquery('simple','search-index')) THEN
+    RAISE EXCEPTION 'Search document trigger did not index title and tags';
+  END IF;
+
+  UPDATE search_documents SET title='Changed searchable title',tags=array['updated-marker']
+    WHERE entity_type='profile' AND entity_id=v_doc_id;
+  SELECT search_vector INTO v_vector FROM search_documents WHERE entity_type='profile' AND entity_id=v_doc_id;
+  IF NOT (v_vector @@ plainto_tsquery('simple','updated-marker')) OR v_vector @@ plainto_tsquery('simple','SearchVector') THEN
+    RAISE EXCEPTION 'Search vector trigger did not refresh on update';
+  END IF;
+
+  SELECT count(*) INTO v_pending FROM search_index_jobs
+    WHERE entity_type='profile' AND entity_id='10000000-0000-4000-8000-000000000001'
+      AND operation='delete';
+  IF v_pending=0 THEN
+    RAISE EXCEPTION 'Private profile insertion did not enqueue an index-removal operation';
+  END IF;
+END
+$search_index_checks$;
+
+
+DO $marketplace_fulfillment_checks$
+DECLARE
+  v_listing uuid := '70000000-0000-4000-8000-000000000001';
+  v_order uuid := '70000000-0000-4000-8000-000000000001';
+  v_shipment uuid;
+  v_state text;
+  v_event_count integer;
+BEGIN
+  INSERT INTO marketplace_listings(id,seller_id,title,description,category,currency,price_minor,status)
+  VALUES(v_listing,'10000000-0000-4000-8000-000000000001','Synthetic shipping test','Fixture only','test','USD',1250,'sold_out')
+  ON CONFLICT(id) DO NOTHING;
+  INSERT INTO listing_inventory(listing_id,quantity_available,quantity_reserved)
+  VALUES(v_listing,2,0) ON CONFLICT(listing_id) DO NOTHING;
+  INSERT INTO commerce_orders(id,buyer_id,currency,subtotal_minor,tax_minor,shipping_minor,total_minor,status,idempotency_key)
+  VALUES(v_order,'10000000-0000-4000-8000-000000000002','USD',2500,0,0,2500,'paid','fulfillment-smoke-order-00000001')
+  ON CONFLICT(id) DO NOTHING;
+  INSERT INTO commerce_order_items(order_id,listing_id,seller_id,quantity,unit_price_minor,line_total_minor)
+  VALUES(v_order,v_listing,'10000000-0000-4000-8000-000000000001',2,1250,2500)
+  ON CONFLICT DO NOTHING;
+
+  v_shipment:=public.update_commerce_fulfillment(v_order,'10000000-0000-4000-8000-000000000001','label_created',null,null);
+  v_shipment:=public.update_commerce_fulfillment(v_order,'10000000-0000-4000-8000-000000000001','in_transit','ZUNO Test Carrier','ZUNO-TRACK-0001');
+  v_shipment:=public.update_commerce_fulfillment(v_order,'10000000-0000-4000-8000-000000000001','delivered','ZUNO Test Carrier','ZUNO-TRACK-0001');
+  SELECT state INTO v_state FROM commerce_shipments WHERE id=v_shipment;
+  IF v_state<>'delivered' THEN RAISE EXCEPTION 'Fulfillment did not reach delivered'; END IF;
+  IF (SELECT status FROM commerce_orders WHERE id=v_order)<>'fulfilled' THEN RAISE EXCEPTION 'One-seller order did not become fulfilled'; END IF;
+  SELECT count(*)::integer INTO v_event_count FROM commerce_fulfillment_events WHERE order_id=v_order;
+  IF v_event_count<>3 THEN RAISE EXCEPTION 'Expected three fulfillment events; got %',v_event_count; END IF;
+END
+$marketplace_fulfillment_checks$;
+
+
+-- Payout reservations remain held until a verified item-success finalizes them.
+DO $payout_checks$
+DECLARE
+  v_creator uuid := '10000000-0000-4000-8000-000000000002';
+  v_other_creator uuid := '10000000-0000-4000-8000-000000000001';
+  v_payout uuid;
+  v_replay uuid;
+  v_fail_payout uuid;
+  v_amount bigint;
+  v_state text;
+  v_count integer;
+  v_recipient_ciphertext text;
+BEGIN
+  INSERT INTO creator_payout_profiles(
+    creator_id,recipient_ciphertext,recipient_nonce,recipient_tag,recipient_hash,recipient_masked,
+    country_code,country_eligibility,provider_recipient_ready,identity_verified_at,compliance_state,risk_hold
+  ) VALUES(
+    v_creator,'ci-encrypted-recipient','Y2ktbm9uY2U=','Y2ktdGFn=',repeat('a',64),'c***@ci.invalid',
+    'JM','eligible',true,now(),'cleared',false
+  ) ON CONFLICT(creator_id) DO UPDATE SET
+    recipient_ciphertext=excluded.recipient_ciphertext,recipient_nonce=excluded.recipient_nonce,
+    recipient_tag=excluded.recipient_tag,recipient_hash=excluded.recipient_hash,recipient_masked=excluded.recipient_masked,
+    country_code='JM',country_eligibility='eligible',provider_recipient_ready=true,identity_verified_at=now(),
+    compliance_state='cleared',risk_hold=false;
+
+  INSERT INTO creator_earning_entries(
+    creator_id,source_type,source_id,gross_minor,provider_fee_minor,creator_share_minor,platform_share_minor,
+    currency,policy_version,state,idempotency_key,available_at
+  ) VALUES
+    (v_creator,'other','ci-payout-success-a',2000,0,1000,1000,'USD','v1-2026','available','ci-payout-success-earn-0001',now()-interval '1 minute'),
+    (v_creator,'other','ci-payout-success-b',1400,0,700,700,'USD','v1-2026','available','ci-payout-success-earn-0002',now()-interval '1 minute')
+  ON CONFLICT(idempotency_key) DO NOTHING;
+
+  SELECT public.request_creator_payout(v_creator,1000,'zuno-ci-payout-success-idempotency-0001') INTO v_payout;
+  SELECT public.request_creator_payout(v_creator,1000,'zuno-ci-payout-success-idempotency-0001') INTO v_replay;
+  IF v_payout IS DISTINCT FROM v_replay THEN RAISE EXCEPTION 'Payout idempotency retry created a second payout'; END IF;
+  UPDATE creator_payout_profiles SET recipient_ciphertext='edited-after-reservation' WHERE creator_id=v_creator;
+  SELECT recipient_ciphertext INTO v_recipient_ciphertext FROM payouts WHERE id=v_payout;
+  IF v_recipient_ciphertext<>'ci-encrypted-recipient' THEN RAISE EXCEPTION 'Payout recipient snapshot changed after reservation'; END IF;
+  SELECT amount_minor,state INTO v_amount,v_state FROM payouts WHERE id=v_payout;
+  IF v_amount<>1700 OR v_state<>'requested' THEN RAISE EXCEPTION 'Payout request did not reserve correct amount/state: %, %',v_amount,v_state; END IF;
+  SELECT count(*) INTO v_count FROM creator_earning_entries WHERE payout_id=v_payout AND state='held';
+  IF v_count<>2 THEN RAISE EXCEPTION 'Payout did not reserve exactly both available earning entries'; END IF;
+
+  IF public.attach_creator_payout_batch(v_payout,'ZUNO-CI-PAYOUT-BATCH-0001')<>'processing' THEN
+    RAISE EXCEPTION 'Payout batch was not attached';
+  END IF;
+  IF public.complete_creator_payout(v_payout,'ZUNO-CI-PAYOUT-BATCH-0001','ZUNO-CI-PAYOUT-ITEM-0001',1700)<>'paid' THEN
+    RAISE EXCEPTION 'Verified payout success was not finalized';
+  END IF;
+  IF public.complete_creator_payout(v_payout,'ZUNO-CI-PAYOUT-BATCH-0001','ZUNO-CI-PAYOUT-ITEM-0001',1700)<>'paid' THEN
+    RAISE EXCEPTION 'Payout success retry was not idempotent';
+  END IF;
+  SELECT count(*) INTO v_count FROM creator_earning_entries WHERE payout_id=v_payout AND state='paid';
+  IF v_count<>2 THEN RAISE EXCEPTION 'Paid payout did not finalize the reserved creator earnings'; END IF;
+
+  INSERT INTO creator_payout_profiles(
+    creator_id,recipient_ciphertext,recipient_nonce,recipient_tag,recipient_hash,recipient_masked,
+    country_code,country_eligibility,provider_recipient_ready,identity_verified_at,compliance_state,risk_hold
+  ) VALUES(
+    v_other_creator,'ci-encrypted-recipient','Y2ktbm9uY2U=','Y2ktdGFn=',repeat('b',64),'o***@ci.invalid',
+    'JM','eligible',true,now(),'cleared',false
+  ) ON CONFLICT(creator_id) DO UPDATE SET
+    country_eligibility='eligible',provider_recipient_ready=true,identity_verified_at=now(),
+    compliance_state='cleared',risk_hold=false;
+
+  INSERT INTO creator_earning_entries(
+    creator_id,source_type,source_id,gross_minor,provider_fee_minor,creator_share_minor,platform_share_minor,
+    currency,policy_version,state,idempotency_key,available_at
+  ) VALUES(v_other_creator,'other','ci-payout-fail',2200,0,1100,1100,'USD','v1-2026','available','ci-payout-fail-earn-0001',now()-interval '1 minute')
+  ON CONFLICT(idempotency_key) DO NOTHING;
+  SELECT public.request_creator_payout(v_other_creator,1000,'zuno-ci-payout-fail-idempotency-0001') INTO v_fail_payout;
+  IF public.release_creator_payout(v_fail_payout,'PAYPAL_PAYOUT_REJECTED')<>'failed' THEN
+    RAISE EXCEPTION 'Definitively rejected provider payout was not marked failed';
+  END IF;
+  SELECT state INTO v_state FROM creator_earning_entries WHERE idempotency_key='ci-payout-fail-earn-0001';
+  IF v_state<>'available' THEN RAISE EXCEPTION 'Failed payout did not release reserved earnings'; END IF;
+  SELECT count(*) INTO v_count FROM creator_earning_entries WHERE payout_id IS NULL AND state='available' AND idempotency_key='ci-payout-fail-earn-0001';
+  IF v_count<>1 THEN RAISE EXCEPTION 'Failed payout left earning entry incorrectly reserved'; END IF;
+END
+$payout_checks$;
+
+SELECT 'ZUNO PostgreSQL migration + RLS + economy + moderation + messaging/community/call/search/fulfillment smoke checks passed' AS verification;

@@ -1,0 +1,9 @@
+{
+  "name": "@zuno/design-system",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/tokens.js",
+  "scripts": {
+    "check": "node --check src/tokens.js"
+  }
+}

@@ -1,0 +1,142 @@
+# Render Blueprint for ZUNO.
+# Deploy is intentionally disabled by default. Sync this Blueprint only when ready.
+# Set secret values in the Render dashboard; never commit credentials here.
+
+envVarGroups:
+  - name: zuno-runtime-defaults
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SUPABASE_MEDIA_BUCKET
+        value: zuno-media
+      - key: MEDIA_SIGNED_URL_TTL_SECONDS
+        value: "600"
+      - key: RANKING_RESET_TZ
+        value: America/Jamaica
+      - key: PAYPAL_ENV
+        value: sandbox
+      - key: PAYPAL_PAYOUTS_ENABLED
+        value: "false"
+      - key: FEATURE_PRODUCTION_PAYMENTS
+        value: "false"
+      - key: FEATURE_PAYOUTS
+        value: "false"
+      - key: FEATURE_LIVE_RECORDING
+        value: "false"
+
+services:
+  - type: web
+    runtime: node
+    name: zuno-api
+    plan: free
+    region: ohio
+    buildCommand: corepack enable && corepack prepare pnpm@9.15.9 --activate && pnpm install --no-frozen-lockfile
+    startCommand: pnpm --filter @zuno/backend-api start
+    healthCheckPath: /health
+    autoDeployTrigger: "off"
+    envVars:
+      - fromGroup: zuno-runtime-defaults
+      - key: PORT
+        value: "10000"
+      - key: APP_BASE_URL
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_JWT_SECRET
+        sync: false
+      - key: LIVEKIT_URL
+        sync: false
+      - key: LIVEKIT_API_KEY
+        sync: false
+      - key: LIVEKIT_API_SECRET
+        sync: false
+      - key: LIVEKIT_WEBHOOK_KEY
+        sync: false
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      - key: PAYPAL_WEBHOOK_ID
+        sync: false
+      - key: WEB_PUSH_VAPID_PUBLIC_KEY
+        sync: false
+      - key: WEB_PUSH_VAPID_PRIVATE_KEY
+        sync: false
+      - key: WEB_PUSH_VAPID_SUBJECT
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM_EMAIL
+        sync: false
+
+  - type: web
+    runtime: static
+    name: zuno-web
+    buildCommand: corepack enable && corepack prepare pnpm@9.15.9 --activate && pnpm install --no-frozen-lockfile && pnpm build:web && pnpm build:apps
+    staticPublishPath: dist
+    autoDeployTrigger: "off"
+    envVars:
+      - key: ZUNO_PUBLIC_API_BASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: LIVEKIT_URL
+        sync: false
+
+  - type: worker
+    runtime: node
+    name: zuno-notification-worker
+    plan: free
+    region: ohio
+    buildCommand: corepack enable && corepack prepare pnpm@9.15.9 --activate && pnpm install --no-frozen-lockfile
+    startCommand: pnpm --filter @zuno/backend-workers start
+    autoDeployTrigger: "off"
+    envVars:
+      - fromGroup: zuno-runtime-defaults
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: APP_BASE_URL
+        sync: false
+      - key: PAYPAL_ENV
+        value: sandbox
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      - key: NOTIFICATION_WORKER_POLL_MS
+        value: "1500"
+      - key: WEB_PUSH_VAPID_PUBLIC_KEY
+        sync: false
+      - key: WEB_PUSH_VAPID_PRIVATE_KEY
+        sync: false
+      - key: WEB_PUSH_VAPID_SUBJECT
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM_EMAIL
+        sync: false
+
+  - type: worker
+    runtime: docker
+    name: zuno-media-worker
+    plan: free
+    region: ohio
+    dockerfilePath: ./backend/media-processing/Dockerfile
+    dockerContext: .
+    autoDeployTrigger: "off"
+    envVars:
+      - fromGroup: zuno-runtime-defaults
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false

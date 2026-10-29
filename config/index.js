@@ -34,11 +34,26 @@ function load(env = process.env) {
   const config = {
     nodeEnv: env.NODE_ENV || 'development',
     appBaseUrl: env.APP_BASE_URL || 'http://localhost:3000',
-    apiPort: Number(env.API_PORT || 4000),
+    apiPublicBaseUrl: env.ZUNO_PUBLIC_API_BASE_URL || '',
+    corsAllowedOrigins: (env.CORS_ALLOWED_ORIGINS || '').split(',').map((origin) => origin.trim().replace(/\/$/, '')).filter(Boolean),
+    storageBucket: env.SUPABASE_MEDIA_BUCKET || 'zuno-media',
+    mediaSignedUrlTtlSeconds: Number(env.MEDIA_SIGNED_URL_TTL_SECONDS || 600),
+    apiPort: Number(env.PORT || env.API_PORT || 4000),
     rankingResetTz: env.RANKING_RESET_TZ || 'America/Jamaica',
     supabase,
     livekit,
     paypal,
+    payouts: {
+      recipientEncryptionKey: env.PAYOUT_RECIPIENT_ENCRYPTION_KEY || '',
+      minimumMinor: Number(env.PAYOUT_MINIMUM_MINOR || 1000)
+    },
+    notifications: {
+      pushVapidPublicKey: env.WEB_PUSH_VAPID_PUBLIC_KEY || '',
+      pushVapidPrivateKey: env.WEB_PUSH_VAPID_PRIVATE_KEY || '',
+      pushVapidSubject: env.WEB_PUSH_VAPID_SUBJECT || '',
+      resendApiKey: env.RESEND_API_KEY || '',
+      resendFromEmail: env.RESEND_FROM_EMAIL || ''
+    },
     features: {
       productionPayments: bool(env.FEATURE_PRODUCTION_PAYMENTS),
       payouts: bool(env.FEATURE_PAYOUTS),
@@ -46,9 +61,11 @@ function load(env = process.env) {
     },
   };
   config.configured = {
-    supabase: Boolean(supabase.url && supabase.serviceRoleKey),
+    supabase: Boolean(supabase.url && supabase.anonKey && supabase.serviceRoleKey),
     livekit: Boolean(livekit.url && livekit.apiKey && livekit.apiSecret),
     paypal: Boolean(paypal.clientId && paypal.clientSecret),
+    pushNotifications: Boolean(config.notifications.pushVapidPublicKey && config.notifications.pushVapidPrivateKey && config.notifications.pushVapidSubject),
+    emailNotifications: Boolean(config.notifications.resendApiKey && config.notifications.resendFromEmail),
   };
   return config;
 }

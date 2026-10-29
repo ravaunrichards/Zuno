@@ -1,0 +1,23 @@
+name: Feature request
+description: Propose a specific ZUNO capability
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: User problem
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Intended outcome
+    validations:
+      required: true
+  - type: textarea
+    id: data_security
+    attributes:
+      label: Data, privacy, permissions and migration impact
+    validations:
+      required: false

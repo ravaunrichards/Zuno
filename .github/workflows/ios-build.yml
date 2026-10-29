@@ -1,0 +1,50 @@
+name: iOS build
+on:
+  pull_request:
+    paths:
+      - "apps/ios/**"
+      - "packages/**"
+      - ".github/workflows/ios-build.yml"
+  push:
+    branches: [main, "zuno-foundation-implementation-*"]
+    paths:
+      - "apps/ios/**"
+      - "packages/**"
+      - ".github/workflows/ios-build.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ios-simulator:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Enable pnpm
+        run: corepack enable && corepack prepare pnpm@9.15.9 --activate
+      - name: Install the shared web build
+        run: pnpm install --no-frozen-lockfile
+      - name: Build production web bundle for iOS resources
+        env:
+          ZUNO_PUBLIC_API_BASE_URL: ${{ secrets.ZUNO_PUBLIC_API_BASE_URL }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          pnpm build:web
+          mkdir -p apps/ios/Resources/ZunoWeb
+          cp -R dist/web/. apps/ios/Resources/ZunoWeb/
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate project from the tracked specification
+        working-directory: apps/ios
+        run: xcodegen generate --spec project.yml
+      - name: Compile simulator target without signing
+        working-directory: apps/ios
+        shell: bash
+        run: |
+          project="$(find . -maxdepth 1 -name '*.xcodeproj' -print -quit)"
+          if [ -z "$project" ]; then echo "XcodeGen did not produce an Xcode project" >&2; exit 1; fi
+          scheme="$(basename "$project" .xcodeproj)"
+          xcodebuild -project "$project" -scheme "$scheme" -sdk iphonesimulator -configuration Debug build CODE_SIGNING_ALLOWED=NO

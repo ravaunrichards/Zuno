@@ -49,15 +49,26 @@ function mintToken(cfg, grant) {
   return { ok: true, token: `${signingInput}.${b64url(sig)}`, expiresAt: payload.exp, url: cfg.url };
 }
 
-/** Verify a LiveKit webhook signature. Returns false when key is absent (never trusts unsigned). */
-function verifyWebhook(cfg, rawBody, authHeader) {
-  if (!cfg || !cfg.webhookKey) return false;
-  if (!authHeader) return false;
-  const expected = crypto.createHmac('sha256', cfg.webhookKey).update(rawBody).digest('hex');
-  // constant-time compare
-  const a = Buffer.from(expected);
-  const b = Buffer.from(String(authHeader));
-  return a.length === b.length && crypto.timingSafeEqual(a, b);
+const { WebhookReceiver } = require('livekit-server-sdk');
+let webhookReceiver = null;
+let webhookCredentials = '';
+
+/** Verify the signed LiveKit JWT and SHA-256 hash of the exact raw body. */
+async function verifyWebhook(cfg, rawBody, authHeader) {
+  if (!cfg || !cfg.apiKey || !cfg.apiSecret || typeof rawBody !== 'string' || !authHeader) {
+    return { ok: false, verified: false, code: 'WEBHOOK_NOT_CONFIGURED' };
+  }
+  try {
+    const fingerprint = cfg.apiKey + ':' + cfg.apiSecret;
+    if (!webhookReceiver || webhookCredentials !== fingerprint) {
+      webhookReceiver = new WebhookReceiver(cfg.apiKey, cfg.apiSecret);
+      webhookCredentials = fingerprint;
+    }
+    const event = await webhookReceiver.receive(rawBody, authHeader);
+    return { ok: true, verified: true, event };
+  } catch (_) {
+    return { ok: false, verified: false, code: 'LIVEKIT_WEBHOOK_SIGNATURE_INVALID' };
+  }
 }
 
 module.exports = { mintToken, verifyWebhook, notConfigured };

@@ -1,0 +1,16 @@
+'use strict';
+const {test,ok,eq}=require('../../tools/test-harness');
+const moderation=require('../../backend/moderation/src/policy');
+const search=require('../../backend/search/src/search');
+const rec=require('../../backend/recommendations/src/scoring');
+const payments=require('../../backend/payments/src/order-policy');
+const payouts=require('../../backend/payouts/src/eligibility');
+const jobs=require('../../backend/workers/src/job-policy');
+const media=require('../../backend/media-processing/src/file-validation');
+test('moderation validates reasons and actor-gated transitions',()=>{ok(!moderation.validateReport({reasonCode:'bad',targetType:'post',targetId:'p1'}).ok);ok(moderation.canTransitionReport('open','reviewing','moderator'));ok(!moderation.canTransitionReport('open','reviewing','user'));ok(!moderation.canTransitionReport('actioned','dismissed','admin'));});
+test('search normalizes queries and filters private records',()=>{eq(search.normalizeQuery(' Hello   WORLD '),'Hello WORLD');const r=search.searchRecords([{title:'Hello public',ownerId:'a'},{title:'Hello private',ownerId:'b',visibility:'private'}],'hello',{viewerId:'a'});eq(r.length,1);});
+test('recommendations exclude blocked candidates before ranking',()=>{const r=rec.rankCandidates([{id:'ok',authorId:'a',visibility:'public',createdAt:new Date().toISOString()},{id:'blocked',authorId:'b',visibility:'public',createdAt:new Date().toISOString()}],{blockedProfileIds:new Set(['b'])});eq(r.map((x)=>x.candidate.id),['ok']);});
+test('payment transitions and idempotency input are explicit',()=>{ok(payments.canTransition('created','approved'));ok(!payments.canTransition('created','credited'));ok(payments.validateOrderRequest({profileId:'p',packageId:'starter',idempotencyKey:'0123456789abcdef'}).ok);});
+test('payout gate blocks unverified recipients',()=>{const r=payouts.evaluatePayoutEligibility({identityVerified:false,providerRecipientReady:false,countryEligible:false,kycAndComplianceClear:false,availableMinor:10000,minimumMinor:5000,riskHold:false});eq(r.eligible,false);ok(r.reasons.length>=4);});
+test('job retry policy applies capped backoff',()=>{eq(jobs.retryDelayMs(3,100,500),400);eq(jobs.nextState(5,5),'dead_letter');});
+test('media validation rejects unsupported types and oversized files',()=>{ok(!media.validateUploadMetadata({mediaType:'video',mimeType:'text/html',byteSize:20,filename:'x.html'}).ok);ok(!media.validateUploadMetadata({mediaType:'image',mimeType:'image/png',byteSize:99999999,filename:'photo.png'}).ok);});
