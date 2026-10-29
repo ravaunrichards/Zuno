@@ -947,28 +947,27 @@ const server = http.createServer(async (req, res) => {
       const session = await requireSession(req, res);
       if (!session.ok) return;
       const selected = await rowsForUser(session, 'media_assets', {
-        select: 'id,post_id,media_type,mime_type,byte_size,state,width,height,duration_ms,metadata,created_at,updated_at',
+        select: 'id,post_id,storage_path,media_type,mime_type,byte_size,state,width,height,duration_ms,metadata,created_at,updated_at',
         uploader_id: 'eq.' + session.profile.id, order: 'created_at.desc', limit: '100'
       });
       if (!selected.ok || !Array.isArray(selected.data)) return badDatabase(res, selected, 'MEDIA_LIBRARY_UNAVAILABLE');
-      const ready = selected.data.filter(asset => asset.state === 'ready');
+      const ready = selected.data.filter(asset => asset.state === 'ready' && typeof asset.storage_path === 'string');
       const signed = ready.length ? await storage.createSignedDownloadUrls(
-        config, config.storageBucket,
-        ready.map(asset => {
-          const meta = asset.metadata && typeof asset.metadata === 'object' ? asset.metadata : {};
-          return typeof meta.finalStoragePath === 'string' ? meta.finalStoragePath : null;
-        }).filter(Boolean),
+        config, config.storageBucket, ready.map(asset => asset.storage_path),
         config.mediaSignedUrlTtlSeconds
       ) : {ok:true,signedUrls:[]};
       const signedByPath = new Map((signed.signedUrls || []).map(item => [item.path,item.signedUrl]));
       return json(res,200,{ok:true,assets:selected.data.map(asset=>{
+        const objectPath=typeof asset.storage_path==='string'?asset.storage_path:null;
         const meta=asset.metadata && typeof asset.metadata==='object'?asset.metadata:{};
-        const originalPath=typeof meta.finalStoragePath==='string'?meta.finalStoragePath:null;
         return {
           id:asset.id,postId:asset.post_id,mediaType:asset.media_type,mimeType:asset.mime_type,
           byteSize:Number(asset.byte_size),state:asset.state,width:asset.width||null,height:asset.height||null,
-          durationMs:asset.duration_ms||null,createdAt:asset.created_at,updatedAt:asset.updated_at,
-          url:asset.state==='ready'&&originalPath?signedByPath.get(originalPath)||null:null
+          durationMs:asset.duration_ms||null,metadata:{
+            pipelineVersion:meta.pipelineVersion||null,processedAt:meta.processedAt||null,
+            lastProcessingError:meta.lastProcessingError||null,quarantineReason:meta.quarantineReason||null
+          },createdAt:asset.created_at,updatedAt:asset.updated_at,
+          url:asset.state==='ready'&&objectPath?signedByPath.get(objectPath)||null:null
         };
       })});
     }

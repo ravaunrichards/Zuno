@@ -50,6 +50,18 @@ test('media completion endpoint rejects unauthenticated requests',async()=>{
  const response=await post(await start(),'/api/media/10000000-0000-4000-8000-000000000001/complete');
  ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
 });
+test('private creator media library endpoint rejects unauthenticated requests',async()=>{
+ const response=await get(await start(),'/api/media/mine');
+ ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
+});
+test('creator post history endpoint rejects unauthenticated requests',async()=>{
+ const response=await get(await start(),'/api/posts/mine');
+ ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
+});
+test('creator analytics endpoint rejects unauthenticated requests',async()=>{
+ const response=await get(await start(),'/api/creator/analytics');
+ ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
+});
 test('payment endpoint rejects unauthenticated requests',async()=>{
  const response=await post(await start(),'/api/payments/order');
  ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
