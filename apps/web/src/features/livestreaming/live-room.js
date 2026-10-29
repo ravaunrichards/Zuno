@@ -158,8 +158,8 @@ function updateLocalControls() {
   const mic = byId('live-mic-toggle');
   const camera = byId('live-camera-toggle');
   const guest = byId('live-guest-request');
-  if (mic) { mic.hidden = active.role === 'viewer'; mic.disabled = active.state !== 'connected'; mic.textContent = active.micEnabled ? 'Mute microphone' : 'Turn microphone on'; }
-  if (camera) { camera.hidden = active.role === 'viewer'; camera.disabled = active.state !== 'connected'; camera.textContent = active.cameraEnabled ? 'Turn camera off' : 'Turn camera on'; }
+  if (mic) { mic.hidden = active.role === 'viewer'; mic.disabled = !['connected','live'].includes(active.state); mic.textContent = active.micEnabled ? 'Mute microphone' : 'Turn microphone on'; }
+  if (camera) { camera.hidden = active.role === 'viewer'; camera.disabled = !['connected','live'].includes(active.state); camera.textContent = active.cameraEnabled ? 'Turn camera off' : 'Turn camera on'; }
   if (guest) {
     guest.hidden = active.isHost;
     if (active.role === 'guest') {
@@ -173,7 +173,7 @@ function updateLocalControls() {
       guest.disabled = false;
     } else {
       guest.textContent = 'Request guest seat';
-      guest.disabled = active.state !== 'connected';
+      guest.disabled = !['connected','live'].includes(active.state);
     }
   }
   const hostPanel = byId('live-host-panel');
@@ -209,7 +209,21 @@ function bindRoomEvents(room) {
 async function connectRoom({roomId,title,token,url,role,isHost,privateRoom=false,startAfterConnect=false}) {
   const safeUrl = safeLiveKitUrl(url);
   if (!safeUrl) throw new Error('The LiveKit service URL is missing or not a trusted secure URL.');
-  if (active) await leaveActive({closeDialog:false,refresh:false});
+  if (active) {
+    if (active.roomId === roomId) {
+      // Guest role upgrade: disconnect the viewer transport without marking the
+      // persisted participant as left; the accepted request already changed the
+      // server-side role to guest and the replacement token is for this identity.
+      const previous = active;
+      previous.state = 'reconnecting';
+      stopPolling(previous);
+      try { await previous.room.disconnect(); } catch (_) {}
+      active = null;
+      resetStage();
+    } else {
+      await leaveActive({closeDialog:false,refresh:false});
+    }
+  }
   const room = new Room({adaptiveStream:true,dynacast:true,stopLocalTrackOnUnpublish:true});
   active = {
     room, roomId, title, role:role||'viewer', isHost:Boolean(isHost), privateRoom,

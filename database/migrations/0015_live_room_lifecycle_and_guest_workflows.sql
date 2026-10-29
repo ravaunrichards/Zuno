@@ -222,7 +222,7 @@ begin
   if v_request.state<>'pending' then raise exception 'LIVE_GUEST_REQUEST_NOT_PENDING'; end if;
   if v_request.created_at < now()-interval '2 minutes' then
     update public.guest_requests set state='expired',resolved_at=now() where id=p_request_id;
-    raise exception 'LIVE_GUEST_REQUEST_EXPIRED';
+    return null;
   end if;
   if exists(select 1 from public.blocks b where
     (b.blocker_id=v_request.requester_id and b.blocked_id=v_room.host_id)

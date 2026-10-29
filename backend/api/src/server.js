@@ -542,6 +542,7 @@ const server = http.createServer(async (req, res) => {
       }
       const accepted = await adminRpc(config, 'accept_live_guest_request', { p_request_id: requestId, p_host_profile_id: session.profile.id });
       if (!accepted.ok) return badDatabase(res, accepted, 'LIVE_GUEST_ACCEPT_FAILED');
+      if (accepted.data === null || accepted.data === undefined) return error(res, 409, 'LIVE_GUEST_REQUEST_EXPIRED', 'Guest request expired before it could be accepted.');
       return json(res, 200, {
         ok: true, requestId, state: 'accepted',
         guest: { profileId: requestRows.rows[0].requester_id },
