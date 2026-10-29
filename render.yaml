@@ -127,12 +127,12 @@ services:
         sync: false
 
   - type: worker
-    runtime: node
+    runtime: docker
     name: zuno-media-worker
     plan: free
     region: ohio
-    buildCommand: corepack enable && corepack prepare pnpm@9.15.9 --activate && pnpm install --no-frozen-lockfile
-    startCommand: pnpm --filter @zuno/backend-media-processing worker
+    dockerfilePath: ./backend/media-processing/Dockerfile
+    dockerContext: .
     autoDeployTrigger: "off"
     envVars:
       - fromGroup: zuno-runtime-defaults
