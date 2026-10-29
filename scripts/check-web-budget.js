@@ -4,7 +4,7 @@ const path = require('node:path');
 const zlib = require('node:zlib');
 
 const root = path.join(__dirname, '..');
-const dist = path.join(root, 'apps', 'web', 'dist');
+const dist = path.join(root, 'dist', 'web');
 const limits = { jsBytes: 1500 * 1024, cssBytes: 800 * 1024, totalBytes: 3 * 1024 * 1024, gzipBytes: 1024 * 1024 };
 const problems = [];
 const files = [];

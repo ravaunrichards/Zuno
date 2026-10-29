@@ -39,7 +39,7 @@ insert into gifter_level_thresholds(level,minimum_eligible_lifetime_coins)
 values(0,0)
 on conflict(level) do update set minimum_eligible_lifetime_coins=excluded.minimum_eligible_lifetime_coins;
 insert into gifter_level_thresholds(level,minimum_eligible_lifetime_coins)
-select level::smallint,ceil(100::numeric*power(1000000::numeric,level::numeric/50.0))::bigint
+select level::smallint,round(power(level::numeric/50.0,2.6)*100000000)::bigint
 from generate_series(1,50) as levels(level)
 on conflict(level) do update set minimum_eligible_lifetime_coins=excluded.minimum_eligible_lifetime_coins;
 alter table gifter_level_thresholds enable row level security;

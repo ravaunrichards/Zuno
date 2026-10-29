@@ -1,8 +1,8 @@
 name: ZUNO
 options:
   bundleIdPrefix: com.zuno
-  xcodeVersion: "16.0"
-  projectFormat: xcode16_0
+  xcodeVersion: "15.4"
+  projectFormat: xcode15_0
   deploymentTarget:
     iOS: "17.0"
 settings:

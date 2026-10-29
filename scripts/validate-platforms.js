@@ -17,6 +17,7 @@ const placeholders=[];
 function walk(folder){
   if(!fs.existsSync(folder))return;
   for(const item of fs.readdirSync(folder,{withFileTypes:true})){
+    if(item.isDirectory() && ['node_modules','.git','dist','build','.gradle','release','DerivedData'].includes(item.name)) continue;
     const full=path.join(folder,item.name);
     if(item.isDirectory())walk(full);
     else if(item.name==='.gitkeep'||item.name==='gitkeep.txt')placeholders.push(path.relative(root,full));
