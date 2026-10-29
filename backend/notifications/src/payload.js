@@ -1,5 +1,5 @@
 'use strict';
-const ALLOWED_TYPES=new Set(['follow','reaction','comment','message','live_started','gift_received','subscription','system','moderation']);
+const ALLOWED_TYPES=new Set(['follow','reaction','comment','message','live_started','gift_received','subscription','system','moderation','live_guest_request']);
 function validateNotification(input) {
   const errors=[];
   if(!input||typeof input!=='object') return {ok:false,errors:['INVALID_INPUT']};

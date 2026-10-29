@@ -2,9 +2,10 @@
   "name": "@zuno/backend-workers",
   "version": "0.1.0",
   "private": true,
-  "description": "ZUNO durable background job transition policy",
+  "description": "Durable ZUNO event outbox worker",
   "main": "src/job-policy.js",
   "scripts": {
-    "check": "node --check src/job-policy.js"
+    "check": "node --check src/job-policy.js && node --check src/notification-worker.js",
+    "start": "node src/notification-worker.js"
   }
 }
