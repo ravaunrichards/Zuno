@@ -158,6 +158,7 @@ function updateLocalControls() {
   const mic = byId('live-mic-toggle');
   const camera = byId('live-camera-toggle');
   const guest = byId('live-guest-request');
+  const gift = byId('live-send-gift');
   if (mic) { mic.hidden = active.role === 'viewer'; mic.disabled = !['connected','live'].includes(active.state); mic.textContent = active.micEnabled ? 'Mute microphone' : 'Turn microphone on'; }
   if (camera) { camera.hidden = active.role === 'viewer'; camera.disabled = !['connected','live'].includes(active.state); camera.textContent = active.cameraEnabled ? 'Turn camera off' : 'Turn camera on'; }
   if (guest) {
@@ -176,6 +177,7 @@ function updateLocalControls() {
       guest.disabled = !['connected','live'].includes(active.state);
     }
   }
+  if (gift) { gift.hidden = active.isHost; gift.disabled = !['connected','live'].includes(active.state); }
   const hostPanel = byId('live-host-panel');
   if (hostPanel) hostPanel.hidden = !active.isHost;
   if (byId('live-leave-button')) byId('live-leave-button').textContent = active.isHost ? 'End LIVE' : 'Leave room';
@@ -226,7 +228,7 @@ async function connectRoom({roomId,title,token,url,role,isHost,privateRoom=false
   }
   const room = new Room({adaptiveStream:true,dynacast:true,stopLocalTrackOnUnpublish:true});
   active = {
-    room, roomId, title, role:role||'viewer', isHost:Boolean(isHost), privateRoom,
+    room, roomId, title, role:role||'viewer', isHost:Boolean(isHost), privateRoom, hostUsername:arguments[0]?.hostUsername||'',
     state:'connecting', micEnabled:false, cameraEnabled:false,
     tiles:new Map(), pollTimer:null, guestRequestState:null
   };
@@ -296,6 +298,16 @@ async function createHostRoom(form) {
     setSectionStatus(error.message||'Could not start LIVE.');
   } finally { if(button)button.disabled=false; }
 }
+function openLiveGiftCatalog() {
+  if (!active || active.isHost) return;
+  const context = { roomId: active.roomId, hostUsername: active.hostUsername || '' };
+  window.ZUNO_LIVE_GIFT_CONTEXT = context;
+  window.dispatchEvent(new CustomEvent('zuno:live-gift-context', { detail: context }));
+  dialogClose();
+  document.getElementById('gifts')?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+  const status = document.getElementById('gift-source');
+  if (status) status.textContent = 'LIVE gift mode · delivery is recorded against this room';
+}
 async function joinRoom(roomData) {
   if (!mustBeSignedIn()) return;
   try {
@@ -303,7 +315,7 @@ async function joinRoom(roomData) {
     if(!joined.livekit||!joined.livekit.token||!joined.livekit.url)throw new Error('The API did not issue a LiveKit viewer token.');
     await connectRoom({
       roomId:roomData.id,title:roomData.title,token:joined.livekit.token,url:joined.livekit.url,
-      role:joined.role||'viewer',isHost:joined.role==='host',privateRoom:Boolean(roomData.isPrivate)
+      role:joined.role||'viewer',isHost:joined.role==='host',privateRoom:Boolean(roomData.isPrivate),hostUsername:roomData.host?.username||''
     });
   } catch(error) {
     setSectionStatus(error.message||'Could not join this LIVE room.');
@@ -627,6 +639,7 @@ function mountDialogControls() {
   byId('live-chat-form')?.addEventListener('submit',sendChat);
   byId('live-refresh-chat')?.addEventListener('click',refreshChat);
   byId('live-guest-request')?.addEventListener('click',guestButtonClick);
+  byId('live-send-gift')?.addEventListener('click',openLiveGiftCatalog);
   byId('live-leave-button')?.addEventListener('click',()=>leaveActive());
   byId('live-room-close')?.addEventListener('click',()=>leaveActive());
   byId('live-mic-toggle')?.addEventListener('click',toggleMic);

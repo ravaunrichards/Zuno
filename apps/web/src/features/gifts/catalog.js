@@ -18,7 +18,8 @@ function family(category) {
   return 'premium';
 }
 let selectedGift = null;
-let activeLiveRoomId = null;
+let activeLiveRoomId = window.ZUNO_LIVE_GIFT_CONTEXT?.roomId || null;
+let activeLiveRecipientUsername = window.ZUNO_LIVE_GIFT_CONTEXT?.hostUsername || '';
 function giftSendStatus(message,isError=false) {
   const status=document.getElementById('gift-send-status');
   if(status){status.textContent=message;status.classList.toggle('is-error',Boolean(isError));}
@@ -34,6 +35,8 @@ function openGiftSendForm() {
   form.hidden=false;
   document.getElementById('gift-send-id').value=selectedGift.id;
   document.getElementById('gift-send-live-room').value=activeLiveRoomId||'';
+  const recipient=document.getElementById('gift-recipient-username');
+  if(recipient && activeLiveRecipientUsername && !recipient.value)recipient.value=activeLiveRecipientUsername;
   document.getElementById('gift-recipient-username')?.focus();
 }
 function secureGiftKey() {
@@ -128,6 +131,7 @@ export async function mountGiftCatalog() {
   document.getElementById('gift-send-cancel')?.addEventListener('click',()=>{const form=document.getElementById('gift-send-form');if(form)form.hidden=true;});
   window.addEventListener('zuno:live-gift-context',event=>{
     activeLiveRoomId=typeof event.detail?.roomId==='string'?event.detail.roomId:null;
+    activeLiveRecipientUsername=typeof event.detail?.hostUsername==='string'?event.detail.hostUsername:'';
     const liveInput=document.getElementById('gift-send-live-room');if(liveInput)liveInput.value=activeLiveRoomId||'';
   });
   const filters = document.getElementById('gift-filters');
