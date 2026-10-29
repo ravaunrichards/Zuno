@@ -2,7 +2,7 @@
 create or replace function public.enforce_message_identity_immutability()
 returns trigger
 language plpgsql security definer
-set search_path=public,pg_temp as $
+set search_path=public,pg_temp as $$
 begin
   if new.id is distinct from old.id
      or new.conversation_id is distinct from old.conversation_id
@@ -18,7 +18,7 @@ begin
   end if;
   return new;
 end;
-$;
+$$;
 revoke all on function public.enforce_message_identity_immutability() from public,anon,authenticated;
 drop trigger if exists messages_identity_immutable on public.messages;
 create trigger messages_identity_immutable
