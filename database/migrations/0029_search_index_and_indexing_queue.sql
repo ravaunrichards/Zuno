@@ -10,14 +10,28 @@ create table if not exists public.search_documents (
   metadata jsonb not null default '{}'::jsonb,
   source_created_at timestamptz not null default now(),
   source_updated_at timestamptz not null default now(),
-  search_vector tsvector generated always as (
-    setweight(to_tsvector('simple'::regconfig,coalesce(title,'')),'A') ||
-    setweight(to_tsvector('simple'::regconfig,coalesce(body,'')),'B') ||
-    setweight(to_tsvector('simple'::regconfig,coalesce(array_to_string(tags,' '),'')),'C')
-  ) stored,
+  search_vector tsvector not null default ''::tsvector,
   indexed_at timestamptz not null default now(),
   primary key(entity_type,entity_id)
 );
+create or replace function public.set_search_document_vector()
+returns trigger
+language plpgsql
+set search_path=public,pg_temp as $search_vector$
+begin
+  new.search_vector :=
+    setweight(to_tsvector('simple'::regconfig,coalesce(new.title,'')),'A') ||
+    setweight(to_tsvector('simple'::regconfig,coalesce(new.body,'')),'B') ||
+    setweight(to_tsvector('simple'::regconfig,coalesce(array_to_string(new.tags,' '),'')),'C');
+  return new;
+end;
+$search_vector$;
+revoke all on function public.set_search_document_vector() from public,anon,authenticated;
+drop trigger if exists search_documents_vector_update on public.search_documents;
+create trigger search_documents_vector_update
+before insert or update of title,body,tags on public.search_documents
+for each row execute function public.set_search_document_vector();
+
 create index if not exists search_documents_vector_idx on public.search_documents using gin(search_vector);
 create index if not exists search_documents_owner_idx on public.search_documents(owner_id,entity_type);
 create index if not exists search_documents_updated_idx on public.search_documents(source_updated_at desc);
