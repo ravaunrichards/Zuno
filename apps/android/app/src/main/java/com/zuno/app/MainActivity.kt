@@ -1,141 +1,209 @@
 package com.zuno.app
 
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
+import android.webkit.PermissionRequest
+import android.webkit.ValueCallback
+import android.webkit.WebChromeClient
+import android.webkit.WebResourceRequest
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import android.view.ViewGroup
+import android.widget.FrameLayout
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-
-private val Ink = Color(0xFF0D0D15)
-private val Panel = Color(0xFF191927)
-private val Violet = Color(0xFF9A7CFF)
-private val Muted = Color(0xFFAAA6C3)
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import androidx.webkit.WebViewAssetLoader
 
 class MainActivity : ComponentActivity() {
+    private lateinit var webView: WebView
+    private lateinit var assetLoader: WebViewAssetLoader
+    private lateinit var filePicker: ActivityResultLauncher<Array<String>>
+    private var pendingFileChooser: ValueCallback<Array<Uri>>? = null
+    private var pendingWebPermission: PermissionRequest? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent { ZunoApp() }
-    }
-}
 
-@Composable
-private fun ZunoApp() {
-    var selected by remember { mutableStateOf("Home") }
-    MaterialTheme(colorScheme = darkColorScheme(
-        primary = Violet, background = Ink, surface = Panel,
-        onBackground = Color.White, onSurface = Color.White
-    )) {
-        Scaffold(
-            containerColor = Ink,
-            bottomBar = {
-                NavigationBar(containerColor = Panel) {
-                    listOf("Home", "Discover", "LIVE", "Inbox", "Profile").forEach { item ->
-                        NavigationBarItem(
-                            selected = selected == item,
-                            onClick = { selected = item },
-                            icon = { Text(when(item) { "Home" -> "⌂"; "Discover" -> "⌕"; "LIVE" -> "◉"; "Inbox" -> "▤"; else -> "○" }) },
-                            label = { Text(item, fontSize = 10.sp) }
-                        )
-                    }
+        filePicker = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            pendingFileChooser?.onReceiveValue(uri?.let { arrayOf(it) })
+            pendingFileChooser = null
+        }
+
+        assetLoader = WebViewAssetLoader.Builder()
+            .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(this))
+            .build()
+
+        webView = WebView(this)
+        webView.layoutParams = FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT
+        )
+        webView.settings.apply {
+            javaScriptEnabled = true
+            domStorageEnabled = true
+            databaseEnabled = true
+            mediaPlaybackRequiresUserGesture = true
+            allowFileAccess = false
+            allowContentAccess = true
+            javaScriptCanOpenWindowsAutomatically = false
+            setSupportMultipleWindows(false)
+            mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_NEVER_ALLOW
+        }
+        webView.webViewClient = object : WebViewClient() {
+            override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?) =
+                request?.url?.let { assetLoader.shouldInterceptRequest(it) }
+
+            override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+                val uri = request?.url ?: return true
+                val host = uri.host?.lowercase() ?: return true
+                val localAsset = uri.scheme == "https" &&
+                    host == "appassets.androidplatform.net" &&
+                    (uri.path?.startsWith("/assets/zuno-web/") == true)
+                val paypal = uri.scheme == "https" &&
+                    (host == "paypal.com" || host.endsWith(".paypal.com"))
+                if (localAsset || paypal) return false
+                if (uri.scheme == "https") {
+                    startActivity(Intent(Intent.ACTION_VIEW, uri))
                 }
-            }
-        ) { padding ->
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 18.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
-                item {
-                    Row(Modifier.fillMaxWidth().padding(top = 18.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Surface(color = Violet, shape = MaterialTheme.shapes.medium) {
-                            Text("Z", Modifier.padding(horizontal = 12.dp, vertical = 7.dp), fontSize = 20.sp, fontWeight = FontWeight.Black)
-                        }
-                        Spacer(Modifier.width(10.dp))
-                        Text("ZUNO", fontSize = 24.sp, fontWeight = FontWeight.Black)
-                        Spacer(Modifier.weight(1f))
-                        Text("PREVIEW", color = Muted, fontSize = 10.sp)
-                    }
-                }
-                item {
-                    Column(Modifier.fillMaxWidth().background(Panel, MaterialTheme.shapes.extraLarge).padding(22.dp)) {
-                        Text("ONE PLATFORM. MANY WORLDS.", color = Violet, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                        Spacer(Modifier.height(9.dp))
-                        Text(if (selected == "Home") "Your world, all in one place." else selected, fontSize = 31.sp, lineHeight = 36.sp, fontWeight = FontWeight.Bold)
-                        Spacer(Modifier.height(8.dp))
-                        Text("Discover stories, find your people, explore LIVE and create something unforgettable.", color = Muted, fontSize = 13.sp)
-                        Spacer(Modifier.height(17.dp))
-                        Button(onClick = { selected = "Discover" }, colors = ButtonDefaults.buttonColors(containerColor = Violet)) {
-                            Text("Explore ZUNO")
-                        }
-                    }
-                }
-                item { Text("EXPLORE YOUR INTERESTS", color = Violet, fontSize = 10.sp, fontWeight = FontWeight.Bold) }
-                item { FeatureCard("Video & stories", "Short video, long-form, photos and creator stories", "▶") { selected = "Discover" } }
-                item { FeatureCard("LIVE & entertainment", "Music, gaming and audience conversations", "◉") { selected = "LIVE" } }
-                item { FeatureCard("Communities", "Bring groups, channels and events together", "◎") { selected = "Discover" } }
-                item { FeatureCard("Creator tools", "Prepare content and build your creative presence", "✦") { selected = "Profile" } }
-                item {
-                    Column(Modifier.fillMaxWidth().background(Panel, MaterialTheme.shapes.large).padding(17.dp)) {
-                        Text("Connection status", fontWeight = FontWeight.Bold)
-                        Spacer(Modifier.height(5.dp))
-                        Text("This native UI does not claim provider connectivity. Authentication, feed data and LIVE room state are connected in later integration work.", color = Muted, fontSize = 11.sp)
-                    }
-                }
-                item { Spacer(Modifier.height(12.dp)) }
+                return true
             }
         }
-    }
-}
+        webView.webChromeClient = object : WebChromeClient() {
+            override fun onShowFileChooser(
+                view: WebView?,
+                filePathCallback: ValueCallback<Array<Uri>>?,
+                fileChooserParams: FileChooserParams?
+            ): Boolean {
+                pendingFileChooser?.onReceiveValue(null)
+                pendingFileChooser = filePathCallback ?: return false
+                val accepted = fileChooserParams?.acceptTypes
+                    ?.flatMap { it.split(',').asSequence() }
+                    ?.map { it.trim() }
+                    ?.filter { it.contains('/') && !it.contains(';') }
+                    ?.distinct()
+                    ?.toTypedArray()
+                    ?.takeIf { it.isNotEmpty() } ?: arrayOf("*/*")
+                return try {
+                    filePicker.launch(accepted)
+                    true
+                } catch (_: Exception) {
+                    pendingFileChooser?.onReceiveValue(null)
+                    pendingFileChooser = null
+                    false
+                }
+            }
 
-@Composable
-private fun FeatureCard(title: String, detail: String, icon: String, onClick: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(containerColor = Panel),
-        shape = MaterialTheme.shapes.large
+            override fun onPermissionRequest(request: PermissionRequest?) {
+                if (request == null) return
+                runOnUiThread {
+                    if (request.origin.host != "appassets.androidplatform.net") {
+                        request.deny()
+                        return@runOnUiThread
+                    }
+                    val requested = request.resources.filter {
+                        it == PermissionRequest.RESOURCE_AUDIO_CAPTURE ||
+                            it == PermissionRequest.RESOURCE_VIDEO_CAPTURE
+                    }
+                    if (requested.isEmpty()) {
+                        request.deny()
+                        return@runOnUiThread
+                    }
+                    val needed = mutableListOf<String>()
+                    if (PermissionRequest.RESOURCE_AUDIO_CAPTURE in requested &&
+                        ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                        needed.add(Manifest.permission.RECORD_AUDIO)
+                    }
+                    if (PermissionRequest.RESOURCE_VIDEO_CAPTURE in requested &&
+                        ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                        needed.add(Manifest.permission.CAMERA)
+                    }
+                    if (needed.isEmpty()) {
+                        request.grant(requested.toTypedArray())
+                    } else {
+                        pendingWebPermission?.deny()
+                        pendingWebPermission = request
+                        requestPermissions(needed.distinct().toTypedArray(), MEDIA_PERMISSION_REQUEST)
+                    }
+                }
+            }
+        }
+
+        setContentView(webView)
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (webView.canGoBack()) webView.goBack()
+                else {
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                }
+            }
+        })
+        if (savedInstanceState != null) {
+            webView.restoreState(savedInstanceState)
+        } else {
+            webView.loadUrl(LOCAL_WEB_ENTRY)
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
     ) {
-        Row(Modifier.padding(17.dp), verticalAlignment = Alignment.CenterVertically) {
-            Surface(color = Color(0xFF2A2543), shape = MaterialTheme.shapes.medium) {
-                Text(icon, Modifier.padding(13.dp), color = Violet, fontSize = 21.sp)
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode != MEDIA_PERMISSION_REQUEST) return
+        val request = pendingWebPermission ?: return
+        pendingWebPermission = null
+        val granted = permissions.indices.associate { permissions[it] to (grantResults.getOrNull(it) == PackageManager.PERMISSION_GRANTED) }
+        val allowedResources = request.resources.filter { resource ->
+            when (resource) {
+                PermissionRequest.RESOURCE_AUDIO_CAPTURE ->
+                    ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED ||
+                        granted[Manifest.permission.RECORD_AUDIO] == true
+                PermissionRequest.RESOURCE_VIDEO_CAPTURE ->
+                    ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED ||
+                        granted[Manifest.permission.CAMERA] == true
+                else -> false
             }
-            Spacer(Modifier.width(14.dp))
-            Column(Modifier.weight(1f)) {
-                Text(title, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Spacer(Modifier.height(4.dp))
-                Text(detail, color = Muted, fontSize = 11.sp)
-            }
-            Text("↗", color = Violet, fontSize = 18.sp)
         }
+        if (allowedResources.isEmpty()) request.deny() else request.grant(allowedResources.toTypedArray())
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        webView.saveState(outState)
+        super.onSaveInstanceState(outState)
+    }
+
+    override fun onPause() {
+        webView.onPause()
+        super.onPause()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        webView.onResume()
+    }
+
+    override fun onDestroy() {
+        pendingFileChooser?.onReceiveValue(null)
+        pendingFileChooser = null
+        pendingWebPermission?.deny()
+        pendingWebPermission = null
+        webView.stopLoading()
+        webView.webChromeClient = null
+        webView.webViewClient = WebViewClient()
+        webView.destroy()
+        super.onDestroy()
+    }
+
+    companion object {
+        private const val MEDIA_PERMISSION_REQUEST = 4317
+        private const val LOCAL_WEB_ENTRY = "https://appassets.androidplatform.net/assets/zuno-web/index.html"
     }
 }
