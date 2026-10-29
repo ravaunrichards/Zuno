@@ -84,8 +84,8 @@ begin
  select cp.* into v_part from public.call_participants AS cp
  where cp.call_id=p_call_id and cp.profile_id=p_profile_id for update;
  if not found then raise exception 'CALL_INVITATION_REQUIRED'; end if;
- if v_part.last_state in ('declined','missed','left') or v_part.left_at is not null then raise exception 'CALL_PARTICIPATION_CLOSED'; end if;
  if v_call.state not in ('ringing','active') then raise exception 'CALL_NOT_JOINABLE'; end if;
+ if v_part.last_state in ('declined','missed','left') or v_part.left_at is not null then raise exception 'CALL_PARTICIPATION_CLOSED'; end if;
  select count(*) into v_count from public.call_participants AS cp
  where cp.call_id=p_call_id and cp.left_at is null and cp.last_state='joined';
  if v_part.last_state<>'joined' and v_count>=8 then raise exception 'CALL_FULL'; end if;
