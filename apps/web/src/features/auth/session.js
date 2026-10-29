@@ -66,17 +66,20 @@ async function fetchJson(url, options = {}) {
 
 export async function getPublicConfig() {
   if (!publicConfigPromise) {
+    const runtime = typeof window !== 'undefined' && window.ZUNO_CONFIG ? window.ZUNO_CONFIG : {};
+    // The web build validates and embeds public runtime settings. Prefer live API
+    // config, but do not make sign-in depend on the API being available just to
+    // discover the public Supabase URL and publishable/anon key.
     publicConfigPromise = fetchJson(apiBaseUrl() + '/api/meta/public-config', {
       headers: { Accept: 'application/json' }
-    }).then((payload) => {
-      const runtime = window.ZUNO_CONFIG || {};
+    }).catch(() => ({})).then((payload) => {
       const value = {
         apiBaseUrl: apiBaseUrl(),
         supabaseUrl: payload.supabaseUrl || runtime.supabaseUrl || '',
         supabaseAnonKey: payload.supabaseAnonKey || runtime.supabaseAnonKey || ''
       };
       if (!value.supabaseUrl || !value.supabaseAnonKey) {
-        throw new Error('Supabase Auth is not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY on the API service.');
+        throw new Error('Supabase Auth is not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY on the ZUNO web service.');
       }
       return value;
     }).catch((error) => {
