@@ -806,15 +806,35 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && url.pathname === '/api/wallet') {
       const session = await requireSession(req, res);
       if (!session.ok) return;
+      const restrictions = await selectAdminRows(config, 'wallet_restrictions', query({
+        select: 'state,reason_code,created_at', profile_id: 'eq.' + session.profile.id, state: 'eq.active', limit: '1'
+      }));
+      if (!restrictions.ok) return badDatabase(res, restrictions, 'WALLET_RESTRICTION_LOOKUP_FAILED');
+      const restriction = restrictions.rows[0] || null;
+      const canUsePayPal = Boolean(config.configured.paypal && (
+        config.paypal.env !== 'live' ||
+        (config.features.productionPayments && Boolean(config.paypal.webhookId))
+      ) && !restriction);
       const accounts = await selectAdminRows(config, 'wallet_accounts', query({ select: 'id,kind', profile_id: 'eq.' + session.profile.id, kind: 'eq.user' }));
       if (!accounts.ok) return badDatabase(res, accounts, 'WALLET_UNAVAILABLE');
-      if (!accounts.rows.length) return json(res, 200, { ok: true, wallet: { initialized: false, coinBalance: null, note: 'Wallet has not been provisioned for this account yet.' }, checkoutEnabled: false, payoutsEnabled: false });
+      if (!accounts.rows.length) return json(res, 200, {
+        ok: true,
+        wallet: { initialized: false, coinBalance: null, restricted: Boolean(restriction), restrictionReason: restriction ? restriction.reason_code : null, note: 'Wallet has not been provisioned for this account yet.' },
+        checkoutEnabled: canUsePayPal, payoutsEnabled: false
+      });
       const postings = await selectAdminRows(config, 'ledger_postings', query({ select: 'delta,unit,entry_id', account_id: 'eq.' + accounts.rows[0].id, unit: 'eq.coins', limit: '5000' }));
       if (!postings.ok) return badDatabase(res, postings, 'WALLET_UNAVAILABLE');
       const balance = postings.rows.reduce((total, posting) => total + Number(posting.delta || 0), 0);
-      return json(res, 200, { ok: true, wallet: { initialized: true, coinBalance: balance }, checkoutEnabled: false, payoutsEnabled: false });
+      return json(res, 200, {
+        ok: true,
+        wallet: {
+          initialized: true, coinBalance: balance,
+          restricted: Boolean(restriction), restrictionReason: restriction ? restriction.reason_code : null,
+          note: restriction ? 'Wallet spending is restricted pending provider reconciliation.' : 'Balance is calculated from server ledger postings.'
+        },
+        checkoutEnabled: canUsePayPal, payoutsEnabled: false
+      });
     }
-
     if (req.method === 'GET' && url.pathname === '/api/rankings') {
       const periodRaw = url.searchParams.get('period') || 'monthly';
       const period = ['weekly','monthly','all_time'].includes(periodRaw) ? periodRaw : 'monthly';

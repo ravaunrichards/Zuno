@@ -18,6 +18,7 @@ function say(message, error = false) {
 function money(value) {
   return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(Number(value));
 }
+const PENDING_CHECKOUT_KEY = 'zuno:pending-checkout';
 function safeIdempotencyKey() {
   if (window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID();
   if (window.crypto && typeof window.crypto.getRandomValues === 'function') {
@@ -26,6 +27,34 @@ function safeIdempotencyKey() {
     return Array.from(bytes, b => b.toString(16).padStart(2,'0')).join('');
   }
   throw new Error('Secure payment request IDs are not supported by this browser. Use an updated browser over HTTPS.');
+}
+function quoteFingerprint(body) {
+  return body.packageId ? 'package:' + body.packageId : 'custom:' + Number(body.customAmountUSD).toFixed(2);
+}
+function obtainCheckoutKey(body) {
+  const fingerprint = quoteFingerprint(body);
+  try {
+    const existing = JSON.parse(localStorage.getItem(PENDING_CHECKOUT_KEY) || 'null');
+    if (existing && existing.fingerprint === fingerprint && typeof existing.key === 'string' && existing.key.length >= 16) return existing.key;
+  } catch (_) {}
+  const key = safeIdempotencyKey();
+  try { localStorage.setItem(PENDING_CHECKOUT_KEY, JSON.stringify({ key, fingerprint, createdAt: Date.now() })); } catch (_) {}
+  return key;
+}
+function clearCheckoutKey(expectedOrderId) {
+  try {
+    const existing = JSON.parse(localStorage.getItem(PENDING_CHECKOUT_KEY) || 'null');
+    if (!expectedOrderId || !existing || !existing.orderId || existing.orderId === expectedOrderId) localStorage.removeItem(PENDING_CHECKOUT_KEY);
+  } catch (_) {}
+}
+function rememberCheckoutOrder(orderId) {
+  try {
+    const existing = JSON.parse(localStorage.getItem(PENDING_CHECKOUT_KEY) || 'null');
+    if (existing && typeof existing.key === 'string') {
+      existing.orderId = orderId;
+      localStorage.setItem(PENDING_CHECKOUT_KEY, JSON.stringify(existing));
+    }
+  } catch (_) {}
 }
 function setButtonsDisabled(disabled) {
   document.querySelectorAll('[data-recharge-package]').forEach(button => { button.disabled = disabled; });
@@ -151,12 +180,19 @@ async function beginCheckout({packageId, customAmountUSD, button} = {}) {
     const body = packageId ? {packageId} : {customAmountUSD:Number(customAmountUSD)};
     const result = await requestJson('/api/payments/order', {
       method:'POST',
-      headers:{'Idempotency-Key':safeIdempotencyKey()},
+      headers:{'Idempotency-Key':obtainCheckoutKey(body)},
       body
     });
+    if (result.ok && result.order && result.order.state === 'credited') {
+      clearCheckoutKey(result.order.id);
+      say('This idempotent checkout order is already reconciled. ' + new Intl.NumberFormat().format(Number(result.order.coins||0)) + ' Z Coins were previously credited.');
+      await refreshWallet();
+      return;
+    }
     if (!result.ok || !result.order || typeof result.order.approvalUrl !== 'string') {
       throw new Error('The server did not return a usable PayPal approval URL. No checkout redirect was started.');
     }
+    rememberCheckoutOrder(result.order.id);
     const target = new URL(result.order.approvalUrl);
     if (target.protocol !== 'https:' || !(target.hostname === 'paypal.com' || target.hostname.endsWith('.paypal.com'))) {
       throw new Error('The payment provider returned an untrusted approval URL. Checkout was not opened.');
@@ -165,6 +201,7 @@ async function beginCheckout({packageId, customAmountUSD, button} = {}) {
     say('PayPal order created. Opening the provider approval page; no coins have been credited yet.');
     window.location.assign(approvalUrl);
   } catch (error) {
+    if (error.code === 'PAYMENT_ORDER_NOT_OPEN' || error.code === 'IDEMPOTENCY_KEY_REUSED') clearCheckoutKey();
     say(error.message || 'Checkout could not be started.', true);
   } finally {
     if (!approvalUrl) {
@@ -189,6 +226,7 @@ async function handlePaymentReturn() {
   if (paymentStatus === 'cancel') {
     returnHandled = true;
     say('PayPal checkout was cancelled. No coins were credited.');
+    clearCheckoutKey(orderId || undefined);
     cleanPaymentReturnParams();
     return;
   }
@@ -212,6 +250,7 @@ async function handlePaymentReturn() {
       say('Payment capture is verified and reconciled. ' + new Intl.NumberFormat().format(Number(result.order.coins||0)) + ' Z Coins were credited.');
       const status = $id('wallet-order-status');
       if (status) status.textContent = 'Order ' + orderId + ' · ledger entry ' + (result.order.ledgerEntryId || 'recorded');
+      clearCheckoutKey(orderId);
       cleanPaymentReturnParams();
       await refreshWallet();
     } else {
