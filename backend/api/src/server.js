@@ -3319,8 +3319,17 @@ const server = http.createServer(async (req, res) => {
       const session = await requireSession(req, res);
       if (!session.ok) return;
       const body = await readBody(req);
-      const recipientId = String(body.recipientProfileId || '');
+      const recipientUsername = typeof body.recipientUsername === 'string' ? body.recipientUsername.trim().toLowerCase() : '';
+      let recipientId = String(body.recipientProfileId || '');
       const giftId = String(body.giftId || '');
+      if (recipientUsername && recipientId) return error(res, 400, 'CHOOSE_ONE_GIFT_RECIPIENT');
+      if (recipientUsername) {
+        if (!/^[a-z0-9_.]{3,30}$/.test(recipientUsername)) return error(res, 400, 'INVALID_GIFT_RECIPIENT_USERNAME');
+        const resolved = await selectAdminRows(config, 'profiles', query({ select: 'id,username', username: 'eq.' + recipientUsername, limit: '1' }));
+        if (!resolved.ok) return error(res, 503, 'GIFT_RECIPIENT_LOOKUP_FAILED');
+        if (!resolved.rows[0]) return error(res, 404, 'GIFT_RECIPIENT_NOT_FOUND', 'No ZUNO account uses that username.');
+        recipientId = resolved.rows[0].id;
+      }
       const liveRoomId = body.liveRoomId == null || body.liveRoomId === '' ? null : String(body.liveRoomId);
       const message = body.message == null ? null : String(body.message);
       const rawKey = String(req.headers['idempotency-key'] || body.idempotencyKey || '');
