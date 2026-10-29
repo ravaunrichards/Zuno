@@ -5,6 +5,7 @@
   "description": "ZUNO upload metadata validation and media-processing policies",
   "main": "src/file-validation.js",
   "scripts": {
-    "check": "node --check src/file-validation.js && node --check src/worker.js"
+    "check": "node --check src/file-validation.js && node --check src/worker.js",
+    "worker": "node src/worker.js"
   }
 }
