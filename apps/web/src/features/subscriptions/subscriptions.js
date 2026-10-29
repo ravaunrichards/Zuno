@@ -5,7 +5,6 @@ let currentCreator=null;
 let loading=false;
 function id(name){return document.getElementById(name);}
 function el(tag,cls,text){const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined&&text!==null)n.textContent=String(text);return n;}
-function id(name){return document.getElementById(name);}
 function report(message,isError=false){const box=id('subscriptions-status');if(box){box.textContent=message;box.classList.toggle('is-error',isError);}}
 function openDialog(){
  const dialog=id('subscriptions-dialog');if(!dialog)return;

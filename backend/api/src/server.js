@@ -261,7 +261,9 @@ const server = http.createServer(async (req, res) => {
           'BILLING.SUBSCRIPTION.SUSPENDED','BILLING.SUBSCRIPTION.PAYMENT.FAILED'
         ]);
         if (creatorSubscriptionEvents.has(body.event_type)) {
-          const providerSubscriptionId = String(resource.id || resource.billing_agreement_id || resource.subscription_id || '');
+          const providerSubscriptionId = body.event_type === 'BILLING.SUBSCRIPTION.PAYMENT.FAILED'
+            ? String(resource.billing_agreement_id || resource.subscription_id || resource.id || '')
+            : String(resource.id || resource.billing_agreement_id || resource.subscription_id || '');
           if (!providerSubscriptionId) {
             processing = 'failed'; errorCode = 'CREATOR_SUBSCRIPTION_WEBHOOK_ID_MISSING';
           } else {
