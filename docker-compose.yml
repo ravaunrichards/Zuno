@@ -1,0 +1,33 @@
+# Local development environment — only services genuinely needed for dev.
+# Supabase and LiveKit are hosted providers; configure them via .env rather
+# than running full local clones here.
+version: "3.9"
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=development
+      - API_PORT=4000
+    env_file:
+      - .env
+    ports:
+      - "4000:4000"
+    healthcheck:
+      test: ["CMD", "node", "backend/api/healthcheck.js"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+volumes:
+  redis-data:
