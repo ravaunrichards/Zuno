@@ -24,7 +24,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-
 const POST_KINDS = new Set(['short_video','long_video','photo','gallery','text','audio','story']);
 const AUDIENCES = new Set(['public','followers','private']);
 const PROFILE_FIELDS = new Set(['display_name','bio','avatar_url','cover_url','visibility']);
-const PROFILE_FIELDS = new Set(['display_name','bio','avatar_url','cover_url','visibility']);
+
 const DIRECT_TABLE_LIMIT = 100;
 const MAX_REQUEST_BYTES = 1_000_000;
 
