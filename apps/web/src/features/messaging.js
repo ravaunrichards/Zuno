@@ -149,7 +149,7 @@ async function connectCall(tokenData,callInfo){
  if(callInfo.callType==='video'){await room.localParticipant.setCameraEnabled(true);call.camera=true;}
  await room.localParticipant.setMicrophoneEnabled(true);call.mic=true;
  for(const pub of room.localParticipant.trackPublications.values())if(pub.track)attachCallTrack(room,pub.track,room.localParticipant);
- id('message-call-video-grid').replaceChildren();
+ id('message-call-video-grid').querySelectorAll('.message-empty').forEach(node=>node.remove());
  setStatus('Call connected. Microphone and camera are controlled by your device permissions.');
 }
 async function startCall(callType){

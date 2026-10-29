@@ -146,7 +146,15 @@ test('event RSVP rejects unauthenticated requests',async()=>{
  const response=await post(await start(),'/api/events/10000000-0000-4000-8000-000000000001/rsvp');
  ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
 });
-test('community channel listing requires authentication',async()=>{\n const response=await get(await start(),'/api/communities/10000000-0000-4000-8000-000000000001/channels');\n ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');\n});\ntest('community channel creation requires authentication',async()=>{\n const response=await post(await start(),'/api/communities/10000000-0000-4000-8000-000000000001/channels');\n ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');\n});\ntest('call creation requires authentication',async()=>{
+test('community channel listing requires authentication',async()=>{
+ const response=await get(await start(),'/api/communities/10000000-0000-4000-8000-000000000001/channels');
+ ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
+});
+test('community channel creation requires authentication',async()=>{
+ const response=await post(await start(),'/api/communities/10000000-0000-4000-8000-000000000001/channels');
+ ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
+});
+test('call creation requires authentication',async()=>{
  const response=await post(await start(),'/api/calls');
  ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
 });
