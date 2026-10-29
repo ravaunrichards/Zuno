@@ -4,9 +4,9 @@
   "private": true,
   "description": "ZUNO administrative operations web client",
   "scripts": {
-    "start": "node ../../scripts/serve-static.js --root apps/admin --port 3002",
+    "start": "pnpm --dir ../.. build:web && pnpm --dir ../.. build:apps && node ../../scripts/serve-static.js --root ../../dist --port 3002",
     "check": "node --check app.js",
-    "build": "node ../../scripts/build-static-apps.js admin"
+    "build": "pnpm --dir ../.. build:web && node ../../scripts/build-static-apps.js admin"
   },
   "type": "module"
 }

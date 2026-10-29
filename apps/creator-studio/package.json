@@ -4,9 +4,9 @@
   "private": true,
   "description": "ZUNO creator publishing workspace",
   "scripts": {
-    "start": "node ../../scripts/serve-static.js --root apps/creator-studio --port 3003",
+    "start": "pnpm --dir ../.. build:web && pnpm --dir ../.. build:apps && node ../../scripts/serve-static.js --root ../../dist --port 3003",
     "check": "node --check app.js",
-    "build": "node ../../scripts/build-static-apps.js creator-studio"
+    "build": "pnpm --dir ../.. build:web && node ../../scripts/build-static-apps.js creator-studio"
   },
   "type": "module"
 }

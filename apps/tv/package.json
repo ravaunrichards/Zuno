@@ -4,7 +4,9 @@
   "private": true,
   "description": "ZUNO remote-first TV web client",
   "scripts": {
-    "start": "node ../../scripts/serve-static.js --root apps/tv --port 3004",
-    "check": "node --check app.js"
-  }
+    "start": "pnpm --dir ../.. build:web && pnpm --dir ../.. build:apps && node ../../scripts/serve-static.js --root ../../dist --port 3004",
+    "check": "node --check app.js",
+    "build": "pnpm --dir ../.. build:web && node ../../scripts/build-static-apps.js tv"
+  },
+  "type": "module"
 }
