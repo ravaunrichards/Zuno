@@ -36,8 +36,8 @@
 <form method="dialog" class="studio-auth-dialog-top"><div><span class="kicker">YOUR ZUNO ACCOUNT</span><h2 id="auth-title">Welcome back.</h2></div><button type="submit" class="secondary" value="cancel" aria-label="Close">Close</button></form>
 <div class="studio-auth-modes"><button type="button" data-auth-mode="signin">Sign in</button><button type="button" data-auth-mode="signup">Create account</button></div>
 <form id="auth-form">
-<label for="auth-email">Email</label><input id="auth-email" name="email" type="email" autocomplete="email" required>
+<div id="auth-email-field"><label for="auth-email">Email</label><input id="auth-email" name="email" type="email" autocomplete="email" maxlength="254" required></div>
 <div id="auth-signup-fields" hidden><label for="auth-username">Username</label><input id="auth-username" name="username" autocomplete="username" minlength="3" maxlength="30" pattern="[A-Za-z0-9_.]{3,30}"><label for="auth-display-name">Display name</label><input id="auth-display-name" name="displayName" maxlength="80"></div>
-<label for="auth-password">Password</label><input id="auth-password" name="password" type="password" minlength="8" autocomplete="current-password" required>
-<p id="auth-status" role="status"></p><button id="auth-submit" type="submit" class="primary">Sign in</button>
+<div id="auth-password-field"><label for="auth-password">Password</label><input id="auth-password" name="password" type="password" minlength="8" autocomplete="current-password" required></div><div id="auth-recovery-fields" hidden><label for="auth-confirm-password">Confirm new password</label><input id="auth-confirm-password" name="confirmPassword" type="password" minlength="8" autocomplete="new-password"></div>
+<div id="auth-extra-actions"><button id="auth-forgot-password" class="secondary" type="button">Forgot password?</button><button id="auth-resend-confirmation" class="secondary" type="button" hidden>Resend confirmation email</button></div><p id="auth-status" role="status"></p><button id="auth-submit" type="submit" class="primary">Sign in</button>
 </form></dialog></main><script src="./runtime-config.js"></script><script type="module" src="./app.js"></script></body></html>
