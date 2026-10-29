@@ -109,8 +109,9 @@ async function markRead(item,button,rerender=true){
  }catch(error){
   showStatus(error.message||'Could not mark this notification as read.',true);
   if(button)button.disabled=false;
-  throw error;
+  return false;
  }
+ return true;
 }
 export function mountNotifications(){
  id('notification-refresh')?.addEventListener('click',()=>load(true));

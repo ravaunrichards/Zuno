@@ -3300,9 +3300,17 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && url.pathname === '/api/notifications') {
       const session = await requireSession(req, res);
       if (!session.ok) return;
-      const result = await rowsForUser(session, 'notifications', { select: 'id,profile_id,kind,payload,read_at,created_at', profile_id: 'eq.' + session.profile.id, order: 'created_at.desc', limit: '100' });
+      const limit = asSafeInt(url.searchParams.get('limit'), 25, 1, 100);
+      const offset = asSafeInt(url.searchParams.get('offset'), 0, 0, 100000);
+      const result = await rowsForUser(session, 'notifications', {
+        select: 'id,profile_id,kind,payload,read_at,created_at',
+        profile_id: 'eq.' + session.profile.id,
+        order: 'created_at.desc',
+        limit: String(limit),
+        offset: String(offset)
+      });
       if (!result.ok || !Array.isArray(result.data)) return badDatabase(res, result, 'NOTIFICATIONS_UNAVAILABLE');
-      return json(res, 200, { ok: true, notifications: result.data });
+      return json(res, 200, { ok: true, notifications: result.data, limit, offset, hasMore: result.data.length === limit });
     }
 
     const notificationReadMatch = url.pathname.match(/^\/api\/notifications\/([0-9a-f-]+)\/read$/i);

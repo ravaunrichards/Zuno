@@ -269,6 +269,11 @@ test('push subscription registration and removal require authentication',async()
  const create=await post(port,'/api/notifications/push-subscriptions');ok(create.status===401);ok(create.body.code==='AUTH_REQUIRED');
  const remove=await del(port,'/api/notifications/push-subscriptions');ok(remove.status===401);ok(remove.body.code==='AUTH_REQUIRED');
 });
+test('notification feed pagination requires authentication',async()=>{
+ const port=await start();
+ const response=await get(port,'/api/notifications?limit=10&offset=20');
+ ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
+});
 test('payment endpoint rejects unauthenticated requests',async()=>{
  const response=await post(await start(),'/api/payments/order');
  ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
