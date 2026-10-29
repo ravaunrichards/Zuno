@@ -15,6 +15,8 @@ const livekit = require('../../../integrations/livekit');
 const { rankCandidates } = require('../../recommendations/src/scoring');
 const { monthlyPeriodStart, weeklyPeriodStart } = require('../../../packages/gift-engine/src/rankings');
 const { authenticateProfile, userRest, adminRest, adminRpc, selectAdminRows, profileProjection } = require('./auth');
+const storage = require('../../../integrations/supabase/storage');
+const { validateUploadMetadata, MIME_TO_EXTENSION } = require('../../media-processing/src/file-validation');
 
 const config = load();
 const envCheck = validateRequired(config);
@@ -281,6 +283,111 @@ const server = http.createServer(async (req, res) => {
         rankingScore: post.rankingScore ?? null,
         author: profileProjection(profileById.get(post.author_id))
       })) });
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/media/upload-url') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const body = await readBody(req);
+      const validation = validateUploadMetadata(body);
+      if (!validation.ok) return error(res, 400, validation.errors[0] || 'INVALID_MEDIA_METADATA');
+      const media = validation.metadata;
+      const assetId = randomUUID();
+      const extension = MIME_TO_EXTENSION[media.mimeType];
+      if (!extension) return error(res, 400, 'UNSUPPORTED_MEDIA_TYPE');
+      const storagePath = 'profiles/' + session.profile.id + '/' + assetId + '.' + extension;
+      const insert = await rowsForUser(session, 'media_assets', {
+        select: 'id,uploader_id,storage_path,media_type,mime_type,byte_size,checksum_sha256,state,created_at'
+      }, {
+        method: 'POST',
+        body: {
+          id: assetId,
+          uploader_id: session.profile.id,
+          storage_path: storagePath,
+          media_type: media.mediaType,
+          mime_type: media.mimeType,
+          byte_size: media.byteSize,
+          checksum_sha256: media.checksumSha256,
+          state: 'uploaded',
+          metadata: { originalFilename: media.filename, pipelineVersion: 'zuno-media-v1' }
+        }
+      });
+      if (!insert.ok || !Array.isArray(insert.data) || !insert.data[0]) return badDatabase(res, insert, 'MEDIA_ASSET_CREATE_FAILED');
+      const signed = await storage.createSignedUploadUrl(config, config.storageBucket, storagePath);
+      if (!signed.ok) {
+        await adminRest(config, 'media_assets', query({ id: 'eq.' + assetId, uploader_id: 'eq.' + session.profile.id }), 'PATCH', {
+          state: 'failed', updated_at: new Date().toISOString(),
+          metadata: { originalFilename: media.filename, uploadErrorCode: signed.code }
+        });
+        return error(res, signed.status || 503, signed.code || 'MEDIA_UPLOAD_URL_FAILED', 'A secure upload URL could not be created. No media was uploaded.');
+      }
+      return json(res, 201, {
+        ok: true,
+        asset: { id: assetId, mediaType: media.mediaType, mimeType: media.mimeType, byteSize: media.byteSize, state: 'uploaded' },
+        upload: { url: signed.uploadUrl, method: 'PUT', headers: { 'Content-Type': media.mimeType }, expiresInSeconds: signed.expiresInSeconds },
+        next: 'PUT the file to the signed URL, then POST /api/media/' + assetId + '/complete.'
+      });
+    }
+
+    const mediaCompleteMatch = url.pathname.match(/^\/api\/media\/([0-9a-f-]+)\/complete$/i);
+    if (req.method === 'POST' && mediaCompleteMatch) {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const assetId = mediaCompleteMatch[1];
+      if (!uuid(assetId)) return error(res, 400, 'INVALID_MEDIA_ASSET_ID');
+      const selected = await rowsForUser(session, 'media_assets', {
+        select: 'id,uploader_id,storage_path,media_type,mime_type,byte_size,checksum_sha256,state,metadata',
+        id: 'eq.' + assetId, uploader_id: 'eq.' + session.profile.id, limit: '1'
+      });
+      if (!selected.ok || !Array.isArray(selected.data) || !selected.data[0]) return error(res, selected.status === 503 ? 503 : 404, 'MEDIA_ASSET_NOT_FOUND');
+      const asset = selected.data[0];
+      if (asset.state === 'processing') return json(res, 202, { ok: true, asset: { id: asset.id, state: asset.state }, idempotent: true });
+      if (asset.state === 'ready') return json(res, 200, { ok: true, asset: { id: asset.id, state: asset.state }, idempotent: true });
+      if (asset.state !== 'uploaded' && asset.state !== 'failed') return error(res, 409, 'MEDIA_ASSET_STATE_NOT_COMPLETABLE');
+      const object = await storage.inspectObject(config, config.storageBucket, asset.storage_path);
+      if (!object.ok) return error(res, object.status === 404 ? 409 : 503, object.code || 'MEDIA_OBJECT_NOT_FOUND', 'The uploaded file is not yet available in private storage.');
+      if (object.byteSize !== null && object.byteSize !== Number(asset.byte_size)) {
+        await adminRest(config, 'media_assets', query({ id: 'eq.' + asset.id, uploader_id: 'eq.' + session.profile.id }), 'PATCH', {
+          state: 'quarantined', updated_at: new Date().toISOString(),
+          metadata: { ...(asset.metadata || {}), quarantineReason: 'MEDIA_SIZE_MISMATCH' }
+        });
+        return error(res, 409, 'MEDIA_SIZE_MISMATCH', 'Uploaded bytes do not match the declared file size. The asset was quarantined.');
+      }
+      const queued = await adminRpc(config, 'queue_media_processing_job', {
+        p_asset_id: asset.id, p_profile_id: session.profile.id, p_bucket: config.storageBucket
+      });
+      if (!queued.ok) return badDatabase(res, queued, 'MEDIA_QUEUE_UNAVAILABLE');
+      const jobId = typeof queued.data === 'string' ? queued.data : Array.isArray(queued.data) ? queued.data[0] : queued.data && queued.data.queue_media_processing_job;
+      return json(res, 202, { ok: true, asset: { id: asset.id, state: 'processing' }, jobId: jobId || null });
+    }
+
+    const mediaStatusMatch = url.pathname.match(/^\/api\/media\/([0-9a-f-]+)$/i);
+    if (req.method === 'GET' && mediaStatusMatch) {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const assetId = mediaStatusMatch[1];
+      if (!uuid(assetId)) return error(res, 400, 'INVALID_MEDIA_ASSET_ID');
+      const selected = await rowsForUser(session, 'media_assets', {
+        select: 'id,media_type,mime_type,byte_size,state,width,height,duration_ms,metadata,created_at,updated_at',
+        id: 'eq.' + assetId, uploader_id: 'eq.' + session.profile.id, limit: '1'
+      });
+      if (!selected.ok) return badDatabase(res, selected, 'MEDIA_STATUS_UNAVAILABLE');
+      if (!Array.isArray(selected.data) || !selected.data[0]) return error(res, 404, 'MEDIA_ASSET_NOT_FOUND');
+      const asset = selected.data[0];
+      const safeMetadata = asset.metadata && typeof asset.metadata === 'object' ? {
+        pipelineVersion: asset.metadata.pipelineVersion || null,
+        processedAt: asset.metadata.processedAt || null,
+        lastProcessingError: asset.metadata.lastProcessingError || null,
+        quarantineReason: asset.metadata.quarantineReason || null,
+        width: asset.metadata.width || asset.width || null,
+        height: asset.metadata.height || asset.height || null,
+        durationSeconds: asset.metadata.durationSeconds || (asset.duration_ms ? Number(asset.duration_ms) / 1000 : null)
+      } : {};
+      return json(res, 200, { ok: true, asset: {
+        id: asset.id, mediaType: asset.media_type, mimeType: asset.mime_type, byteSize: asset.byte_size,
+        state: asset.state, width: asset.width, height: asset.height, durationMs: asset.duration_ms,
+        metadata: safeMetadata, createdAt: asset.created_at, updatedAt: asset.updated_at
+      } });
     }
 
     if (req.method === 'POST' && url.pathname === '/api/posts') {

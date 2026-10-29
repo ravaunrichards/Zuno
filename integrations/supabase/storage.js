@@ -163,6 +163,28 @@ async function downloadObjectToFile(config, bucket, objectPath, outputPath, maxB
     return { ok: false, status: error && error.message === 'FILE_TOO_LARGE' ? 413 : 503, code: error && error.message === 'FILE_TOO_LARGE' ? 'FILE_TOO_LARGE' : 'STORAGE_UNAVAILABLE' };
   }
 }
+async function inspectObject(config, bucket, objectPath, fetcher = fetch) {
+  if (!isConfigured(config)) return { ok: false, status: 503, code: 'STORAGE_NOT_CONFIGURED' };
+  try {
+    const key = encodeObjectPath(objectPath);
+    const url = endpoint(config, '/object/authenticated/' + encodeURIComponent(bucket) + '/' + key);
+    const response = await fetchWithTimeout(fetcher, url, {
+      method: 'HEAD',
+      headers: serviceHeaders(config, { Accept: 'application/json, */*' })
+    });
+    await response.arrayBuffer().catch(() => null);
+    if (!response.ok) return { ok: false, status: response.status, code: response.status === 404 ? 'OBJECT_NOT_FOUND' : 'STORAGE_OBJECT_INSPECTION_FAILED' };
+    const size = Number(response.headers.get('content-length'));
+    return {
+      ok: true, status: response.status,
+      byteSize: Number.isSafeInteger(size) && size >= 0 ? size : null,
+      mimeType: response.headers.get('content-type') || null,
+      etag: response.headers.get('etag') || null
+    };
+  } catch (_) {
+    return { ok: false, status: 503, code: 'STORAGE_UNAVAILABLE' };
+  }
+}
 async function deleteObject(config, bucket, objectPath, fetcher = fetch) {
   if (!isConfigured(config)) return { ok: false, status: 503, code: 'STORAGE_NOT_CONFIGURED' };
   try {
@@ -181,5 +203,5 @@ async function deleteObject(config, bucket, objectPath, fetcher = fetch) {
 module.exports = {
   isConfigured, storageBase, encodeObjectPath, resolveSignedPath,
   createSignedUploadUrl, createSignedDownloadUrl, createSignedDownloadUrls,
-  uploadObjectFromFile, downloadObjectToFile, deleteObject
+  uploadObjectFromFile, downloadObjectToFile, inspectObject, deleteObject
 };
