@@ -13,10 +13,10 @@ function bool(v, def = false) {
 
 function load(env = process.env) {
   const supabase = {
-    url: env.SUPABASE_URL || '',
-    anonKey: env.SUPABASE_ANON_KEY || '',
-    serviceRoleKey: env.SUPABASE_SECRET_KEY || env.SUPABASE_SERVICE_ROLE_KEY || '',
-    jwtSecret: env.SUPABASE_JWT_SECRET || '',
+    url: String(env.SUPABASE_URL || '').trim(),
+    anonKey: String(env.SUPABASE_ANON_KEY || '').trim(),
+    serviceRoleKey: String(env.SUPABASE_SECRET_KEY || env.SUPABASE_SERVICE_ROLE_KEY || '').trim(),
+    jwtSecret: String(env.SUPABASE_JWT_SECRET || '').trim(),
   };
   const livekit = {
     url: env.LIVEKIT_URL || '',
