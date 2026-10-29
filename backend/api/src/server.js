@@ -498,7 +498,7 @@ const server = http.createServer(async (req, res) => {
               }
             }
           }
-
+        }
       } catch (_) {
         processing = 'failed';
         errorCode = 'WEBHOOK_PROCESSING_FAILED';
