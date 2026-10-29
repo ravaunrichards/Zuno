@@ -2,7 +2,7 @@ import { mountNavigation } from './src/components/navigation.js';
 import { mountSearch } from './src/features/search/search.js';
 import { mountComposer } from './src/features/creation/composer.js';
 import { mountGiftCatalog } from './src/features/gifts/catalog.js';
-import { mountLivePreview } from './src/features/livestreaming/live-preview.js';
+import { mountLiveRooms } from './src/features/livestreaming/live-room.js';
 import { mountActions } from './src/features/actions.js';
 import { mountAuth } from './src/features/auth/auth-ui.js';
 import { mountFeed } from './src/features/feed/feed.js';
@@ -16,7 +16,7 @@ mountAuth();
 mountFeed();
 mountWallet();
 mountGiftCatalog();
-mountLivePreview();
+mountLiveRooms();
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   navigator.serviceWorker.register('./sw.js').catch(() => {
