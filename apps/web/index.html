@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' http://localhost:4000; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'" />
+<title>ZUNO</title>
+<link rel="manifest" href="./manifest.webmanifest" />
+<style>
+  :root{--brand:#5b2be0;--brand2:#00d4c8;--bg:#0d0d12;--surface:#1f1f2b;--text:#f4f4f8;--muted:#a0a0b4;--coin:#ffce3a;--live:#ff2d55}
+  *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif}
+  header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid #2a2a38;position:sticky;top:0;background:rgba(13,13,18,.9);backdrop-filter:blur(8px)}
+  .logo{font-weight:800;font-size:22px;background:linear-gradient(90deg,var(--brand),var(--brand2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  main{max-width:1100px;margin:0 auto;padding:20px}
+  h2{font-size:18px;margin:24px 0 12px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+  .card{background:var(--surface);border-radius:14px;padding:14px;border:1px solid #2a2a38}
+  .card .name{font-weight:600;font-size:14px}
+  .card .cat{color:var(--muted);font-size:11px;margin:4px 0}
+  .price{color:var(--coin);font-weight:700;font-size:13px}
+  .badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:999px;background:#2a2a38;color:var(--muted);margin-top:6px}
+  .status{color:var(--muted);font-size:13px}
+  nav.tab{position:sticky;bottom:0;display:flex;justify-content:space-around;padding:10px;border-top:1px solid #2a2a38;background:var(--bg)}
+  nav.tab button{background:transparent;border:0;color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<header><span class="logo">ZUNO</span><span class="status" id="health">connecting\u2026</span></header>
+<main>
+  <h2>Z Coin Gift Catalog <span class="status" id="count"></span></h2>
+  <div class="grid" id="gifts"><div class="status">Loading gifts\u2026</div></div>
+</main>
+<nav class="tab">
+  <button>Home</button><button>Discover</button><button>LIVE</button><button>Inbox</button><button>Profile</button>
+</nav>
+<script src="./app.js"></script>
+</body>
+</html>

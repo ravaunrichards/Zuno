@@ -1,0 +1,9 @@
+{
+  "app": { "name": "ZUNO", "tagline": "Create. Connect. Go Live." },
+  "nav": { "home": "Home", "discover": "Discover", "live": "LIVE", "inbox": "Inbox", "profile": "Profile" },
+  "feed": { "following": "Following", "forYou": "For You", "empty": "Nothing here yet" },
+  "gift": { "send": "Send Gift", "insufficient": "Not enough Z Coins", "locked": "Reach a higher level to send this gift" },
+  "wallet": { "balance": "Z Coins", "recharge": "Recharge", "history": "Transaction history" },
+  "live": { "start": "Go Live", "requestGuest": "Request to join", "end": "End LIVE" },
+  "errors": { "generic": "Something went wrong", "offline": "You are offline", "unauthorized": "Please sign in" }
+}

@@ -1,0 +1,2375 @@
+{
+  "version": "1.0.0",
+  "count": 103,
+  "gifts": [
+    {
+      "giftId": "gift_animals_fantasy_celestial_whale_379e7e82",
+      "name": "Celestial Whale",
+      "category": "animals_fantasy",
+      "priceCoins": 9999,
+      "modelPath": "assets/3d-models/gift_animals_fantasy_celestial_whale_379e7e82.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 4300
+      },
+      "audioPath": "assets/gift-audio/gift_animals_fantasy_celestial_whale_379e7e82.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:5a6d52eb636e46e559466154a2df2436dafdb538452a43edf4548ed2ab9dea06",
+      "audioChecksum": "sha256:c10192f30bda2743c9734d090b991ddb788f8c84d2483252c9f609369a7a0db9"
+    },
+    {
+      "giftId": "gift_animals_fantasy_crystal_dragon_70cf4514",
+      "name": "Crystal Dragon",
+      "category": "animals_fantasy",
+      "priceCoins": 9999,
+      "modelPath": "assets/3d-models/gift_animals_fantasy_crystal_dragon_70cf4514.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 4300
+      },
+      "audioPath": "assets/gift-audio/gift_animals_fantasy_crystal_dragon_70cf4514.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:f345eb2d9310ea6540b4647feea0b1c825cd20502890a23a5cdca7a8f71e9b3e",
+      "audioChecksum": "sha256:4886c5b8504d8d857680a22cf6fe75e581510846f6a61e43c5eb89b597160b53"
+    },
+    {
+      "giftId": "gift_animals_fantasy_doctor_bird_ef185972",
+      "name": "Doctor Bird",
+      "category": "animals_fantasy",
+      "priceCoins": 99,
+      "modelPath": "assets/3d-models/gift_animals_fantasy_doctor_bird_ef185972.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 2700
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:bfa64e6e365c3873f619b26bd5c669fc3563883cbe84b8597114995b60244345",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_animals_fantasy_hummingbird_a40fd17c",
+      "name": "Hummingbird",
+      "category": "animals_fantasy",
+      "priceCoins": 20,
+      "modelPath": "assets/3d-models/gift_animals_fantasy_hummingbird_a40fd17c.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": false,
+        "particles": false,
+        "durationMs": 2300
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:0853d77be503e03a7ce7f0b3372e1ebb53d06ac4ad6f861b9c87238d145b2efb",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_animals_fantasy_mongoose_dash_025c78ca",
+      "name": "Mongoose Dash",
+      "category": "animals_fantasy",
+      "priceCoins": 20,
+      "modelPath": "assets/3d-models/gift_animals_fantasy_mongoose_dash_025c78ca.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": false,
+        "particles": false,
+        "durationMs": 2300
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:5b8749306784553bbba870b5f0c54dad9a53662033b209919411a6ee23c7630e",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_animals_fantasy_phoenix_rise_f49d274d",
+      "name": "Phoenix Rise",
+      "category": "animals_fantasy",
+      "priceCoins": 2999,
+      "modelPath": "assets/3d-models/gift_animals_fantasy_phoenix_rise_f49d274d.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 3900
+      },
+      "audioPath": "assets/gift-audio/gift_animals_fantasy_phoenix_rise_f49d274d.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:79d847e2aca0d5c0e6e71e49d0c5d69889414bca122865a6d5c0b7aca7b17daa",
+      "audioChecksum": "sha256:7890f0b103be8d9cf68567596d87a6e1bbd8a471a749e0faa1c7fccbc36cf6a7"
+    },
+    {
+      "giftId": "gift_animals_fantasy_sea_turtle_726e149c",
+      "name": "Sea Turtle",
+      "category": "animals_fantasy",
+      "priceCoins": 99,
+      "modelPath": "assets/3d-models/gift_animals_fantasy_sea_turtle_726e149c.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 2700
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:71daed7d1594769e169822e8a5f83f9f9b55c7a96600a93954c6651b75780914",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_animals_fantasy_spirit_lion_9dc2ba1e",
+      "name": "Spirit Lion",
+      "category": "animals_fantasy",
+      "priceCoins": 2999,
+      "modelPath": "assets/3d-models/gift_animals_fantasy_spirit_lion_9dc2ba1e.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 3900
+      },
+      "audioPath": "assets/gift-audio/gift_animals_fantasy_spirit_lion_9dc2ba1e.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:1bb6fdca5a522a9300630ebb14f4f2e373d819b9e32275e002c9271fa66a1292",
+      "audioChecksum": "sha256:3116697a8a804165a106ff04cfdec68351073e013cd17b05cb324d6927b6a5c3"
+    },
+    {
+      "giftId": "gift_celebration_balloon_bunch_522b7789",
+      "name": "Balloon Bunch",
+      "category": "celebration",
+      "priceCoins": 20,
+      "modelPath": "assets/3d-models/gift_celebration_balloon_bunch_522b7789.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": false,
+        "particles": false,
+        "durationMs": 2300
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:fb83c619d7b4aacab733d9d3966cfc34478996ca8288a7c5f9afcfc3a9b75d2c",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_celebration_birthday_cake_3691e330",
+      "name": "Birthday Cake",
+      "category": "celebration",
+      "priceCoins": 99,
+      "modelPath": "assets/3d-models/gift_celebration_birthday_cake_3691e330.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 2700
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:0f0192b3a9427aa48acf665eebee5a49ddca9d80886d6a6321a31ab633c22b74",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_celebration_champagne_tower_b8919a9c",
+      "name": "Champagne Tower",
+      "category": "celebration",
+      "priceCoins": 999,
+      "modelPath": "assets/3d-models/gift_celebration_champagne_tower_b8919a9c.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 3500
+      },
+      "audioPath": "assets/gift-audio/gift_celebration_champagne_tower_b8919a9c.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:8f0866ff4a08c13310b8498a220c7934f1d0e500466a75ddba0130849f7dc65d",
+      "audioChecksum": "sha256:a052281560d13815a27ccc7ac390c420db1648966363e9cb72dfbd645af334ba"
+    },
+    {
+      "giftId": "gift_celebration_confetti_pop_82ad0d98",
+      "name": "Confetti Pop",
+      "category": "celebration",
+      "priceCoins": 5,
+      "modelPath": "assets/3d-models/gift_celebration_confetti_pop_82ad0d98.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": false,
+        "particles": false,
+        "durationMs": 1900
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:6fd831df798718b2b712dbeca069cfee7eaefcdfaf526525709b4bbc62799027",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_celebration_fireworks_burst_d7f2e4bb",
+      "name": "Fireworks Burst",
+      "category": "celebration",
+      "priceCoins": 299,
+      "modelPath": "assets/3d-models/gift_celebration_fireworks_burst_d7f2e4bb.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 3100
+      },
+      "audioPath": "assets/gift-audio/gift_celebration_fireworks_burst_d7f2e4bb.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:5ae820b9be2d38606e32aad620038c43dcbe94def0adfdcfd55b0cf745c9ade2",
+      "audioChecksum": "sha256:f9358c8961937032017e76f3c963f347c4e33d5c2867f646161e8dfe5dd17546"
+    },
+    {
+      "giftId": "gift_celebration_golden_trophy_47b6280a",
+      "name": "Golden Trophy",
+      "category": "celebration",
+      "priceCoins": 999,
+      "modelPath": "assets/3d-models/gift_celebration_golden_trophy_47b6280a.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 3500
+      },
+      "audioPath": "assets/gift-audio/gift_celebration_golden_trophy_47b6280a.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:d9344797ee114deb2c017e3967c98346cef8cb8d46d219606e1f9042b1bc6c50",
+      "audioChecksum": "sha256:2898e2dff4fc52d685c5edd36351c2f2af3e97d5567250712cc933b327ce57a0"
+    },
+    {
+      "giftId": "gift_celebration_grand_parade_34fc3dbe",
+      "name": "Grand Parade",
+      "category": "celebration",
+      "priceCoins": 9999,
+      "modelPath": "assets/3d-models/gift_celebration_grand_parade_34fc3dbe.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 4300
+      },
+      "audioPath": "assets/gift-audio/gift_celebration_grand_parade_34fc3dbe.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:f472dc3feb69e4974fbb7fa5c4941cdae982bf7cafa68c7285bba40253b6cfd7",
+      "audioChecksum": "sha256:e2a747de6258407bcd455f3e3f502dd620fd92c967ffa439b918e8d814c52abb"
+    },
+    {
+      "giftId": "gift_celebration_medal_ceremony_269d5fc5",
+      "name": "Medal Ceremony",
+      "category": "celebration",
+      "priceCoins": 299,
+      "modelPath": "assets/3d-models/gift_celebration_medal_ceremony_269d5fc5.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 3100
+      },
+      "audioPath": "assets/gift-audio/gift_celebration_medal_ceremony_269d5fc5.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:c403398facc72a605130ccc25f1d771b03a197f194b04b4afa5aa0b5e9d9d7b2",
+      "audioChecksum": "sha256:3934ebabd255eb28f75b6b0eb0912a2522c36a94ef0b15f6f4f4d97d222a04f6"
+    },
+    {
+      "giftId": "gift_celebration_streamer_cannon_8324c008",
+      "name": "Streamer Cannon",
+      "category": "celebration",
+      "priceCoins": 20,
+      "modelPath": "assets/3d-models/gift_celebration_streamer_cannon_8324c008.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": false,
+        "particles": false,
+        "durationMs": 2300
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:5c2a3355b6345f5dd6e0199ef01835bc1d63d21f1aef8fc7c77e64e997b0f086",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_cosmic_black_hole_b2112d82",
+      "name": "Black Hole",
+      "category": "cosmic",
+      "priceCoins": 9999,
+      "modelPath": "assets/3d-models/gift_cosmic_black_hole_b2112d82.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 4300
+      },
+      "audioPath": "assets/gift-audio/gift_cosmic_black_hole_b2112d82.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:a4fd77eed81224948ebc93847f944c24282a0f6df5055eed1542dafe5bb2fa58",
+      "audioChecksum": "sha256:7129fd96d68172d6756685d47d6bab1cbf9e5f2fef174b54c85d343866104241"
+    },
+    {
+      "giftId": "gift_cosmic_comet_trail_c7984d7e",
+      "name": "Comet Trail",
+      "category": "cosmic",
+      "priceCoins": 299,
+      "modelPath": "assets/3d-models/gift_cosmic_comet_trail_c7984d7e.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 3100
+      },
+      "audioPath": "assets/gift-audio/gift_cosmic_comet_trail_c7984d7e.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:c0b4e4db4172a8791de3417a849c41917071de0d0d795d9a87d1e1e2d594f58f",
+      "audioChecksum": "sha256:f179a3843da1fd9061a888d6303dceb50dd4a37b9636f421fcdceeb07a06b804"
+    },
+    {
+      "giftId": "gift_cosmic_galaxy_swirl_0bead6e5",
+      "name": "Galaxy Swirl",
+      "category": "cosmic",
+      "priceCoins": 2999,
+      "modelPath": "assets/3d-models/gift_cosmic_galaxy_swirl_0bead6e5.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 3900
+      },
+      "audioPath": "assets/gift-audio/gift_cosmic_galaxy_swirl_0bead6e5.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:4271ce85b0879906c35931404e52874e5370412d8295225486f4eee1d7f25ce6",
+      "audioChecksum": "sha256:99a23dbc33416b49c3570d0ce03e42a157e3b739f142b32731360c204f0c8f1b"
+    },
+    {
+      "giftId": "gift_cosmic_nebula_veil_27a829d0",
+      "name": "Nebula Veil",
+      "category": "cosmic",
+      "priceCoins": 2999,
+      "modelPath": "assets/3d-models/gift_cosmic_nebula_veil_27a829d0.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 3900
+      },
+      "audioPath": "assets/gift-audio/gift_cosmic_nebula_veil_27a829d0.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:31e0b7cad3e16d353ebcdb107ffae2cead5db16ed7279d7312a35d6bce52a218",
+      "audioChecksum": "sha256:d187e2b09789de01a1f41c574f7635364834d23c4e409abed5dd4ac719dbec18"
+    },
+    {
+      "giftId": "gift_cosmic_saturn_ring_333f9881",
+      "name": "Saturn Ring",
+      "category": "cosmic",
+      "priceCoins": 999,
+      "modelPath": "assets/3d-models/gift_cosmic_saturn_ring_333f9881.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 3500
+      },
+      "audioPath": "assets/gift-audio/gift_cosmic_saturn_ring_333f9881.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:96f464a7269cfadc9887ab8e16d3b8d69ec564cd3d5f5166ad4cb1d963089513",
+      "audioChecksum": "sha256:4bd7098bc470c6ffd1a2e405c4c22d316cbbd3eea37f8a6dab8dd989ba4564bd"
+    },
+    {
+      "giftId": "gift_cosmic_shooting_star_23b804c0",
+      "name": "Shooting Star",
+      "category": "cosmic",
+      "priceCoins": 99,
+      "modelPath": "assets/3d-models/gift_cosmic_shooting_star_23b804c0.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 2700
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:2384c3e8abe5c7b769131311bdc75ef80b30d86a37603ae2e79284b595563e8a",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_cosmic_star_cluster_724eaf7d",
+      "name": "Star Cluster",
+      "category": "cosmic",
+      "priceCoins": 999,
+      "modelPath": "assets/3d-models/gift_cosmic_star_cluster_724eaf7d.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 3500
+      },
+      "audioPath": "assets/gift-audio/gift_cosmic_star_cluster_724eaf7d.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:6d53e76c3a54293ea0e66b1f46b85f8d8a77f4365e7f945a31ef0bf247d3ddfe",
+      "audioChecksum": "sha256:93db3632144b3a1f3d9091cb16de0be47088e96474b299d137f5711ffbad0eb5"
+    },
+    {
+      "giftId": "gift_cosmic_supernova_3f46776a",
+      "name": "Supernova",
+      "category": "cosmic",
+      "priceCoins": 9999,
+      "modelPath": "assets/3d-models/gift_cosmic_supernova_3f46776a.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 4300
+      },
+      "audioPath": "assets/gift-audio/gift_cosmic_supernova_3f46776a.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:7fcbe30701d7a2ebfd4882c01e08ff2f4fc83ce2d0a07e6ec1115aba2989a7f5",
+      "audioChecksum": "sha256:eadfd0c9f4c127e7ec7be580ca4cf43b5486e6cf50a39c9eb6ca5c7d04d7561b"
+    },
+    {
+      "giftId": "gift_cosmic_ultimate_universe_29670f16",
+      "name": "Ultimate Universe",
+      "category": "cosmic",
+      "priceCoins": 50000,
+      "modelPath": "assets/3d-models/gift_cosmic_ultimate_universe_29670f16.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 4700
+      },
+      "audioPath": "assets/gift-audio/gift_cosmic_ultimate_universe_29670f16.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:611c8303152cf187e92c1f82f53ceda2ec69175dd668f060bd76a2a04f2f8821",
+      "audioChecksum": "sha256:d5498b95e0588d15529cf7a3db48c6854d30bad6471c4ad987ee7650efd57727"
+    },
+    {
+      "giftId": "gift_cosmic_wormhole_9ea475eb",
+      "name": "Wormhole",
+      "category": "cosmic",
+      "priceCoins": 2999,
+      "modelPath": "assets/3d-models/gift_cosmic_wormhole_9ea475eb.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 3900
+      },
+      "audioPath": "assets/gift-audio/gift_cosmic_wormhole_9ea475eb.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:2418fe7364ee1aff5fef22f77824c25dce486e6c4cd25d6a4ae59198450a1883",
+      "audioChecksum": "sha256:2684ee295ccd4f27759bec2dd7bbb7f6e2320c51402e0940c5bcf8f649956ff7"
+    },
+    {
+      "giftId": "gift_creator_support_coffee_cup_f56ab090",
+      "name": "Coffee Cup",
+      "category": "creator_support",
+      "priceCoins": 5,
+      "modelPath": "assets/3d-models/gift_creator_support_coffee_cup_f56ab090.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": false,
+        "particles": false,
+        "durationMs": 1900
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:7d57f5de69f2e9813eb1ffcbae55cdcea975bdb76c68028667c634bbd528db89",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_creator_support_fan_badge_b11a2154",
+      "name": "Fan Badge",
+      "category": "creator_support",
+      "priceCoins": 20,
+      "modelPath": "assets/3d-models/gift_creator_support_fan_badge_b11a2154.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": false,
+        "particles": false,
+        "durationMs": 2300
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:62b49ad2854c9a7ebc841b2bdb857421e939e715644799bb03aff368d49324fa",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_creator_support_hall_of_fame_e88255fa",
+      "name": "Hall of Fame",
+      "category": "creator_support",
+      "priceCoins": 2999,
+      "modelPath": "assets/3d-models/gift_creator_support_hall_of_fame_e88255fa.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 3900
+      },
+      "audioPath": "assets/gift-audio/gift_creator_support_hall_of_fame_e88255fa.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:9e189aca0524a76703daa3649ad531af9d192b3800b6d23d05515ab03f6bde32",
+      "audioChecksum": "sha256:e923e19e240a78ea5f5c484c0e5f4bbefc8dfc737a64c9be3f29cdcd01cf966c"
+    },
+    {
+      "giftId": "gift_creator_support_legend_banner_76aaa5a0",
+      "name": "Legend Banner",
+      "category": "creator_support",
+      "priceCoins": 2999,
+      "modelPath": "assets/3d-models/gift_creator_support_legend_banner_76aaa5a0.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 3900
+      },
+      "audioPath": "assets/gift-audio/gift_creator_support_legend_banner_76aaa5a0.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:0fa877eef4b83fa3eae3b55117db977358cbae5a0427e1272c5756081443065a",
+      "audioChecksum": "sha256:c0af0e8951417c88110229032d4eeb0544ca79470988b14de40b0d76ea30ea98"
+    },
+    {
+      "giftId": "gift_creator_support_patron_medal_a7c7c20d",
+      "name": "Patron Medal",
+      "category": "creator_support",
+      "priceCoins": 999,
+      "modelPath": "assets/3d-models/gift_creator_support_patron_medal_a7c7c20d.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 3500
+      },
+      "audioPath": "assets/gift-audio/gift_creator_support_patron_medal_a7c7c20d.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:9b90c305588b8df2258cff53ed50f6780888e457c001fe4e6d56b6a24aeeae25",
+      "audioChecksum": "sha256:6bfd67a329654eae2d5e31387a2adaccc4e3a6e10469207765f4aa429b291428"
+    },
+    {
+      "giftId": "gift_creator_support_rocket_boost_decdb315",
+      "name": "Rocket Boost",
+      "category": "creator_support",
+      "priceCoins": 99,
+      "modelPath": "assets/3d-models/gift_creator_support_rocket_boost_decdb315.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 2700
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:a998abe021be9897683df160914b9fe2d0c5276515110b15bd238022b4572bcc",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_creator_support_spotlight_6723b9a9",
+      "name": "Spotlight",
+      "category": "creator_support",
+      "priceCoins": 299,
+      "modelPath": "assets/3d-models/gift_creator_support_spotlight_6723b9a9.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 3100
+      },
+      "audioPath": "assets/gift-audio/gift_creator_support_spotlight_6723b9a9.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:e2678ddcfbe2a1f959eb5970770b0372300eab1f658582ab8c4f1ea77ccaba5f",
+      "audioChecksum": "sha256:19f2ca333149059d486ece5aae686aea09f98890fb56a440392753c50337b583"
+    },
+    {
+      "giftId": "gift_creator_support_super_fan_8fb58477",
+      "name": "Super Fan",
+      "category": "creator_support",
+      "priceCoins": 299,
+      "modelPath": "assets/3d-models/gift_creator_support_super_fan_8fb58477.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 3100
+      },
+      "audioPath": "assets/gift-audio/gift_creator_support_super_fan_8fb58477.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:2bc100751ec5b392bf711933e13cab21ef73cd1df2bb0e48d0aa27f2c3f281b7",
+      "audioChecksum": "sha256:211991b6d79e1f63bccddbc5314caf77ba54a7b9f6640ee48737fc3c7210ecc4"
+    },
+    {
+      "giftId": "gift_creator_support_thumbs_up_28f8ba68",
+      "name": "Thumbs Up",
+      "category": "creator_support",
+      "priceCoins": 5,
+      "modelPath": "assets/3d-models/gift_creator_support_thumbs_up_28f8ba68.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": false,
+        "particles": false,
+        "durationMs": 1900
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:a8bae13199489c3495bd9ee5f053cc2468f73ad0adf2ee9e66da7bdc6cc6d030",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_flowers_romance_diamond_heart_d3d7a021",
+      "name": "Diamond Heart",
+      "category": "flowers_romance",
+      "priceCoins": 9999,
+      "modelPath": "assets/3d-models/gift_flowers_romance_diamond_heart_d3d7a021.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 4300
+      },
+      "audioPath": "assets/gift-audio/gift_flowers_romance_diamond_heart_d3d7a021.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:4c2b8fad1b4efc35285e75ec5bed2d039daab18e15202239cfe42bab90232d22",
+      "audioChecksum": "sha256:8222462c45a2d943132e0fb3094979ce91bc65bfff0002718e1961f061a3b932"
+    },
+    {
+      "giftId": "gift_flowers_romance_eternal_rose_605fe3b5",
+      "name": "Eternal Rose",
+      "category": "flowers_romance",
+      "priceCoins": 999,
+      "modelPath": "assets/3d-models/gift_flowers_romance_eternal_rose_605fe3b5.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 3500
+      },
+      "audioPath": "assets/gift-audio/gift_flowers_romance_eternal_rose_605fe3b5.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:45d686f1f27036ae329450fcffe5c3cab705a2a925fa88e4e0c6a351b07bd0e7",
+      "audioChecksum": "sha256:a108b1422fb7b1731a6be74febf39c42f09f9c2dcca1f8310e9b853c1f776e51"
+    },
+    {
+      "giftId": "gift_flowers_romance_heart_petals_19df6b7e",
+      "name": "Heart Petals",
+      "category": "flowers_romance",
+      "priceCoins": 99,
+      "modelPath": "assets/3d-models/gift_flowers_romance_heart_petals_19df6b7e.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 2700
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:7701fbc4e2332151a6f942b2163772d2f8a885b873837828c827de42ce2b1d7f",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_flowers_romance_hibiscus_bloom_4ee091a6",
+      "name": "Hibiscus Bloom",
+      "category": "flowers_romance",
+      "priceCoins": 20,
+      "modelPath": "assets/3d-models/gift_flowers_romance_hibiscus_bloom_4ee091a6.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": false,
+        "particles": false,
+        "durationMs": 2300
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:9a2fa404a7124dd8ca7856980ee14a989b48a568a35765f816e8d8d64235550f",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_flowers_romance_lily_basket_68f81a82",
+      "name": "Lily Basket",
+      "category": "flowers_romance",
+      "priceCoins": 20,
+      "modelPath": "assets/3d-models/gift_flowers_romance_lily_basket_68f81a82.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": false,
+        "particles": false,
+        "durationMs": 2300
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:eba60c6fa584a5eece3b472b431a117b40be4cd467803740c99c6b76a4b5e2fd",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_flowers_romance_love_constellation_d5ea89e5",
+      "name": "Love Constellation",
+      "category": "flowers_romance",
+      "priceCoins": 2999,
+      "modelPath": "assets/3d-models/gift_flowers_romance_love_constellation_d5ea89e5.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 3900
+      },
+      "audioPath": "assets/gift-audio/gift_flowers_romance_love_constellation_d5ea89e5.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:f50c136c6467af36a844ec68cde341bb1273c8e323d2687e7214d9b5aaf97aae",
+      "audioChecksum": "sha256:a16316576b6efe5ab548f78ad199b7129389e4c186bb0317d9e4df21663236da"
+    },
+    {
+      "giftId": "gift_flowers_romance_orchid_spray_5b15a262",
+      "name": "Orchid Spray",
+      "category": "flowers_romance",
+      "priceCoins": 99,
+      "modelPath": "assets/3d-models/gift_flowers_romance_orchid_spray_5b15a262.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 2700
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:c312b9960d2c3e7ebfb68b62d4c5ec050faf5ffb6b649c93f3a9349d5a4c8575",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_flowers_romance_rose_bouquet_5bf05a24",
+      "name": "Rose Bouquet",
+      "category": "flowers_romance",
+      "priceCoins": 20,
+      "modelPath": "assets/3d-models/gift_flowers_romance_rose_bouquet_5bf05a24.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": false,
+        "particles": false,
+        "durationMs": 2300
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:af5b2d944a401eee4d5fc6cb94e002c0a3fb4f433ed716212e72fce12451d587",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_flowers_romance_single_rose_02968e43",
+      "name": "Single Rose",
+      "category": "flowers_romance",
+      "priceCoins": 5,
+      "modelPath": "assets/3d-models/gift_flowers_romance_single_rose_02968e43.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": false,
+        "particles": false,
+        "durationMs": 1900
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:58b9a1e84ba6694156d9eb4b219eb5d16dae84326b1c62c10c521972c6df232d",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_flowers_romance_sunflower_field_40667f7c",
+      "name": "Sunflower Field",
+      "category": "flowers_romance",
+      "priceCoins": 99,
+      "modelPath": "assets/3d-models/gift_flowers_romance_sunflower_field_40667f7c.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 2700
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:735d68b3800efb52c7d0e6acac9501e0addd1641902dd3efc912aa9a6fbb933d",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_jamaica_culture_ackee___saltfish_8cc49dc0",
+      "name": "Ackee & Saltfish",
+      "category": "jamaica_culture",
+      "priceCoins": 20,
+      "modelPath": "assets/3d-models/gift_jamaica_culture_ackee___saltfish_8cc49dc0.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": false,
+        "particles": false,
+        "durationMs": 2300
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:ca36fed56fcc6590ae61cd8e46fe6e0a52ee974836fa8aafd2050c69ff51fd08",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_jamaica_culture_bamboo_raft_fadfef44",
+      "name": "Bamboo Raft",
+      "category": "jamaica_culture",
+      "priceCoins": 99,
+      "modelPath": "assets/3d-models/gift_jamaica_culture_bamboo_raft_fadfef44.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 2700
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:1a293dec1d0cd7c41ecef92c319ac82ee0df1ad0c9bb3aa958cbda9c3892ec3e",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_jamaica_culture_blue_mountain_peak_cf8d0205",
+      "name": "Blue Mountain Peak",
+      "category": "jamaica_culture",
+      "priceCoins": 299,
+      "modelPath": "assets/3d-models/gift_jamaica_culture_blue_mountain_peak_cf8d0205.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 3100
+      },
+      "audioPath": "assets/gift-audio/gift_jamaica_culture_blue_mountain_peak_cf8d0205.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:a48d36440ed051be14de2afa36dc4d8af022d4fea4a89ce9cc64394fc9da6856",
+      "audioChecksum": "sha256:d3b304a0558a30614ec44b5b06eab66e60282311ce0d980f8f122b0e2bd9397b"
+    },
+    {
+      "giftId": "gift_jamaica_culture_festival_kite_8c03afe7",
+      "name": "Festival Kite",
+      "category": "jamaica_culture",
+      "priceCoins": 99,
+      "modelPath": "assets/3d-models/gift_jamaica_culture_festival_kite_8c03afe7.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 2700
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:e323085ec9d39693b9c882c98749bd5ae736646f09bd0f1f4b2c397054fd62b0",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_jamaica_culture_market_basket_9a72dbc4",
+      "name": "Market Basket",
+      "category": "jamaica_culture",
+      "priceCoins": 20,
+      "modelPath": "assets/3d-models/gift_jamaica_culture_market_basket_9a72dbc4.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": false,
+        "particles": false,
+        "durationMs": 2300
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:1f03c1e30e8bf9e4a337cbded1faac0d6a2a25b2c9a5aa0417fb59970ec49e11",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_jamaica_culture_reggae_sunsplash_c385d11a",
+      "name": "Reggae Sunsplash",
+      "category": "jamaica_culture",
+      "priceCoins": 999,
+      "modelPath": "assets/3d-models/gift_jamaica_culture_reggae_sunsplash_c385d11a.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 3500
+      },
+      "audioPath": "assets/gift-audio/gift_jamaica_culture_reggae_sunsplash_c385d11a.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:2c2259b7491cc26e6e18b7ab3074db2c0e027fd26fb6b131445b4813df068ff8",
+      "audioChecksum": "sha256:5732c592d518810ca01fd477b04c139dbe479d655b79345fc2218925612e99cf"
+    },
+    {
+      "giftId": "gift_jamaica_culture_steel_drum_39363e77",
+      "name": "Steel Drum",
+      "category": "jamaica_culture",
+      "priceCoins": 99,
+      "modelPath": "assets/3d-models/gift_jamaica_culture_steel_drum_39363e77.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 2700
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:84febd944d8071e833eb08745991a935b2c585244fa9adcd6a743ac2bcba39bf",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_jamaica_parish_clarendon_8c2c296a",
+      "name": "Clarendon",
+      "category": "jamaica_parish",
+      "priceCoins": 99,
+      "modelPath": "assets/3d-models/gift_jamaica_parish_clarendon_8c2c296a.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 2700
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:b835dcd050083a7bba96ee913a5e4eae5cb45a38223e7162b2a5f4dc1b5646b2",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_jamaica_parish_hanover_c999af42",
+      "name": "Hanover",
+      "category": "jamaica_parish",
+      "priceCoins": 99,
+      "modelPath": "assets/3d-models/gift_jamaica_parish_hanover_c999af42.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 2700
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:d212fc699e6cfbb215e19883e9b2b4c07c5f1b70b62dde0e953355e52bbe7897",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_jamaica_parish_kingston_8b4e16b2",
+      "name": "Kingston",
+      "category": "jamaica_parish",
+      "priceCoins": 99,
+      "modelPath": "assets/3d-models/gift_jamaica_parish_kingston_8b4e16b2.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 2700
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:9b779a97c399945c7efbea4456f08de7ff9a897896cd5025b25938f2c60edc85",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_jamaica_parish_manchester_aa3acefb",
+      "name": "Manchester",
+      "category": "jamaica_parish",
+      "priceCoins": 99,
+      "modelPath": "assets/3d-models/gift_jamaica_parish_manchester_aa3acefb.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 2700
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:d82d236218959dc0c1ac36b87baee9496b4a643b7c2dce62b492fb3bf2b4eb09",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_jamaica_parish_montego_bay_57ae24d0",
+      "name": "Montego Bay",
+      "category": "jamaica_parish",
+      "priceCoins": 299,
+      "modelPath": "assets/3d-models/gift_jamaica_parish_montego_bay_57ae24d0.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 3100
+      },
+      "audioPath": "assets/gift-audio/gift_jamaica_parish_montego_bay_57ae24d0.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:2861a3a429aa636d91eeda5a2087d6ea794431c93308377d92377fe03ad3a0ae",
+      "audioChecksum": "sha256:26aff3c311e36237368144aa5d9d3513a241dde3f51d15aad3b4b42328b40abf"
+    },
+    {
+      "giftId": "gift_jamaica_parish_portland_251d7021",
+      "name": "Portland",
+      "category": "jamaica_parish",
+      "priceCoins": 99,
+      "modelPath": "assets/3d-models/gift_jamaica_parish_portland_251d7021.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 2700
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:8c7c3bbb519007d6f16968b20c598b2dd600fb9abc6a08417fbef65bd7b65c5b",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_jamaica_parish_st__andrew_ab63935d",
+      "name": "St. Andrew",
+      "category": "jamaica_parish",
+      "priceCoins": 99,
+      "modelPath": "assets/3d-models/gift_jamaica_parish_st__andrew_ab63935d.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 2700
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:ff7202a68e25919a87677ce9e8f078b72e8496468dfba085efa74c26b071ca9a",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_jamaica_parish_st__ann_082cc86c",
+      "name": "St. Ann",
+      "category": "jamaica_parish",
+      "priceCoins": 99,
+      "modelPath": "assets/3d-models/gift_jamaica_parish_st__ann_082cc86c.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 2700
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:cc7b97674294c8d2592eeaaacc751e15b35f07a435a666e8b2dcc53db871b4c3",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_jamaica_parish_st__catherine_7945ebe8",
+      "name": "St. Catherine",
+      "category": "jamaica_parish",
+      "priceCoins": 99,
+      "modelPath": "assets/3d-models/gift_jamaica_parish_st__catherine_7945ebe8.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 2700
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:f5faf1dea77e1dc426b8464e920f17f9572ce1bffd828a15ae5b823cec79621e",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_jamaica_parish_st__elizabeth_7be7d502",
+      "name": "St. Elizabeth",
+      "category": "jamaica_parish",
+      "priceCoins": 99,
+      "modelPath": "assets/3d-models/gift_jamaica_parish_st__elizabeth_7be7d502.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 2700
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:ef1f0a77a9e24cb1af2c3e21dcb47fe37fc6bc51033ed524a585e5d22918cced",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_jamaica_parish_st__mary_02960d83",
+      "name": "St. Mary",
+      "category": "jamaica_parish",
+      "priceCoins": 99,
+      "modelPath": "assets/3d-models/gift_jamaica_parish_st__mary_02960d83.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 2700
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:108fd15fe181f36679461c9da9b43907aa4249b72dd11af494ea553975cb0d32",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_jamaica_parish_st__thomas_57a086d5",
+      "name": "St. Thomas",
+      "category": "jamaica_parish",
+      "priceCoins": 99,
+      "modelPath": "assets/3d-models/gift_jamaica_parish_st__thomas_57a086d5.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 2700
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:4276bdce35d303615c04d1171a20e6d77a5fdadaa49712623842077209ac8c8d",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_jamaica_parish_trelawny_7c6d726e",
+      "name": "Trelawny",
+      "category": "jamaica_parish",
+      "priceCoins": 99,
+      "modelPath": "assets/3d-models/gift_jamaica_parish_trelawny_7c6d726e.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 2700
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:791c680027ef9031c7a8a06d80cee8565724534573fe0178f60392327409f1cb",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_jamaica_parish_westmoreland_5296325c",
+      "name": "Westmoreland",
+      "category": "jamaica_parish",
+      "priceCoins": 99,
+      "modelPath": "assets/3d-models/gift_jamaica_parish_westmoreland_5296325c.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 2700
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:eda23eaec8ac194294793304b4681b36b749a0e7ccf0abeb3132da8b2244df06",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_luxury_crown_jewel_9e76c324",
+      "name": "Crown Jewel",
+      "category": "luxury",
+      "priceCoins": 2999,
+      "modelPath": "assets/3d-models/gift_luxury_crown_jewel_9e76c324.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 3900
+      },
+      "audioPath": "assets/gift-audio/gift_luxury_crown_jewel_9e76c324.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:20e2160366fe432bae3fb42f99f4f7809ede233953da2f90ee7cd4b9a661acf3",
+      "audioChecksum": "sha256:e875bb3e1bc6693457827f0bbf8f13a75c25183e6b39b951648d33729eec77ed"
+    },
+    {
+      "giftId": "gift_luxury_emerald_scepter_c91501a2",
+      "name": "Emerald Scepter",
+      "category": "luxury",
+      "priceCoins": 2999,
+      "modelPath": "assets/3d-models/gift_luxury_emerald_scepter_c91501a2.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 3900
+      },
+      "audioPath": "assets/gift-audio/gift_luxury_emerald_scepter_c91501a2.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:f3d23d79d55bb1f6b7e895e958622017c3ac69967ecf30499e909f37b1132bc0",
+      "audioChecksum": "sha256:98bd5e68e2e3b10db63edf37effb4e82f6e72c3d9adcaa49af3dd5ea4cd10ec2"
+    },
+    {
+      "giftId": "gift_luxury_gold_ring_5e65b508",
+      "name": "Gold Ring",
+      "category": "luxury",
+      "priceCoins": 299,
+      "modelPath": "assets/3d-models/gift_luxury_gold_ring_5e65b508.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 3100
+      },
+      "audioPath": "assets/gift-audio/gift_luxury_gold_ring_5e65b508.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:1a3084296c6212c4efc35c8a1aa782fc9b878791269572f6010549090c9468e0",
+      "audioChecksum": "sha256:75f092c68afa7650cd9d6d0b9926154c17ea174c9135913178319e049f617156"
+    },
+    {
+      "giftId": "gift_luxury_palace_gates_3f002e25",
+      "name": "Palace Gates",
+      "category": "luxury",
+      "priceCoins": 9999,
+      "modelPath": "assets/3d-models/gift_luxury_palace_gates_3f002e25.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 4300
+      },
+      "audioPath": "assets/gift-audio/gift_luxury_palace_gates_3f002e25.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:2758d67fd4b2abe271e611bb94230151dcf5bdd5c17bf989ada8d33bd28d2dab",
+      "audioChecksum": "sha256:c6eb176964f16ca4e4c6d39f7451ea8a24da813ab9c417d6a7e66cfa123f642d"
+    },
+    {
+      "giftId": "gift_luxury_platinum_watch_3cd084d5",
+      "name": "Platinum Watch",
+      "category": "luxury",
+      "priceCoins": 999,
+      "modelPath": "assets/3d-models/gift_luxury_platinum_watch_3cd084d5.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 3500
+      },
+      "audioPath": "assets/gift-audio/gift_luxury_platinum_watch_3cd084d5.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:a68e4e92eb8f37d9a060c5c77417c49bb492bf08e63b9626676983c4938719f5",
+      "audioChecksum": "sha256:4ba8c5dece91075c4d6f958103a6d298edad4541f92303fdc3f7f2c633d226e3"
+    },
+    {
+      "giftId": "gift_luxury_royal_crown_dcdbdf7c",
+      "name": "Royal Crown",
+      "category": "luxury",
+      "priceCoins": 9999,
+      "modelPath": "assets/3d-models/gift_luxury_royal_crown_dcdbdf7c.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 4300
+      },
+      "audioPath": "assets/gift-audio/gift_luxury_royal_crown_dcdbdf7c.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:32ad330fd0d287ead652d538306a284fdcb6f2c5208b5422cfc7c7808b9cfa47",
+      "audioChecksum": "sha256:187ae9123bed08e14d8a0c3bb876c428fd768862a026b2287d3b5a46430b0a16"
+    },
+    {
+      "giftId": "gift_luxury_sovereign_throne_8ade022e",
+      "name": "Sovereign Throne",
+      "category": "luxury",
+      "priceCoins": 50000,
+      "modelPath": "assets/3d-models/gift_luxury_sovereign_throne_8ade022e.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 4700
+      },
+      "audioPath": "assets/gift-audio/gift_luxury_sovereign_throne_8ade022e.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:c576bd6a26b8d4995e7e0d79a8949a35f41cf6c510c620e485015d6c572124db",
+      "audioChecksum": "sha256:df36c7ebf4bfae9664868335977ac72db1226f822cd3d57f391d206cb2693ba4"
+    },
+    {
+      "giftId": "gift_music_perf_brass_section_f088176e",
+      "name": "Brass Section",
+      "category": "music_perf",
+      "priceCoins": 299,
+      "modelPath": "assets/3d-models/gift_music_perf_brass_section_f088176e.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 3100
+      },
+      "audioPath": "assets/gift-audio/gift_music_perf_brass_section_f088176e.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:24842a5181e75a0d7260f99e5ad0953eb391df744e7943364829610b05e46fe0",
+      "audioChecksum": "sha256:0c5915b010370fbaa6e09aed0cd508e81a6b2e85b5a31b7975dbfb2b211b2400"
+    },
+    {
+      "giftId": "gift_music_perf_festival_stage_4e6caec1",
+      "name": "Festival Stage",
+      "category": "music_perf",
+      "priceCoins": 2999,
+      "modelPath": "assets/3d-models/gift_music_perf_festival_stage_4e6caec1.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 3900
+      },
+      "audioPath": "assets/gift-audio/gift_music_perf_festival_stage_4e6caec1.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:54fff740c43da2f1cf8abc5a5f3455b691463ccb21c21a74c00fb6a4499703e8",
+      "audioChecksum": "sha256:f7de4f0ae6e631dc7929a69944fcef8c8789f1e11e36f13422765e226defbd1f"
+    },
+    {
+      "giftId": "gift_music_perf_golden_mic_e7b9ca07",
+      "name": "Golden Mic",
+      "category": "music_perf",
+      "priceCoins": 9999,
+      "modelPath": "assets/3d-models/gift_music_perf_golden_mic_e7b9ca07.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 4300
+      },
+      "audioPath": "assets/gift-audio/gift_music_perf_golden_mic_e7b9ca07.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:ce29c1c032907d9fefd507befb5ecd6750b3b5e6d853735e9e5d1cf0bf8d66d4",
+      "audioChecksum": "sha256:b56153ebbdfdcd3e617ab1d28fe28b8704b6dd3d685101de7b6a5803a1597997"
+    },
+    {
+      "giftId": "gift_music_perf_microphone_ce3d2b9f",
+      "name": "Microphone",
+      "category": "music_perf",
+      "priceCoins": 20,
+      "modelPath": "assets/3d-models/gift_music_perf_microphone_ce3d2b9f.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": false,
+        "particles": false,
+        "durationMs": 2300
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:1d354e1f34dd38e033988d0b04d709716ae98e6354f9888c252e04bf237381dc",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_music_perf_neon_dj_deck_eaf6c5fc",
+      "name": "Neon DJ Deck",
+      "category": "music_perf",
+      "priceCoins": 999,
+      "modelPath": "assets/3d-models/gift_music_perf_neon_dj_deck_eaf6c5fc.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 3500
+      },
+      "audioPath": "assets/gift-audio/gift_music_perf_neon_dj_deck_eaf6c5fc.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:412161796c55b5406a656f032add312b1536878dac9aa7eea02b6caa9ca0386b",
+      "audioChecksum": "sha256:a0740e93933bef74d57c81434feb49ad7e6c71826e231e9845453c30065c9ee1"
+    },
+    {
+      "giftId": "gift_music_perf_sound_system_8a7a0c90",
+      "name": "Sound System",
+      "category": "music_perf",
+      "priceCoins": 299,
+      "modelPath": "assets/3d-models/gift_music_perf_sound_system_8a7a0c90.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 3100
+      },
+      "audioPath": "assets/gift-audio/gift_music_perf_sound_system_8a7a0c90.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:398a4d838bbce427c55e022f3c2c7b305e2eac089353262fc503294c4aecb931",
+      "audioChecksum": "sha256:5b0c84918ba737559e85efb16626ae781f8789d504f98f2e9d811165ec35eb2d"
+    },
+    {
+      "giftId": "gift_music_perf_vinyl_spin_cc84fd5b",
+      "name": "Vinyl Spin",
+      "category": "music_perf",
+      "priceCoins": 99,
+      "modelPath": "assets/3d-models/gift_music_perf_vinyl_spin_cc84fd5b.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 2700
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:5c7fe44565de924f776798d3e59edbe00cf058ce455a86e3ebcacae04dd33228",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_premium_animated_aurora_wings_61465d9e",
+      "name": "Aurora Wings",
+      "category": "premium_animated",
+      "priceCoins": 2999,
+      "modelPath": "assets/3d-models/gift_premium_animated_aurora_wings_61465d9e.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 3900
+      },
+      "audioPath": "assets/gift-audio/gift_premium_animated_aurora_wings_61465d9e.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:ee4590f4b9c476f6923d61d8850aeb64093ba1475dadecfaa0c87ee31ec68fb1",
+      "audioChecksum": "sha256:36451b9ababeee3d64e835f6008f802c95bc53e6d39f1b65b677fbeaab61a12c"
+    },
+    {
+      "giftId": "gift_premium_animated_celestial_crown_34fa2a61",
+      "name": "Celestial Crown",
+      "category": "premium_animated",
+      "priceCoins": 50000,
+      "modelPath": "assets/3d-models/gift_premium_animated_celestial_crown_34fa2a61.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 4700
+      },
+      "audioPath": "assets/gift-audio/gift_premium_animated_celestial_crown_34fa2a61.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:24cd3538af9c7d91f50660b9a56c01837d6dbecada1aaac79881a5cacc5db1dc",
+      "audioChecksum": "sha256:414b0fb8110c94227b84d8e29a07ef6a38b11faf04fe52e6b446df815bbdc40a"
+    },
+    {
+      "giftId": "gift_premium_animated_eternal_phoenix_796a416a",
+      "name": "Eternal Phoenix",
+      "category": "premium_animated",
+      "priceCoins": 50000,
+      "modelPath": "assets/3d-models/gift_premium_animated_eternal_phoenix_796a416a.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 4700
+      },
+      "audioPath": "assets/gift-audio/gift_premium_animated_eternal_phoenix_796a416a.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:543b3a24eda9f1db99ca710e12b0de36fd06d2519021da2fc926ffc71c3288c7",
+      "audioChecksum": "sha256:e5d91757847be28fdace33ab55c32f7bd814af53e05fa2e9ee923a5f14ad23bf"
+    },
+    {
+      "giftId": "gift_premium_animated_infinity_bloom_70ec44de",
+      "name": "Infinity Bloom",
+      "category": "premium_animated",
+      "priceCoins": 9999,
+      "modelPath": "assets/3d-models/gift_premium_animated_infinity_bloom_70ec44de.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 4300
+      },
+      "audioPath": "assets/gift-audio/gift_premium_animated_infinity_bloom_70ec44de.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:e25e24336f25431bb736069a87c858c8fe49c366a26c88dcee5cdb46754229dd",
+      "audioChecksum": "sha256:749c6712cc52963a5d5bfb6daff17a901968284ccaea06c5357e4bfd80b67845"
+    },
+    {
+      "giftId": "gift_premium_animated_prism_fountain_d1fec6ec",
+      "name": "Prism Fountain",
+      "category": "premium_animated",
+      "priceCoins": 2999,
+      "modelPath": "assets/3d-models/gift_premium_animated_prism_fountain_d1fec6ec.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 3900
+      },
+      "audioPath": "assets/gift-audio/gift_premium_animated_prism_fountain_d1fec6ec.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:3b1d2078636e92481e671ced822288d1afcb7c61c9eaa8df3337283140214f24",
+      "audioChecksum": "sha256:c6278eac3c73a00884fcb4e43e77ca0afddefadc1436b3e9af9e9dd1c2ccca58"
+    },
+    {
+      "giftId": "gift_premium_animated_starfall_carousel_149f0de2",
+      "name": "Starfall Carousel",
+      "category": "premium_animated",
+      "priceCoins": 9999,
+      "modelPath": "assets/3d-models/gift_premium_animated_starfall_carousel_149f0de2.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 4300
+      },
+      "audioPath": "assets/gift-audio/gift_premium_animated_starfall_carousel_149f0de2.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:d2a7baff9bab1b843761b4db46960f09b69bfe205ef60aba3f64c3779688d99a",
+      "audioChecksum": "sha256:d7d64b2b288685b49184f908a21a5d3e8736029c928300f402df29816a45cdbb"
+    },
+    {
+      "giftId": "gift_seasonal_cherry_blossom_rain_03ee9fb8",
+      "name": "Cherry Blossom Rain",
+      "category": "seasonal",
+      "priceCoins": 999,
+      "modelPath": "assets/3d-models/gift_seasonal_cherry_blossom_rain_03ee9fb8.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 3500
+      },
+      "audioPath": "assets/gift-audio/gift_seasonal_cherry_blossom_rain_03ee9fb8.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:62c7a1dda434aa9e84245777eb3851fe56209f498127dd58c6a7ed2319ee9d8b",
+      "audioChecksum": "sha256:0f696161e8340da8e5ccb646608cda90ba5df9d6b1aff2442c7e89b5a8babe10"
+    },
+    {
+      "giftId": "gift_seasonal_fireflies_392b5e64",
+      "name": "Fireflies",
+      "category": "seasonal",
+      "priceCoins": 99,
+      "modelPath": "assets/3d-models/gift_seasonal_fireflies_392b5e64.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 2700
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:57822c0c41e5ac043369b742a974419fb1909d92f249784b052db09b806ac7f0",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_seasonal_harvest_moon_9fa4c353",
+      "name": "Harvest Moon",
+      "category": "seasonal",
+      "priceCoins": 299,
+      "modelPath": "assets/3d-models/gift_seasonal_harvest_moon_9fa4c353.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 3100
+      },
+      "audioPath": "assets/gift-audio/gift_seasonal_harvest_moon_9fa4c353.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:6ac0c5e9b0a159d3dfeddb1c692ca1dce757c7cc1aa1fd3556191b5d75c8024f",
+      "audioChecksum": "sha256:e4ba83fcfa0aa0c2aa21dfa1b979bf2f7bcb321a6cfdbe87f2a627595f550083"
+    },
+    {
+      "giftId": "gift_seasonal_lantern_float_efeef7d9",
+      "name": "Lantern Float",
+      "category": "seasonal",
+      "priceCoins": 299,
+      "modelPath": "assets/3d-models/gift_seasonal_lantern_float_efeef7d9.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 3100
+      },
+      "audioPath": "assets/gift-audio/gift_seasonal_lantern_float_efeef7d9.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:9d5c1fc58ae689584ab17987409338b240d576b34b97b93eb06992147e91a13e",
+      "audioChecksum": "sha256:1aa63ca03f3faa3d2f9a716010f823ded3e6f81c4625fd2474cb90006ca21807"
+    },
+    {
+      "giftId": "gift_seasonal_new_year_bell_86125021",
+      "name": "New Year Bell",
+      "category": "seasonal",
+      "priceCoins": 299,
+      "modelPath": "assets/3d-models/gift_seasonal_new_year_bell_86125021.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 3100
+      },
+      "audioPath": "assets/gift-audio/gift_seasonal_new_year_bell_86125021.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:ffd8b7e9146c7d63181aca3591fe0b6e3bc4e2aa5aa1e0fde2739d02ff1993b4",
+      "audioChecksum": "sha256:7d67ee23b4fac09d5e9ce9c52ebcae02d1654e04e1920f964d901ab931c97d9a"
+    },
+    {
+      "giftId": "gift_seasonal_pumpkin_glow_fef92b47",
+      "name": "Pumpkin Glow",
+      "category": "seasonal",
+      "priceCoins": 99,
+      "modelPath": "assets/3d-models/gift_seasonal_pumpkin_glow_fef92b47.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 2700
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:70e01278dabc16ee1a1c1b1c966900cca032e31f05075fcb94182f7cf083e1f0",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_seasonal_snowflake_98d6f42b",
+      "name": "Snowflake",
+      "category": "seasonal",
+      "priceCoins": 20,
+      "modelPath": "assets/3d-models/gift_seasonal_snowflake_98d6f42b.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": false,
+        "particles": false,
+        "durationMs": 2300
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:6c8c18edda5b1ca91824dd5feb0392f955219d0ba2d46eacbe4d059c86a383d2",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_seasonal_spring_blossom_caf27e85",
+      "name": "Spring Blossom",
+      "category": "seasonal",
+      "priceCoins": 20,
+      "modelPath": "assets/3d-models/gift_seasonal_spring_blossom_caf27e85.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": false,
+        "particles": false,
+        "durationMs": 2300
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:95ada1904463efc3128e57a584c2640d16255f37879e93d200ec36c0ea2ca100",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_seasonal_summer_sun_4a37c14a",
+      "name": "Summer Sun",
+      "category": "seasonal",
+      "priceCoins": 99,
+      "modelPath": "assets/3d-models/gift_seasonal_summer_sun_4a37c14a.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 2700
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:472230bb1f9d2c039212c5e3d07d0c55cda8230c11a7da5f13c7004369c32128",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_vehicles_hover_bike_2230dda4",
+      "name": "Hover Bike",
+      "category": "vehicles",
+      "priceCoins": 999,
+      "modelPath": "assets/3d-models/gift_vehicles_hover_bike_2230dda4.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 3500
+      },
+      "audioPath": "assets/gift-audio/gift_vehicles_hover_bike_2230dda4.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:6ceefaafc5f8bbf14b48a7ce3b3108b2924d3b8d6a461304f21dc0253156a2f7",
+      "audioChecksum": "sha256:e4644e4c5cd6b42a05e4e1466fd5a6a17fd983246782d0c4974de56107f05b56"
+    },
+    {
+      "giftId": "gift_vehicles_mag_lev_pod_b87dfdd7",
+      "name": "Mag-Lev Pod",
+      "category": "vehicles",
+      "priceCoins": 2999,
+      "modelPath": "assets/3d-models/gift_vehicles_mag_lev_pod_b87dfdd7.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 3900
+      },
+      "audioPath": "assets/gift-audio/gift_vehicles_mag_lev_pod_b87dfdd7.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:4d78d9530cd1324c2a161244fe8706cdaeb55345d467b2ee49bcb2f81f2e2fee",
+      "audioChecksum": "sha256:0a78964e32e23145959e94f2da10aa1bd8c7457b42e6e0de49e7b860e66ed3b0"
+    },
+    {
+      "giftId": "gift_vehicles_orbital_shuttle_474a8e87",
+      "name": "Orbital Shuttle",
+      "category": "vehicles",
+      "priceCoins": 50000,
+      "modelPath": "assets/3d-models/gift_vehicles_orbital_shuttle_474a8e87.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 4700
+      },
+      "audioPath": "assets/gift-audio/gift_vehicles_orbital_shuttle_474a8e87.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:ee3741fe455f6cb55db45d0e6d44216e27ee83262cd12046cbc245dfd50cb6d7",
+      "audioChecksum": "sha256:dc11ba77c8b8d1c213ede1f8518f59e716c9263ef20267a1aefd8d788331bf31"
+    },
+    {
+      "giftId": "gift_vehicles_private_jet_d66a1af8",
+      "name": "Private Jet",
+      "category": "vehicles",
+      "priceCoins": 9999,
+      "modelPath": "assets/3d-models/gift_vehicles_private_jet_d66a1af8.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 4300
+      },
+      "audioPath": "assets/gift-audio/gift_vehicles_private_jet_d66a1af8.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:9574a2c1de3159604a8e99f0c0a7f2988dec24162493f19edd0c5fa0a0d78f5c",
+      "audioChecksum": "sha256:b55a389d2679a2bfd62aece373de4f53baa48084736cb3540a59e2008ede5078"
+    },
+    {
+      "giftId": "gift_vehicles_scooter_7d25c88d",
+      "name": "Scooter",
+      "category": "vehicles",
+      "priceCoins": 20,
+      "modelPath": "assets/3d-models/gift_vehicles_scooter_7d25c88d.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": false,
+        "particles": false,
+        "durationMs": 2300
+      },
+      "audioPath": null,
+      "audioStatus": "not_required",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:4e9748f846fed149d9ca2bf8516787243e333ff5f10bafb75401cf93afc5b2d8",
+      "audioChecksum": null
+    },
+    {
+      "giftId": "gift_vehicles_sports_car_90f34038",
+      "name": "Sports Car",
+      "category": "vehicles",
+      "priceCoins": 299,
+      "modelPath": "assets/3d-models/gift_vehicles_sports_car_90f34038.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": false,
+        "durationMs": 3100
+      },
+      "audioPath": "assets/gift-audio/gift_vehicles_sports_car_90f34038.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": false,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:cf11f47d34c116d25d9ed5d969a5570fe0004eba636cdc9e26097c027e978e6c",
+      "audioChecksum": "sha256:363bdea41def16162a851876b9eb784873ab14f2d646ef2cbcf3e2d423b2ad5a"
+    },
+    {
+      "giftId": "gift_vehicles_yacht_769b11fd",
+      "name": "Yacht",
+      "category": "vehicles",
+      "priceCoins": 2999,
+      "modelPath": "assets/3d-models/gift_vehicles_yacht_769b11fd.geometry.json",
+      "animation": {
+        "spin": true,
+        "bob": true,
+        "particles": true,
+        "durationMs": 3900
+      },
+      "audioPath": "assets/gift-audio/gift_vehicles_yacht_769b11fd.wav",
+      "audioStatus": "resolved",
+      "assetVersion": "1.0.0",
+      "deviceRequirements": {
+        "webgl": true,
+        "minTierForFullscreen": 7
+      },
+      "license": "ZUNO-Original (procedurally generated, platform-owned)",
+      "modelChecksum": "sha256:168b6a1c79fcecdada3f86535cad11fc81f914275531225b93207dcff3af19d9",
+      "audioChecksum": "sha256:11c247fc2a1b714e43626c5e2d78e0fc72fedc83f6f939e8131e85c80aa19bb6"
+    }
+  ]
+}
