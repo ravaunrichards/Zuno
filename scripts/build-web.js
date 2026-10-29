@@ -62,6 +62,18 @@ const publicRuntime = {
   supabaseAnonKey: process.env.SUPABASE_ANON_KEY || '',
   livekitUrl: process.env.LIVEKIT_URL || ''
 };
+
+const missingPublicRuntime = [
+  ['ZUNO_PUBLIC_API_BASE_URL', publicRuntime.apiBaseUrl],
+  ['SUPABASE_URL', publicRuntime.supabaseUrl],
+  ['SUPABASE_ANON_KEY', publicRuntime.supabaseAnonKey]
+].filter(([, value]) => !String(value || '').trim()).map(([name]) => name);
+if (missingPublicRuntime.length) {
+  console.error('Cannot build the production web app: missing required public runtime settings: ' + missingPublicRuntime.join(', '));
+  process.exit(1);
+}
+console.log('Public runtime settings validated: API=' + new URL(publicRuntime.apiBaseUrl).origin +
+  ', Supabase=' + new URL(publicRuntime.supabaseUrl).origin + ', anonymous key present (value hidden).');
 fs.writeFileSync(path.join(output,'runtime-config.js'),'window.ZUNO_CONFIG = Object.freeze('+JSON.stringify(publicRuntime)+');\n');
 const outputHtmlPath = path.join(output,'index.html');
 let outputHtml = fs.readFileSync(outputHtmlPath,'utf8');
