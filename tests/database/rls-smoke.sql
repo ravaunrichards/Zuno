@@ -245,6 +245,12 @@ DECLARE
   v_community_one uuid;
   v_community_two uuid;
 BEGIN
+  -- Earlier RLS negative tests may have established a block for these shared fixtures.
+  -- Isolate this scenario, then re-add the block below and assert a direct-message denial.
+  DELETE FROM blocks
+  WHERE (blocker_id=v_creator AND blocked_id=v_other)
+     OR (blocker_id=v_other AND blocked_id=v_creator);
+
   SELECT public.create_conversation(
     v_creator, array[v_other], false, 'zuno-ci-direct-conversation-0001'
   ) INTO v_direct_one;
