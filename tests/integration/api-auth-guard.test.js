@@ -90,6 +90,10 @@ test('community creation rejects unauthenticated requests',async()=>{
  const response=await post(await start(),'/api/communities');
  ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
 });
+test('creator subscriber dashboard rejects unauthenticated requests',async()=>{
+ const response=await get(await start(),'/api/creator/subscriptions');
+ ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
+});
 test('creator tier creation rejects unauthenticated requests',async()=>{
  const response=await post(await start(),'/api/creator/subscription-tiers');
  ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');

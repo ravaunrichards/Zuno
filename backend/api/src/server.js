@@ -310,7 +310,7 @@ const server = http.createServer(async (req, res) => {
               }
             }
           }
-        } else         if (body.event_type === 'CHECKOUT.ORDER.APPROVED') {
+        } else if (body.event_type === 'CHECKOUT.ORDER.APPROVED') {
           const providerOrderId = String(resource.id || '');
           if (providerOrderId) {
             const approvedCoin=await adminRest(config, 'payment_orders', query({
@@ -1513,6 +1513,29 @@ const server = http.createServer(async (req, res) => {
       }) : await adminRest(config, 'creator_subscriptions', query({ id: 'eq.' + row.id, subscriber_id: 'eq.' + session.profile.id }), 'PATCH', { state: 'cancelled', updated_at: new Date().toISOString() });
       if (!newState.ok) return error(res, 503, 'CREATOR_SUBSCRIPTION_CANCELLATION_RECONCILIATION_REQUIRED');
       return json(res, 200, { ok: true, subscription: { id, state: 'cancelled', currentPeriodEnd: row.current_period_end } });
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api/creator/subscriptions') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const rows = await selectAdminRows(config, 'creator_subscriptions', query({
+        select: 'id,subscriber_id,creator_id,tier_id,tier,state,billing_amount_minor,currency,current_period_end,created_at,updated_at',
+        creator_id: 'eq.' + session.profile.id, order: 'created_at.desc', limit: '200'
+      }));
+      if (!rows.ok) return badDatabase(res, rows, 'CREATOR_SUBSCRIBERS_UNAVAILABLE');
+      const subscriberIds = [...new Set(rows.rows.map(item => item.subscriber_id).filter(uuid))];
+      const profiles = subscriberIds.length ? await selectAdminRows(config, 'profiles', query({
+        select: 'id,username,display_name,avatar_url', id: profileIdIn(subscriberIds)
+      })) : { ok: true, rows: [] };
+      if (!profiles.ok) return badDatabase(res, profiles, 'CREATOR_SUBSCRIBER_PROFILES_UNAVAILABLE');
+      const profileMap = new Map(profiles.rows.map(item => [item.id, item]));
+      return json(res, 200, { ok: true, subscriptions: rows.rows.map(item => ({
+        id: item.id, subscriber: profileProjection(profileMap.get(item.subscriber_id)),
+        tierId: item.tier_id, tier: item.tier, state: item.state,
+        monthlyPriceMinor: item.billing_amount_minor == null ? null : Number(item.billing_amount_minor),
+        currency: item.currency, currentPeriodEnd: item.current_period_end,
+        createdAt: item.created_at, updatedAt: item.updated_at
+      })) });
     }
 
     if (req.method === 'GET' && url.pathname === '/api/creator/analytics') {
