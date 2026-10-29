@@ -75,7 +75,7 @@ function showDetails(gift, group) {
     '<li><span>Catalogue price</span><strong>' + safeText(Number(gift.priceCoins).toLocaleString()) + ' Z Coins</strong></li>' +
     '<li><span>Tier</span><strong>' + safeText(gift.tier == null ? 'Standard' : gift.tier) + '</strong></li>' +
     '<li><span>Audio status</span><strong>' + safeText(gift.audioStatus || 'not specified') + '</strong></li>' +
-    '<li><span>Model asset</span><strong>' + safeText(gift.modelPath || 'Not specified') + '</strong></li></ul>' + audioPanel + '<button class="button button-primary button-small" id="gift-detail-send-open" type="button">Send this gift · ' + safeText(Number(gift.priceCoins).toLocaleString()) + ' Z Coins</button>'
+    '<li><span>Model asset</span><strong>' + safeText(gift.modelPath || 'Not specified') + '</strong></li></ul>' + audioPanel + '<button class="button button-primary button-small" id="gift-detail-send-open" type="button">Send this gift · ' + safeText(Number(gift.priceCoins).toLocaleString()) + ' Z Coins</button>';
   content.querySelector('#gift-detail-send-open')?.addEventListener('click',openGiftSendForm);
   if (typeof dialog.showModal === 'function') { if (!dialog.open) dialog.showModal(); } else dialog.setAttribute('open', '');
 }
