@@ -43,6 +43,15 @@ function supabaseAuthReady(cfg) {
 // Privileged server-side database access requires the service-role secret.
 // User-scoped reads/writes and authentication must work with a verified user JWT
 // and the public anon key, with RLS enforcing ownership.
+function supabaseAdminHeaders(cfg) {
+  const key = cfg && cfg.supabase ? cfg.supabase.serviceRoleKey : '';
+  const headers = { apikey: key, Accept: 'application/json' };
+  // Modern Supabase secret API keys are not JWTs. Sending them in Authorization
+  // makes the gateway reject them with HTTP 401; keep Bearer for legacy JWT keys.
+  if (key && !String(key).startsWith('sb_secret_')) headers.Authorization = 'Bearer ' + key;
+  return headers;
+}
+
 function supabaseReady(cfg) {
   return Boolean(supabaseAuthReady(cfg) && cfg.supabase.serviceRoleKey);
 }
@@ -142,10 +151,7 @@ async function adminRest(cfg, table, params = new URLSearchParams(), method = 'G
   if (!supabaseReady(cfg)) return { ok: false, status: 503, code: 'DB_NOT_CONFIGURED', data: null };
   if (!ADMIN_TABLES.has(table)) return { ok: false, status: 400, code: 'TABLE_NOT_ALLOWED', data: null };
   try {
-    return await requestRest(restUrl(cfg, table, params), {
-      apikey: cfg.supabase.serviceRoleKey,
-      Authorization: 'Bearer ' + cfg.supabase.serviceRoleKey
-    }, method, body);
+    return await requestRest(restUrl(cfg, table, params), supabaseAdminHeaders(cfg), method, body);
   } catch (_) {
     return { ok: false, status: 503, code: 'DB_UNAVAILABLE', data: null };
   }
@@ -155,10 +161,7 @@ async function adminRpc(cfg, rpc, body) {
   if (!supabaseReady(cfg)) return { ok: false, status: 503, code: 'DB_NOT_CONFIGURED', data: null };
   if (!ADMIN_RPCS.has(rpc)) return { ok: false, status: 400, code: 'RPC_NOT_ALLOWED', data: null };
   try {
-    return await requestRest(restUrl(cfg, rpc, null, true), {
-      apikey: cfg.supabase.serviceRoleKey,
-      Authorization: 'Bearer ' + cfg.supabase.serviceRoleKey
-    }, 'POST', body);
+    return await requestRest(restUrl(cfg, rpc, null, true), supabaseAdminHeaders(cfg), 'POST', body);
   } catch (_) {
     return { ok: false, status: 503, code: 'DB_UNAVAILABLE', data: null };
   }
