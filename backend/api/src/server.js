@@ -363,7 +363,296 @@ const server = http.createServer(async (req, res) => {
       if (!rooms.rows.length) return json(res, 200, { ok: true, rooms: [], source: 'database' });
       const hosts = await selectAdminRows(config, 'profiles', query({ select: 'id,username,display_name,avatar_url,is_verified', id: profileIdIn(rooms.rows.map((room) => room.host_id)) }));
       const hostById = new Map((hosts.rows || []).map((host) => [host.id, host]));
-      return json(res, 200, { ok: true, source: 'database', rooms: rooms.rows.map((room) => safeRoom(room, hostById.get(room.host_id))) });
+      const summaries = await adminRpc(config, 'get_live_room_summaries', { p_room_ids: rooms.rows.map((room) => room.id) });
+      const summaryById = new Map((Array.isArray(summaries.data) ? summaries.data : []).map((item) => [item.room_id, item]));
+      return json(res, 200, { ok: true, source: 'database', rooms: rooms.rows.map((room) => {
+        const summary = summaryById.get(room.id) || {};
+        return {
+          ...safeRoom(room, hostById.get(room.host_id)),
+          isPrivate: Boolean(room.is_private),
+          viewerCount: Number(summary.viewer_count || 0),
+          speakerCount: Number(summary.speaker_count || 0),
+          pendingGuestRequests: Number(summary.pending_guest_requests || 0)
+        };
+      }) });
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/live/rooms') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const body = await readBody(req);
+      const title = typeof body.title === 'string' ? body.title.trim() : '';
+      const category = typeof body.category === 'string' ? body.category.trim() : 'General';
+      if (title.length < 2 || title.length > 120) return error(res, 400, 'LIVE_ROOM_TITLE_INVALID');
+      if (category.length < 2 || category.length > 80) return error(res, 400, 'LIVE_ROOM_CATEGORY_INVALID');
+      if (body.isPrivate !== undefined && typeof body.isPrivate !== 'boolean') return error(res, 400, 'INVALID_LIVE_ROOM_PRIVACY');
+      const roomId = randomUUID();
+      const token = livekit.mintToken(config.livekit, { identity: session.profile.id, room: roomId, canPublish: true, canSubscribe: true, ttlSeconds: 900 });
+      if (!token.ok) return error(res, token.status || 503, token.code || 'LIVE_NOT_CONFIGURED', token.message || 'LiveKit is not configured. No room was created.');
+      const created = await adminRpc(config, 'create_live_room', {
+        p_room_id: roomId, p_host_profile_id: session.profile.id, p_title: title,
+        p_category: category, p_is_private: body.isPrivate === true
+      });
+      if (!created.ok) return badDatabase(res, created, 'LIVE_ROOM_CREATE_FAILED');
+      return json(res, 201, {
+        ok: true,
+        room: { id: roomId, title, category, state: 'scheduled', isPrivate: body.isPrivate === true, hostProfileId: session.profile.id },
+        livekit: { url: token.url, token: token.token, expiresAt: token.expiresAt },
+        next: 'Connect to LiveKit and publish local tracks, then call POST /api/live/rooms/' + roomId + '/start.'
+      });
+    }
+
+    const liveRoomStartMatch = url.pathname.match(/^\/api\/live\/rooms\/([0-9a-f-]+)\/start$/i);
+    if (req.method === 'POST' && liveRoomStartMatch) {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const roomId = liveRoomStartMatch[1];
+      if (!uuid(roomId)) return error(res, 400, 'INVALID_ROOM_ID');
+      const started = await adminRpc(config, 'start_live_room', { p_room_id: roomId, p_host_profile_id: session.profile.id });
+      if (!started.ok) return badDatabase(res, started, 'LIVE_ROOM_START_FAILED');
+      return json(res, 200, { ok: true, room: { id: roomId, state: 'live', startedAt: new Date().toISOString() } });
+    }
+
+    const liveRoomEndMatch = url.pathname.match(/^\/api\/live\/rooms\/([0-9a-f-]+)\/end$/i);
+    if (req.method === 'POST' && liveRoomEndMatch) {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const roomId = liveRoomEndMatch[1];
+      if (!uuid(roomId)) return error(res, 400, 'INVALID_ROOM_ID');
+      const ended = await adminRpc(config, 'end_live_room', { p_room_id: roomId, p_host_profile_id: session.profile.id });
+      if (!ended.ok) return badDatabase(res, ended, 'LIVE_ROOM_END_FAILED');
+      return json(res, 200, { ok: true, room: { id: roomId, state: 'ended' } });
+    }
+
+    const liveRoomJoinMatch = url.pathname.match(/^\/api\/live\/rooms\/([0-9a-f-]+)\/join$/i);
+    if (req.method === 'POST' && liveRoomJoinMatch) {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const roomId = liveRoomJoinMatch[1];
+      if (!uuid(roomId)) return error(res, 400, 'INVALID_ROOM_ID');
+      const joined = await adminRpc(config, 'join_live_room', { p_room_id: roomId, p_profile_id: session.profile.id });
+      if (!joined.ok) return badDatabase(res, joined, 'LIVE_ROOM_JOIN_FAILED');
+      const role = typeof joined.data === 'string' ? joined.data.replace(/^"|"$/g,'') : joined.data && joined.data.join_live_room;
+      const token = livekit.mintToken(config.livekit, {
+        identity: session.profile.id, room: roomId,
+        canPublish: role === 'host' || role === 'guest', canSubscribe: true, ttlSeconds: 900
+      });
+      if (!token.ok) {
+        await adminRpc(config, 'leave_live_room', { p_room_id: roomId, p_profile_id: session.profile.id });
+        return error(res, token.status || 503, token.code || 'LIVE_NOT_CONFIGURED', token.message || 'LiveKit token could not be issued.');
+      }
+      return json(res, 200, { ok: true, role: role || 'viewer', livekit: { url: token.url, token: token.token, expiresAt: token.expiresAt } });
+    }
+
+    const liveRoomLeaveMatch = url.pathname.match(/^\/api\/live\/rooms\/([0-9a-f-]+)\/leave$/i);
+    if (req.method === 'POST' && liveRoomLeaveMatch) {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const roomId = liveRoomLeaveMatch[1];
+      if (!uuid(roomId)) return error(res, 400, 'INVALID_ROOM_ID');
+      const result = await adminRpc(config, 'leave_live_room', { p_room_id: roomId, p_profile_id: session.profile.id });
+      if (!result.ok) return badDatabase(res, result, 'LIVE_ROOM_LEAVE_FAILED');
+      return json(res, 200, { ok: true, roomId, state: 'left' });
+    }
+
+    const guestRequestCreateMatch = url.pathname.match(/^\/api\/live\/rooms\/([0-9a-f-]+)\/guest-requests$/i);
+    if (guestRequestCreateMatch && req.method === 'POST') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const roomId = guestRequestCreateMatch[1];
+      if (!uuid(roomId)) return error(res, 400, 'INVALID_ROOM_ID');
+      const requestId = await adminRpc(config, 'create_live_guest_request', { p_room_id: roomId, p_requester_profile_id: session.profile.id });
+      if (!requestId.ok) return badDatabase(res, requestId, 'LIVE_GUEST_REQUEST_FAILED');
+      const id = typeof requestId.data === 'string' ? requestId.data.replace(/^"|"$/g,'') : requestId.data && requestId.data.create_live_guest_request;
+      return json(res, 201, { ok: true, request: { id: id || null, roomId, state: 'pending' } });
+    }
+
+    if (guestRequestCreateMatch && req.method === 'GET') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const roomId = guestRequestCreateMatch[1];
+      if (!uuid(roomId)) return error(res, 400, 'INVALID_ROOM_ID');
+      const rooms = await selectAdminRows(config, 'live_rooms', query({ select: 'id,host_id', id: 'eq.' + roomId, limit: '1' }));
+      if (!rooms.ok) return badDatabase(res, rooms);
+      if (!rooms.rows[0]) return error(res, 404, 'LIVE_ROOM_NOT_FOUND');
+      if (rooms.rows[0].host_id !== session.profile.id) return error(res, 403, 'LIVE_HOST_REQUIRED');
+      const pending = await selectAdminRows(config, 'guest_requests', query({
+        select: 'id,room_id,requester_id,state,created_at', room_id: 'eq.' + roomId, state: 'eq.pending',
+        order: 'created_at.asc', limit: '50'
+      }));
+      if (!pending.ok) return badDatabase(res, pending);
+      const requesterIds = [...new Set(pending.rows.map((row) => row.requester_id).filter(uuid))];
+      const profileRows = requesterIds.length ? await selectAdminRows(config, 'profiles', query({
+        select: 'id,username,display_name,avatar_url', id: profileIdIn(requesterIds)
+      })) : { ok: true, rows: [] };
+      const profileMap = new Map((profileRows.rows || []).map((profile) => [profile.id, profile]));
+      return json(res, 200, { ok: true, requests: pending.rows.map((row) => ({
+        id: row.id, roomId: row.room_id, state: row.state, createdAt: row.created_at,
+        requester: profileMap.has(row.requester_id) ? profileProjection(profileMap.get(row.requester_id)) : null
+      })) });
+    }
+
+    const guestRequestActionMatch = url.pathname.match(/^\/api\/live\/rooms\/([0-9a-f-]+)\/guest-requests\/([0-9a-f-]+)\/(accept|reject)$/i);
+    if (req.method === 'POST' && guestRequestActionMatch) {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const roomId = guestRequestActionMatch[1];
+      const requestId = guestRequestActionMatch[2];
+      const action = guestRequestActionMatch[3].toLowerCase();
+      if (!uuid(roomId) || !uuid(requestId)) return error(res, 400, 'INVALID_GUEST_REQUEST_ID');
+      const rooms = await selectAdminRows(config, 'live_rooms', query({ select: 'id,host_id,state', id: 'eq.' + roomId, limit: '1' }));
+      if (!rooms.ok) return badDatabase(res, rooms);
+      if (!rooms.rows[0]) return error(res, 404, 'LIVE_ROOM_NOT_FOUND');
+      if (rooms.rows[0].host_id !== session.profile.id) return error(res, 403, 'LIVE_HOST_REQUIRED');
+      const requestRows = await selectAdminRows(config, 'guest_requests', query({ select: 'id,room_id,requester_id,state', id: 'eq.' + requestId, room_id: 'eq.' + roomId, limit: '1' }));
+      if (!requestRows.ok || !requestRows.rows[0]) return error(res, 404, 'LIVE_GUEST_REQUEST_NOT_FOUND');
+      if (action === 'reject') {
+        const result = await adminRpc(config, 'reject_live_guest_request', { p_request_id: requestId, p_host_profile_id: session.profile.id });
+        if (!result.ok) return badDatabase(res, result, 'LIVE_GUEST_REJECT_FAILED');
+        return json(res, 200, { ok: true, requestId, state: 'rejected' });
+      }
+      const requesterId = requestRows.rows[0].requester_id;
+      const token = livekit.mintToken(config.livekit, { identity: requesterId, room: roomId, canPublish: true, canSubscribe: true, ttlSeconds: 900 });
+      if (!token.ok) return error(res, token.status || 503, token.code || 'LIVE_NOT_CONFIGURED', token.message || 'LiveKit is not configured.');
+      const accepted = await adminRpc(config, 'accept_live_guest_request', { p_request_id: requestId, p_host_profile_id: session.profile.id });
+      if (!accepted.ok) return badDatabase(res, accepted, 'LIVE_GUEST_ACCEPT_FAILED');
+      return json(res, 200, {
+        ok: true, requestId, state: 'accepted',
+        guest: { profileId: requesterId },
+        livekit: { url: token.url, token: token.token, expiresAt: token.expiresAt }
+      });
+    }
+
+    const liveChatMatch = url.pathname.match(/^\/api\/live\/rooms\/([0-9a-f-]+)\/chat$/i);
+    if (liveChatMatch && req.method === 'GET') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const roomId = liveChatMatch[1];
+      if (!uuid(roomId)) return error(res, 400, 'INVALID_ROOM_ID');
+      const roomRows = await rowsForUser(session, 'live_rooms', { select: 'id,state', id: 'eq.' + roomId, limit: '1' });
+      if (!roomRows.ok || !Array.isArray(roomRows.data) || !roomRows.data[0]) return error(res, 404, 'LIVE_ROOM_NOT_FOUND');
+      const chat = await rowsForUser(session, 'live_chat_messages', {
+        select: 'id,room_id,author_id,body,is_pinned,created_at', room_id: 'eq.' + roomId,
+        deleted_at: 'is.null', order: 'created_at.desc', limit: '100'
+      });
+      if (!chat.ok || !Array.isArray(chat.data)) return badDatabase(res, chat, 'LIVE_CHAT_UNAVAILABLE');
+      const authorIds = [...new Set(chat.data.map((item) => item.author_id).filter(uuid))];
+      const authors = authorIds.length ? await rowsForUser(session, 'profiles', { select: 'id,username,display_name,avatar_url', id: profileIdIn(authorIds) }) : { ok: true, data: [] };
+      const byId = new Map((authors.data || []).map((p) => [p.id,p]));
+      return json(res,200,{ok:true,messages:chat.data.reverse().map(item=>({
+        id:item.id,roomId:item.room_id,body:item.body,isPinned:Boolean(item.is_pinned),createdAt:item.created_at,
+        author:profileProjection(byId.get(item.author_id))
+      }))});
+    }
+    if (liveChatMatch && req.method === 'POST') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const roomId = liveChatMatch[1];
+      if (!uuid(roomId)) return error(res,400,'INVALID_ROOM_ID');
+      const body = await readBody(req);
+      if (typeof body.body !== 'string' || body.body.trim().length < 1 || body.body.trim().length > 2000) return error(res,400,'INVALID_LIVE_CHAT_MESSAGE');
+      const result = await rowsForUser(session,'live_chat_messages',{select:'id,room_id,author_id,body,is_pinned,created_at'},{
+        method:'POST',body:{room_id:roomId,author_id:session.profile.id,body:body.body.trim()}
+      });
+      if(!result.ok || !Array.isArray(result.data) || !result.data[0]) return badDatabase(res,result,'LIVE_CHAT_SEND_FAILED');
+      return json(res,201,{ok:true,message:{id:result.data[0].id,roomId,body:result.data[0].body,createdAt:result.data[0].created_at}});
+    }
+
+    const livePollCollectionMatch = url.pathname.match(/^\/api\/live\/rooms\/([0-9a-f-]+)\/polls$/i);
+    if (livePollCollectionMatch && req.method === 'GET') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const roomId = livePollCollectionMatch[1];
+      if (!uuid(roomId)) return error(res,400,'INVALID_ROOM_ID');
+      const visiblePolls = await rowsForUser(session,'live_polls',{select:'id,room_id,host_id,question,state,closes_at,created_at,closed_at',room_id:'eq.'+roomId,order:'created_at.desc',limit:'20'});
+      if(!visiblePolls.ok || !Array.isArray(visiblePolls.data)) return badDatabase(res,visiblePolls,'LIVE_POLLS_UNAVAILABLE');
+      if(!visiblePolls.data.length)return json(res,200,{ok:true,polls:[]});
+      const pollIds=visiblePolls.data.map(p=>p.id);
+      const options=await rowsForUser(session,'live_poll_options',{select:'id,poll_id,label,position',poll_id:'in.('+pollIds.join(',')+')',order:'position.asc',limit:'200'});
+      if(!options.ok || !Array.isArray(options.data))return badDatabase(res,options,'LIVE_POLL_OPTIONS_UNAVAILABLE');
+      const votes=await selectAdminRows(config,'live_poll_votes',query({select:'poll_id,option_id,voter_id',poll_id:'in.('+pollIds.join(',')+')',limit:'10000'}));
+      const countByOption=new Map();
+      for(const vote of votes.rows||[]) countByOption.set(vote.option_id,(countByOption.get(vote.option_id)||0)+1);
+      const optionByPoll=new Map();
+      for(const option of options.data){if(!optionByPoll.has(option.poll_id))optionByPoll.set(option.poll_id,[]);optionByPoll.get(option.poll_id).push({...option,votes:countByOption.get(option.id)||0});}
+      return json(res,200,{ok:true,polls:visiblePolls.data.map(p=>({...p,options:optionByPoll.get(p.id)||[]}))});
+    }
+    if (livePollCollectionMatch && req.method === 'POST') {
+      const session=await requireSession(req,res);
+      if(!session.ok)return;
+      const roomId=livePollCollectionMatch[1];
+      if(!uuid(roomId))return error(res,400,'INVALID_ROOM_ID');
+      const body=await readBody(req);
+      const question=typeof body.question==='string'?body.question.trim():'';
+      const options=Array.isArray(body.options)?body.options.filter(x=>typeof x==='string').map(x=>x.trim()):[];
+      if(question.length<1||question.length>500)return error(res,400,'LIVE_POLL_QUESTION_INVALID');
+      if(options.length<2||options.length>8||options.some(x=>x.length<1||x.length>200))return error(res,400,'LIVE_POLL_OPTION_COUNT_INVALID');
+      const closesAt=body.closesAt?new Date(body.closesAt):null;
+      if(body.closesAt&&(!closesAt||!Number.isFinite(closesAt.getTime())||closesAt<=new Date()))return error(res,400,'LIVE_POLL_CLOSE_TIME_INVALID');
+      const result=await adminRpc(config,'create_live_poll',{p_room_id:roomId,p_host_profile_id:session.profile.id,p_question:question,p_options:options,p_closes_at:closesAt?closesAt.toISOString():null});
+      if(!result.ok)return badDatabase(res,result,'LIVE_POLL_CREATE_FAILED');
+      const pollId=typeof result.data==='string'?result.data.replace(/^"|"$/g,''):result.data&&result.data.create_live_poll;
+      return json(res,201,{ok:true,poll:{id:pollId,roomId,question,state:'open',options:options.map((label,position)=>({label,position,votes:0})),closesAt:closesAt?closesAt.toISOString():null}});
+    }
+
+    const liveVoteMatch=url.pathname.match(/^\/api\/live\/polls\/([0-9a-f-]+)\/votes$/i);
+    if(liveVoteMatch&&req.method==='POST'){
+      const session=await requireSession(req,res);
+      if(!session.ok)return;
+      const pollId=liveVoteMatch[1];
+      if(!uuid(pollId))return error(res,400,'INVALID_POLL_ID');
+      const body=await readBody(req);
+      if(!uuid(body.optionId))return error(res,400,'INVALID_POLL_OPTION_ID');
+      const poll=await rowsForUser(session,'live_polls',{select:'id,state,closes_at',id:'eq.'+pollId,limit:'1'});
+      if(!poll.ok||!Array.isArray(poll.data)||!poll.data[0])return error(res,404,'LIVE_POLL_NOT_FOUND');
+      if(poll.data[0].state!=='open'||(poll.data[0].closes_at&&new Date(poll.data[0].closes_at)<=new Date()))return error(res,409,'LIVE_POLL_CLOSED');
+      const vote=await rowsForUser(session,'live_poll_votes',{select:'poll_id,option_id,voter_id,created_at'},{method:'POST',body:{poll_id:pollId,option_id:body.optionId,voter_id:session.profile.id}});
+      if(!vote.ok)return badDatabase(res,vote,'LIVE_POLL_VOTE_FAILED');
+      return json(res,201,{ok:true,vote:Array.isArray(vote.data)?vote.data[0]:null});
+    }
+
+    const liveQuestionCollectionMatch=url.pathname.match(/^\/api\/live\/rooms\/([0-9a-f-]+)\/questions$/i);
+    if(liveQuestionCollectionMatch&&req.method==='GET'){
+      const session=await requireSession(req,res);
+      if(!session.ok)return;
+      const roomId=liveQuestionCollectionMatch[1];
+      if(!uuid(roomId))return error(res,400,'INVALID_ROOM_ID');
+      const questions=await rowsForUser(session,'live_questions',{select:'id,room_id,asker_id,body,state,selected_at,answered_at,created_at',room_id:'eq.'+roomId,order:'created_at.desc',limit:'100'});
+      if(!questions.ok||!Array.isArray(questions.data))return badDatabase(res,questions,'LIVE_QUESTIONS_UNAVAILABLE');
+      const profiles=await rowsForUser(session,'profiles',{select:'id,username,display_name,avatar_url',id:profileIdIn(questions.data.map(q=>q.asker_id))});
+      const map=new Map((profiles.data||[]).map(p=>[p.id,p]));
+      return json(res,200,{ok:true,questions:questions.data.map(q=>({id:q.id,roomId:q.room_id,body:q.body,state:q.state,selectedAt:q.selected_at,answeredAt:q.answered_at,createdAt:q.created_at,asker:profileProjection(map.get(q.asker_id))}))});
+    }
+    if(liveQuestionCollectionMatch&&req.method==='POST'){
+      const session=await requireSession(req,res);
+      if(!session.ok)return;
+      const roomId=liveQuestionCollectionMatch[1];
+      if(!uuid(roomId))return error(res,400,'INVALID_ROOM_ID');
+      const body=await readBody(req);
+      if(typeof body.body!=='string'||body.body.trim().length<1||body.body.trim().length>1500)return error(res,400,'INVALID_LIVE_QUESTION');
+      const result=await rowsForUser(session,'live_questions',{select:'id,room_id,asker_id,body,state,created_at'},{method:'POST',body:{room_id:roomId,asker_id:session.profile.id,body:body.body.trim()}});
+      if(!result.ok||!Array.isArray(result.data)||!result.data[0])return badDatabase(res,result,'LIVE_QUESTION_SUBMIT_FAILED');
+      return json(res,201,{ok:true,question:result.data[0]});
+    }
+    const liveQuestionResolveMatch=url.pathname.match(/^\/api\/live\/questions\/([0-9a-f-]+)\/resolve$/i);
+    if(liveQuestionResolveMatch&&req.method==='POST'){
+      const session=await requireSession(req,res);
+      if(!session.ok)return;
+      const questionId=liveQuestionResolveMatch[1];
+      if(!uuid(questionId))return error(res,400,'INVALID_QUESTION_ID');
+      const body=await readBody(req);
+      const state=['selected','answered','dismissed'].includes(body.state)?body.state:null;
+      if(!state)return error(res,400,'INVALID_QUESTION_STATE');
+      const found=await selectAdminRows(config,'live_questions',query({select:'id,room_id,state',id:'eq.'+questionId,limit:'1'}));
+      if(!found.ok)return badDatabase(res,found);
+      if(!found.rows[0])return error(res,404,'LIVE_QUESTION_NOT_FOUND');
+      const rooms=await selectAdminRows(config,'live_rooms',query({select:'id,host_id',id:'eq.'+found.rows[0].room_id,limit:'1'}));
+      if(!rooms.ok)return badDatabase(res,rooms);
+      if(!rooms.rows[0]||rooms.rows[0].host_id!==session.profile.id)return error(res,403,'LIVE_HOST_REQUIRED');
+      const patch={state,...(state==='selected'?{selected_at:new Date().toISOString()}:{}),...(state==='answered'?{answered_at:new Date().toISOString()}: {})};
+      const updated=await rowsForUser(session,'live_questions',{id:'eq.'+questionId,select:'id,room_id,asker_id,body,state,selected_at,answered_at'},{method:'PATCH',body:patch});
+      if(!updated.ok)return badDatabase(res,updated,'LIVE_QUESTION_RESOLUTION_FAILED');
+      return json(res,200,{ok:true,question:Array.isArray(updated.data)?updated.data[0]:null});
     }
 
     if (req.method === 'POST' && url.pathname === '/api/livekit/token') {
@@ -384,6 +673,7 @@ const server = http.createServer(async (req, res) => {
       if (!participantRows.ok) return badDatabase(res, participantRows);
       const membership = participantRows.rows[0] || null;
       if (room.state === 'ended') return error(res, 409, 'ROOM_ENDED');
+      if (!host && !membership) return error(res, 403, 'LIVE_JOIN_REQUIRED', 'Join the room first so participant state is recorded.');
       if (room.is_private && !host && !membership) return error(res, 403, 'ROOM_ACCESS_DENIED');
       if (room.state !== 'live' && !host) return error(res, 409, 'ROOM_NOT_LIVE');
       const canPublish = host || Boolean(membership && membership.role === 'guest');
