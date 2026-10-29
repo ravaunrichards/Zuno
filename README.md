@@ -2,7 +2,7 @@
 
 **ZUNO** is an independent, multi-platform social, entertainment, communication and creator ecosystem. The repository is organized as a pnpm/Turborepo-style workspace with separate applications, backend services, shared packages, database migrations, integrations, assets, infrastructure, tests and verification tools.
 
-> **Current status: PARTIALLY IMPLEMENTED — core backend flows are in the codebase, but the full product is not production-ready.** The current branch includes persisted gift delivery, PayPal checkout/capture/refund paths, verified webhook ingestion, private media upload/processing, LIVE room workflows, protected operations tooling, and migrations through `0026`. Latest inspected CI (2026-10-29, commit `92bc0412a7595dc984dc600c7f2d3cf3a9659be1`) reported 117 automated tests passed, 10/10 web checks passed, and all 26 migrations applied on clean PostgreSQL 16 with RLS/economy/moderation/messaging/community/call smoke checks. Security and accessibility/bundle-budget workflows passed; platform builds were still running/queued at that inspection. External-provider sandbox and production deployment verification remain outstanding.
+> **Current status: PARTIALLY IMPLEMENTED — ZUNO is not production-ready.** `main` currently points to merge commit `f894c66d0d258f765df12f7b91396ff073a9e34e` (2026-10-29). Historical CI notes in this repository refer to earlier commits and do not prove that this merged commit passes CI. No status contexts were returned for the merge SHA in this audit, and the available workflow-run lookup did not confirm a current run, so CI for this exact commit remains **unverified here** (this is not a claim that CI failed). The database validator expects migrations `0001`–`0032`. External-provider sandbox tests, native platform builds, and production deployment verification remain outstanding until supported by fresh, commit-specific evidence.
 
 ## Repository map
 
@@ -24,14 +24,17 @@ Prerequisites: Node.js 20 or later and Corepack/pnpm. PostgreSQL/Supabase, LiveK
 ```bash
 corepack enable
 pnpm install --no-frozen-lockfile
-pnpm run typecheck
+pnpm run lint
 pnpm run platforms:validate
-pnpm run validate:assets
-pnpm run validate:db
+pnpm run assets:validate
+pnpm run db:validate
 pnpm run test
 pnpm run build:web
 pnpm run build:apps
+pnpm run verify
 ```
+
+`typecheck`, `validate:assets`, and `validate:db` are not root scripts in the current `package.json`; use the listed commands above. Run `pnpm run db:test` only after setting `DATABASE_URL` to a **disposable PostgreSQL database**, never to production.
 
 Review `.env.example` before configuring local services. Never commit actual keys or production data. Database changes must be applied in numeric order to a disposable PostgreSQL/Supabase project before a shared environment.
 
@@ -48,7 +51,7 @@ Review `.env.example` before configuring local services. Never commit actual key
 
 ZUNO is intended to combine social networking, video and photo publishing, discovery, messaging and calls, communities, events, livestreaming, original 3D gifts and audio, Z Coins, subscriptions, creator monetization, commerce, ads, moderation, privacy and administrative tools into one coordinated experience. Each capability must have real implementation, schema/policies where persistent, tests and documentation.
 
-Latest documented CI evidence (commit `41ee1320e7a4734670493485ae0576f52836e678`, 2026-10-29): 77 automated tests passed, 10/10 web checks passed, and the disposable PostgreSQL 16 run successfully applied migrations `0001`–`0026` and passed RLS, economy and moderation smoke checks. Android build, security checks and web accessibility/bundle budget also passed on that commit. Check the current Actions page for results after later commits. These checks do not substitute for provider sandbox or production verification.
+The test counts recorded in older reports are historical and must not be treated as verification of the current merge commit. Review the [GitHub Actions runs](https://github.com/ravaunrichards/Zuno/actions) and confirm the exact commit SHA before recording any result as passed. Provider sandbox and production verification are separate requirements even when CI is green.
 
 See `docs/status/implementation-register.md`, `docs/architecture/repository-map.md`, `docs/database/migrations.md`, `docs/integrations/provider-readiness.md`, and `docs/deployment/render.md`.
 
