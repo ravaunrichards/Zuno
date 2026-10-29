@@ -43,7 +43,7 @@
     "build:creator": "node scripts/build-static-apps.js creator-studio"
   },
   "devDependencies": {
-    "turbo": "^1.13.0",
+    "turbo": "^2.11.10",
     "typescript": "^5.4.0",
     "esbuild": "^0.28.2"
   },
