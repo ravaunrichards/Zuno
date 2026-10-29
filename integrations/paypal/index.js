@@ -165,8 +165,7 @@ async function createSubscriptionPlan(cfg, { creatorProfileId, tierKey, title, d
       name: ('ZUNO Creator ' + title.trim()).slice(0, 127),
       description: String(description || ('ZUNO creator subscription tier ' + tierKey)).trim().slice(0, 256),
       type: 'SERVICE',
-      category: 'SOFTWARE',
-      home_url: 'https://zuno.example'
+      category: 'SOFTWARE'
     });
     if (productResult.status < 200 || productResult.status >= 300 || !productResult.body || !productResult.body.id) {
       return { ok: false, status: productResult.status || 502, code: 'PAYPAL_PRODUCT_CREATE_FAILED' };
