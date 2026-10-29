@@ -246,6 +246,18 @@ test('post comments list requires authentication',async()=>{
  const response=await get(await start(),'/api/posts/10000000-0000-4000-8000-000000000001/comments');
  ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
 });
+test('story feed and creation require authentication',async()=>{
+ const port=await start();
+ const read=await get(port,'/api/stories');ok(read.status===401);ok(read.body.code==='AUTH_REQUIRED');
+ const create=await post(port,'/api/stories');ok(create.status===401);ok(create.body.code==='AUTH_REQUIRED');
+});
+test('story view, reply and deletion require authentication',async()=>{
+ const port=await start();
+ const base='/api/stories/10000000-0000-4000-8000-000000000001';
+ const view=await post(port,base+'/view');ok(view.status===401);ok(view.body.code==='AUTH_REQUIRED');
+ const reply=await post(port,base+'/replies');ok(reply.status===401);ok(reply.body.code==='AUTH_REQUIRED');
+ const remove=await del(port,base);ok(remove.status===401);ok(remove.body.code==='AUTH_REQUIRED');
+});
 test('payment endpoint rejects unauthenticated requests',async()=>{
  const response=await post(await start(),'/api/payments/order');
  ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');

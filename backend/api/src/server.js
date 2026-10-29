@@ -1339,6 +1339,170 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
+
+    if (req.method === 'GET' && url.pathname === '/api/stories') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const now = new Date().toISOString();
+      const result = await rowsForUser(session, 'stories', {
+        select: 'id,author_id,media_asset_id,caption,audience,expires_at,created_at',
+        expires_at: 'gt.' + now, deleted_at: 'is.null',
+        order: 'created_at.desc', limit: '100'
+      });
+      if (!result.ok || !Array.isArray(result.data)) return badDatabase(res, result, 'STORIES_UNAVAILABLE');
+      if (!result.data.length) return json(res, 200, { ok: true, stories: [] });
+
+      const authorIds = [...new Set(result.data.map(story => story.author_id).filter(uuid))];
+      const assetIds = [...new Set(result.data.map(story => story.media_asset_id).filter(uuid))];
+      const [authors, assets] = await Promise.all([
+        authorIds.length ? selectAdminRows(config, 'profiles', query({
+          select: 'id,username,display_name,avatar_url,is_verified', id: profileIdIn(authorIds), limit: String(authorIds.length)
+        })) : { ok: true, rows: [] },
+        assetIds.length ? selectAdminRows(config, 'media_assets', query({
+          select: 'id,uploader_id,storage_path,media_type,mime_type,state,width,height,duration_ms',
+          id: profileIdIn(assetIds), limit: String(assetIds.length)
+        })) : { ok: true, rows: [] }
+      ]);
+      if (!authors.ok || !assets.ok) return error(res, 503, 'STORY_METADATA_UNAVAILABLE');
+      const authorById = new Map(authors.rows.map(profile => [profile.id, profile]));
+      const assetById = new Map(assets.rows.map(asset => [asset.id, asset]));
+      const readyAssets = [...assetById.values()].filter(asset => asset.state === 'ready' && typeof asset.storage_path === 'string');
+      let signedByPath = new Map();
+      if (readyAssets.length) {
+        const signed = await storage.createSignedDownloadUrls(config, config.storageBucket, readyAssets.map(asset => asset.storage_path), config.mediaSignedUrlTtlSeconds);
+        if (signed.ok) signedByPath = new Map(signed.signedUrls.map(item => [item.path, item.signedUrl]));
+      }
+      const viewRows = await rowsForUser(session, 'story_views', {
+        select: 'story_id,viewer_id,viewed_at,completed',
+        viewer_id: 'eq.' + session.profile.id, story_id: 'in.(' + result.data.map(story => story.id).join(',') + ')',
+        limit: '100'
+      });
+      if (!viewRows.ok || !Array.isArray(viewRows.data)) return badDatabase(res, viewRows, 'STORY_VIEW_STATE_UNAVAILABLE');
+      const viewedIds = new Set(viewRows.data.map(row => row.story_id));
+      return json(res, 200, { ok: true, stories: result.data.map(story => {
+        const asset = story.media_asset_id ? assetById.get(story.media_asset_id) : null;
+        const url = asset && asset.state === 'ready' ? signedByPath.get(asset.storage_path) || null : null;
+        return {
+          id: story.id, caption: story.caption || '', audience: story.audience,
+          createdAt: story.created_at, expiresAt: story.expires_at,
+          isMine: story.author_id === session.profile.id, viewedByMe: viewedIds.has(story.id),
+          author: profileProjection(authorById.get(story.author_id)),
+          media: asset ? {
+            assetId: asset.id, mediaType: asset.media_type, mimeType: asset.mime_type,
+            url, state: asset.state, width: asset.width || null, height: asset.height || null,
+            durationMs: asset.duration_ms || null
+          } : { url: null, state: 'unavailable' }
+        };
+      }) });
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/stories') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const body = await readBody(req);
+      const assetId = String(body.mediaAssetId || '');
+      if (!uuid(assetId)) return error(res, 400, 'STORY_MEDIA_ASSET_REQUIRED');
+      const caption = typeof body.caption === 'string' ? body.caption.trim() : '';
+      if (caption.length > 2000) return error(res, 400, 'STORY_CAPTION_TOO_LONG');
+      const audience = typeof body.audience === 'string' ? body.audience : 'public';
+      if (!['public','followers','close_friends'].includes(audience)) return error(res, 400, 'STORY_AUDIENCE_INVALID');
+      const asset = await rowsForUser(session, 'media_assets', {
+        select: 'id,uploader_id,storage_path,media_type,mime_type,state,byte_size',
+        id: 'eq.' + assetId, uploader_id: 'eq.' + session.profile.id, state: 'eq.ready', limit: '1'
+      });
+      if (!asset.ok) return badDatabase(res, asset, 'STORY_MEDIA_LOOKUP_FAILED');
+      if (!Array.isArray(asset.data) || !asset.data[0]) return error(res, 409, 'STORY_MEDIA_NOT_READY', 'Only media already processed and marked ready can be shared as a story.');
+      if (!['image','video','audio'].includes(asset.data[0].media_type)) return error(res, 400, 'STORY_MEDIA_TYPE_NOT_SUPPORTED');
+      const created = await rowsForUser(session, 'stories', {
+        select: 'id,author_id,media_asset_id,caption,audience,expires_at,created_at'
+      }, { method: 'POST', body: {
+        author_id: session.profile.id, media_asset_id: assetId, media_url: null,
+        caption: caption || null, audience
+      } });
+      if (!created.ok || !Array.isArray(created.data) || !created.data[0]) return badDatabase(res, created, 'STORY_CREATE_FAILED');
+      const story = created.data[0];
+      return json(res, 201, { ok: true, story: {
+        id: story.id, caption: story.caption || '', audience: story.audience,
+        createdAt: story.created_at, expiresAt: story.expires_at, isMine: true,
+        media: { assetId, mediaType: asset.data[0].media_type, state: 'ready' }
+      } });
+    }
+
+    const storyIdMatch = url.pathname.match(/^\/api\/stories\/([0-9a-f-]+)$/i);
+    if (storyIdMatch && req.method === 'DELETE') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const storyId = storyIdMatch[1];
+      if (!uuid(storyId)) return error(res, 400, 'INVALID_STORY_ID');
+      const removed = await rowsForUser(session, 'stories', {
+        id: 'eq.' + storyId, author_id: 'eq.' + session.profile.id, deleted_at: 'is.null',
+        select: 'id,author_id,deleted_at'
+      }, { method: 'PATCH', body: { deleted_at: new Date().toISOString() } });
+      if (!removed.ok) return badDatabase(res, removed, 'STORY_DELETE_FAILED');
+      if (!Array.isArray(removed.data) || !removed.data[0]) return error(res, 404, 'OWN_STORY_NOT_FOUND');
+      return json(res, 200, { ok: true, storyId, deleted: true });
+    }
+
+    const storyViewMatch = url.pathname.match(/^\/api\/stories\/([0-9a-f-]+)\/view$/i);
+    if (storyViewMatch && req.method === 'POST') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const storyId = storyViewMatch[1];
+      if (!uuid(storyId)) return error(res, 400, 'INVALID_STORY_ID');
+      const visible = await rowsForUser(session, 'stories', {
+        select: 'id,author_id', id: 'eq.' + storyId, deleted_at: 'is.null',
+        expires_at: 'gt.' + new Date().toISOString(), limit: '1'
+      });
+      if (!visible.ok) return badDatabase(res, visible, 'STORY_ACCESS_CHECK_FAILED');
+      if (!Array.isArray(visible.data) || !visible.data[0]) return error(res, 404, 'STORY_NOT_FOUND');
+      if (visible.data[0].author_id === session.profile.id) return json(res, 200, { ok: true, idempotent: true, isMine: true });
+      const body = await readBody(req);
+      const completed = body.completed === undefined ? true : body.completed;
+      if (typeof completed !== 'boolean') return error(res, 400, 'INVALID_STORY_VIEW_COMPLETION');
+      const prior = await rowsForUser(session, 'story_views', {
+        select: 'story_id,viewer_id,viewed_at,completed',
+        story_id: 'eq.' + storyId, viewer_id: 'eq.' + session.profile.id, limit: '1'
+      });
+      if (!prior.ok || !Array.isArray(prior.data)) return badDatabase(res, prior, 'STORY_VIEW_LOOKUP_FAILED');
+      if (prior.data[0]) return json(res, 200, { ok: true, idempotent: true, viewedAt: prior.data[0].viewed_at });
+      const inserted = await rowsForUser(session, 'story_views', {
+        select: 'story_id,viewer_id,viewed_at,completed'
+      }, { method: 'POST', body: { story_id: storyId, viewer_id: session.profile.id, completed } });
+      if (!inserted.ok) {
+        const race = await rowsForUser(session, 'story_views', {
+          select: 'story_id,viewer_id,viewed_at,completed',
+          story_id: 'eq.' + storyId, viewer_id: 'eq.' + session.profile.id, limit: '1'
+        });
+        if (race.ok && Array.isArray(race.data) && race.data[0]) return json(res, 200, { ok: true, idempotent: true, viewedAt: race.data[0].viewed_at });
+        return badDatabase(res, inserted, 'STORY_VIEW_RECORD_FAILED');
+      }
+      return json(res, 201, { ok: true, viewedAt: inserted.data[0].viewed_at, recorded: true });
+    }
+
+    const storyRepliesMatch = url.pathname.match(/^\/api\/stories\/([0-9a-f-]+)\/replies$/i);
+    if (storyRepliesMatch && req.method === 'POST') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const storyId = storyRepliesMatch[1];
+      if (!uuid(storyId)) return error(res, 400, 'INVALID_STORY_ID');
+      const body = await readBody(req);
+      if (typeof body.body !== 'string' || body.body.trim().length < 1 || body.body.trim().length > 2000) return error(res, 400, 'INVALID_STORY_REPLY');
+      const visible = await rowsForUser(session, 'stories', {
+        select: 'id,author_id', id: 'eq.' + storyId, deleted_at: 'is.null',
+        expires_at: 'gt.' + new Date().toISOString(), limit: '1'
+      });
+      if (!visible.ok) return badDatabase(res, visible, 'STORY_ACCESS_CHECK_FAILED');
+      if (!Array.isArray(visible.data) || !visible.data[0]) return error(res, 404, 'STORY_NOT_FOUND');
+      if (visible.data[0].author_id === session.profile.id) return error(res, 400, 'STORY_SELF_REPLY_FORBIDDEN');
+      const inserted = await rowsForUser(session, 'story_replies', {
+        select: 'id,story_id,author_id,message_id,body,created_at'
+      }, { method: 'POST', body: { story_id: storyId, author_id: session.profile.id, body: body.body.trim() } });
+      if (!inserted.ok || !Array.isArray(inserted.data) || !inserted.data[0]) return badDatabase(res, inserted, 'STORY_REPLY_FAILED');
+      return json(res, 201, { ok: true, reply: {
+        id: inserted.data[0].id, storyId, body: inserted.data[0].body, createdAt: inserted.data[0].created_at
+      } });
+    }
+
     if (req.method === 'GET' && url.pathname === '/api/feed') {
       const session = await requireSession(req, res);
       if (!session.ok) return;

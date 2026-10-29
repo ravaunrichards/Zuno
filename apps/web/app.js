@@ -12,6 +12,7 @@ import { mountMarketplace } from './src/features/marketplace/marketplace.js';
 import { mountSubscriptions } from './src/features/subscriptions/subscriptions.js';
 import { mountMessaging } from './src/features/messaging.js';
 import { mountProfileSettings } from './src/features/profile/profile-settings.js';
+import { mountStories } from './src/features/stories/stories.js';
 
 mountNavigation();
 mountSearch();
@@ -25,6 +26,7 @@ mountMarketplace();
 mountSubscriptions();
 mountMessaging();
 mountProfileSettings();
+mountStories();
 mountGiftCatalog();
 mountLiveRooms();
 
