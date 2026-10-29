@@ -1,5 +1,5 @@
-import { requestJson } from '../services/api-client.js';
-import { getSession } from './auth/session.js';
+import { requestJson } from '../../services/api-client.js';
+import { getSession } from '../auth/session.js';
 
 export function mountSearch() {
   const form = document.getElementById('site-search');
