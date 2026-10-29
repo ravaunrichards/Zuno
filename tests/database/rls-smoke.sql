@@ -71,4 +71,114 @@ BEGIN
 END
 $owner_checks$;
 RESET ROLE;
-SELECT 'ZUNO PostgreSQL migration + RLS smoke checks passed' AS verification;
+
+-- Money-moving integration smoke tests use synthetic CI fixtures and PostgreSQL transactions only.
+DO $economy_checks$
+DECLARE
+  v_sender uuid := '10000000-0000-4000-8000-000000000001';
+  v_receiver uuid := '10000000-0000-4000-8000-000000000002';
+  v_sender_account uuid;
+  v_receiver_account uuid;
+  v_mint_account uuid;
+  v_funding_entry uuid;
+  v_delivery_one uuid;
+  v_delivery_two uuid;
+  v_credit_one uuid;
+  v_credit_replay uuid;
+  v_credit_two uuid;
+  v_refund_one uuid;
+  v_refund_two uuid;
+  v_balance bigint;
+  v_balance_before bigint;
+  v_gifter_total bigint;
+  v_order_state text;
+BEGIN
+  INSERT INTO gift_definitions(id,name,category,tier,price_coins,unlock_rule,model_path,audio_status,asset_version,license)
+  VALUES('zuno_ci_atomic_gift','CI Atomic Gift','ci',1,5,'none','ci/geometry.json','not_required','ci-1','CI synthetic fixture only')
+  ON CONFLICT(id) DO UPDATE SET price_coins=excluded.price_coins,unlock_rule='none';
+
+  INSERT INTO wallet_accounts(profile_id,kind) VALUES(v_sender,'user'),(v_receiver,'user')
+  ON CONFLICT(profile_id) DO NOTHING;
+  SELECT id INTO v_sender_account FROM wallet_accounts WHERE profile_id=v_sender AND kind='user';
+  SELECT id INTO v_receiver_account FROM wallet_accounts WHERE profile_id=v_receiver AND kind='user';
+  SELECT id INTO v_mint_account FROM wallet_accounts WHERE kind='mint' ORDER BY id LIMIT 1;
+  IF v_sender_account IS NULL OR v_receiver_account IS NULL OR v_mint_account IS NULL THEN
+    RAISE EXCEPTION 'CI fixture wallet accounts were not provisioned';
+  END IF;
+
+  INSERT INTO ledger_entries(idempotency_key,unit,type)
+  VALUES('zuno-ci-funding-entry-00000001','coins','ci_fixture_funding')
+  ON CONFLICT(idempotency_key) DO NOTHING;
+  SELECT id INTO v_funding_entry FROM ledger_entries WHERE idempotency_key='zuno-ci-funding-entry-00000001';
+  IF NOT EXISTS(SELECT 1 FROM ledger_postings WHERE entry_id=v_funding_entry) THEN
+    INSERT INTO ledger_postings(entry_id,account_id,delta,unit)
+    VALUES(v_funding_entry,v_mint_account,-20,'coins'),(v_funding_entry,v_sender_account,20,'coins');
+  END IF;
+
+  SELECT public.deliver_gift(v_sender,v_receiver,'zuno_ci_atomic_gift',NULL,'CI smoke test','zuno-ci-gift-idempotency-key-0001')
+    INTO v_delivery_one;
+  SELECT public.deliver_gift(v_sender,v_receiver,'zuno_ci_atomic_gift',NULL,'CI smoke test','zuno-ci-gift-idempotency-key-0001')
+    INTO v_delivery_two;
+  IF v_delivery_one IS DISTINCT FROM v_delivery_two THEN
+    RAISE EXCEPTION 'Gift idempotent retry returned different delivery IDs';
+  END IF;
+  SELECT coalesce(sum(delta),0)::bigint INTO v_balance FROM ledger_postings
+    WHERE account_id=v_sender_account AND unit='coins';
+  IF v_balance<>15 THEN RAISE EXCEPTION 'Gift retry double-debited or failed: sender balance %',v_balance; END IF;
+  IF (SELECT count(*) FROM gift_deliveries WHERE idempotency_key='zuno-ci-gift-idempotency-key-0001')<>1 THEN
+    RAISE EXCEPTION 'Gift retry created more than one delivery';
+  END IF;
+  SELECT eligible_lifetime_coins INTO v_gifter_total FROM gifter_progress WHERE profile_id=v_sender;
+  IF v_gifter_total<>5 THEN RAISE EXCEPTION 'Gifter progression did not record exactly 5 eligible coins: %',v_gifter_total; END IF;
+
+  SELECT coalesce(sum(delta),0)::bigint INTO v_balance_before FROM ledger_postings
+    WHERE account_id=v_receiver_account AND unit='coins';
+  INSERT INTO payment_orders(profile_id,package_id,custom_coins,amount_usd,currency,provider,idempotency_key,state,provider_order_id)
+  VALUES(v_receiver,'z_coins_60',NULL,0.99,'USD','paypal','zuno-ci-payment-order-release-0001','created','ZUNO-CI-ORDER-REFUND-RELEASE')
+  ON CONFLICT(idempotency_key) DO NOTHING;
+  SELECT public.credit_captured_coin_order('ZUNO-CI-ORDER-REFUND-RELEASE','ZUNO-CI-CAPTURE-RELEASE',0.99,'USD')
+    INTO v_credit_one;
+  SELECT public.credit_captured_coin_order('ZUNO-CI-ORDER-REFUND-RELEASE','ZUNO-CI-CAPTURE-RELEASE',0.99,'USD')
+    INTO v_credit_replay;
+  IF v_credit_one IS DISTINCT FROM v_credit_replay THEN RAISE EXCEPTION 'Capture retry changed ledger entry ID'; END IF;
+  SELECT coalesce(sum(delta),0)::bigint INTO v_balance FROM ledger_postings
+    WHERE account_id=v_receiver_account AND unit='coins';
+  IF v_balance<>v_balance_before+60 THEN RAISE EXCEPTION 'Capture retry double-credited or failed: expected %, got %',v_balance_before+60,v_balance; END IF;
+
+  SELECT public.reserve_coin_refund(
+    (SELECT id FROM payment_orders WHERE provider_order_id='ZUNO-CI-ORDER-REFUND-RELEASE'),
+    v_receiver,'zuno-ci-refund-release-idempotency-001','ci_test'
+  ) INTO v_refund_one;
+  SELECT coalesce(sum(delta),0)::bigint INTO v_balance FROM ledger_postings
+    WHERE account_id=v_receiver_account AND unit='coins';
+  IF v_balance<>v_balance_before THEN RAISE EXCEPTION 'Refund reservation did not reserve exactly the recharge coin quantity'; END IF;
+  IF public.finalize_coin_refund(v_refund_one,NULL,false,'PAYPAL_REFUND_REJECTED')<>'failed' THEN
+    RAISE EXCEPTION 'Definitively rejected refund was not finalized as failed';
+  END IF;
+  SELECT coalesce(sum(delta),0)::bigint INTO v_balance FROM ledger_postings
+    WHERE account_id=v_receiver_account AND unit='coins';
+  IF v_balance<>v_balance_before+60 THEN RAISE EXCEPTION 'Failed provider refund did not release its coin reservation'; END IF;
+  SELECT state INTO v_order_state FROM payment_orders WHERE provider_order_id='ZUNO-CI-ORDER-REFUND-RELEASE';
+  IF v_order_state<>'credited' THEN RAISE EXCEPTION 'A rejected refund incorrectly changed captured payment state to %',v_order_state; END IF;
+
+  INSERT INTO payment_orders(profile_id,package_id,custom_coins,amount_usd,currency,provider,idempotency_key,state,provider_order_id)
+  VALUES(v_receiver,'z_coins_60',NULL,0.99,'USD','paypal','zuno-ci-payment-order-success-0002','created','ZUNO-CI-ORDER-REFUND-SUCCESS')
+  ON CONFLICT(idempotency_key) DO NOTHING;
+  SELECT public.credit_captured_coin_order('ZUNO-CI-ORDER-REFUND-SUCCESS','ZUNO-CI-CAPTURE-SUCCESS',0.99,'USD')
+    INTO v_credit_two;
+  SELECT public.reserve_coin_refund(
+    (SELECT id FROM payment_orders WHERE provider_order_id='ZUNO-CI-ORDER-REFUND-SUCCESS'),
+    v_receiver,'zuno-ci-refund-success-idempotency-0002','ci_test'
+  ) INTO v_refund_two;
+  IF public.finalize_coin_refund(v_refund_two,'ZUNO-CI-REFUND-SUCCESS',true,NULL)<>'refunded' THEN
+    RAISE EXCEPTION 'Provider-confirmed refund was not finalized as refunded';
+  END IF;
+  SELECT coalesce(sum(delta),0)::bigint INTO v_balance FROM ledger_postings
+    WHERE account_id=v_receiver_account AND unit='coins';
+  IF v_balance<>v_balance_before+60 THEN RAISE EXCEPTION 'Completed refund failed to retain the reserved debit'; END IF;
+  SELECT state INTO v_order_state FROM payment_orders WHERE provider_order_id='ZUNO-CI-ORDER-REFUND-SUCCESS';
+  IF v_order_state<>'refunded' THEN RAISE EXCEPTION 'Completed refund left payment state %',v_order_state; END IF;
+END
+$economy_checks$;
+
+SELECT 'ZUNO PostgreSQL migration + RLS + gift/payment/refund smoke checks passed' AS verification;
