@@ -244,6 +244,7 @@ const server = http.createServer(async (req, res) => {
       if (!session.ok) return;
       const mode = url.searchParams.get('mode') === 'following' ? 'following' : 'for-you';
       const limit = asSafeInt(url.searchParams.get('limit'), 20, 1, 40);
+      const offset = asSafeInt(url.searchParams.get('offset'), 0, 0, 10000);
       let followedIds = [];
       const follows = await rowsForUser(session, 'follows', { select: 'followee_id', follower_id: 'eq.' + session.profile.id, limit: '300' });
       if (follows.ok && Array.isArray(follows.data)) followedIds = follows.data.map((row) => row.followee_id).filter(uuid);
@@ -252,16 +253,19 @@ const server = http.createServer(async (req, res) => {
         select: 'id,author_id,kind,caption,media,audience,created_at,expires_at',
         deleted_at: 'is.null',
         order: 'created_at.desc',
-        limit: String(mode === 'for-you' ? 100 : 100)
+        limit: String(mode === 'for-you' ? 300 : limit)
       };
-      if (mode === 'following') postParams.author_id = profileIdIn(followedIds);
+      if (mode === 'following') {
+        postParams.author_id = profileIdIn(followedIds);
+        postParams.offset = String(offset);
+      }
       const postResult = await rowsForUser(session, 'posts', postParams);
       if (!postResult.ok || !Array.isArray(postResult.data)) return badDatabase(res, postResult, 'FEED_UNAVAILABLE');
       let rows = postResult.data;
       if (mode === 'for-you') {
         const followed = new Set(followedIds);
         rows = rankCandidates(rows.map((post) => ({ ...post, authorId: post.author_id, visibility: post.audience, createdAt: post.created_at })), { viewerId: session.profile.id, followedProfileIds: followed })
-          .slice(0, limit).map((entry) => ({ ...entry.candidate, rankingScore: entry.score }));
+          .slice(offset, offset + limit).map((entry) => ({ ...entry.candidate, rankingScore: entry.score }));
       } else rows = rows.slice(0, limit);
       const authors = [...new Set(rows.map((post) => post.author_id).filter(uuid))];
       let profileById = new Map();
@@ -271,7 +275,7 @@ const server = http.createServer(async (req, res) => {
       }
       const events = rows.map((post, index) => ({ profile_id: session.profile.id, content_type: 'post', content_id: post.id, event_type: 'impression', position: index }));
       if (events.length) await adminRest(config, 'recommendation_events', new URLSearchParams(), 'POST', events);
-      return json(res, 200, { ok: true, mode, posts: rows.map((post) => ({
+      return json(res, 200, { ok: true, mode, offset, limit, hasMore: rows.length === limit && (mode !== 'for-you' || offset + rows.length < 300), posts: rows.map((post) => ({
         id: post.id, kind: post.kind, caption: post.caption || '', media: Array.isArray(post.media) ? post.media : [],
         audience: post.audience, createdAt: post.created_at, expiresAt: post.expires_at || null,
         rankingScore: post.rankingScore ?? null,

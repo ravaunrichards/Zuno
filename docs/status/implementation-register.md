@@ -38,3 +38,8 @@ Record each test as **passed**, **failed**, **blocked**, or **not run** with its
 - Eligible gift-delivery rows automatically refresh gifter progress and record Ultimate Universe at 1,000,000 eligible lifetime coins, separately from level milestones.
 - Creator earning entries can record gross amount, provider fees, net amount, creator/platform shares, policy version, source idempotency and payout association under server-managed writes.
 - These SQL definitions still require application to a real disposable PostgreSQL/Supabase database and transaction-level RLS/trigger tests before they can be treated as verified.
+
+
+## Feed contract update
+
+The API now accepts `offset` and `limit` for feed pagination. Following feeds use PostgREST range pagination under the current session's RLS. The deterministic For You baseline ranks the first 300 accessible candidates and pages the ranked results; this is an explicit bounded baseline rather than a claim of infinite-scale recommendation serving.
