@@ -1,6 +1,17 @@
 \set ON_ERROR_STOP on
 -- This file intentionally uses deterministic, clearly synthetic test identities.
-\n-- Auth user creation trigger provisions a default ZUNO profile and least-privilege role.\nINSERT INTO auth.users(id,email,raw_user_meta_data) VALUES\n('20000000-0000-4000-8000-000000000003','zuno_trigger_test@example.invalid','{"username":"trigger_test","display_name":"Trigger Test"}'::jsonb)\nON CONFLICT(id) DO NOTHING;\nDO $auth_trigger_check$\nBEGIN\n IF NOT EXISTS(SELECT 1 FROM profiles WHERE auth_user_id='20000000-0000-4000-8000-000000000003' AND username='trigger_test') THEN RAISE EXCEPTION 'auth trigger did not provision profile'; END IF;\n IF NOT EXISTS(SELECT 1 FROM roles r JOIN profiles p ON p.id=r.profile_id WHERE p.auth_user_id='20000000-0000-4000-8000-000000000003' AND r.role='user') THEN RAISE EXCEPTION 'auth trigger did not assign default user role'; END IF;\nEND\n$auth_trigger_check$;\n
+
+-- Auth user creation trigger provisions a default ZUNO profile and least-privilege role.
+INSERT INTO auth.users(id,email,raw_user_meta_data) VALUES
+('20000000-0000-4000-8000-000000000003','zuno_trigger_test@example.invalid','{"username":"trigger_test","display_name":"Trigger Test"}'::jsonb)
+ON CONFLICT(id) DO NOTHING;
+DO $auth_trigger_check$
+BEGIN
+ IF NOT EXISTS(SELECT 1 FROM profiles WHERE auth_user_id='20000000-0000-4000-8000-000000000003' AND username='trigger_test') THEN RAISE EXCEPTION 'auth trigger did not provision profile'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM roles r JOIN profiles p ON p.id=r.profile_id WHERE p.auth_user_id='20000000-0000-4000-8000-000000000003' AND r.role='user') THEN RAISE EXCEPTION 'auth trigger did not assign default user role'; END IF;
+END
+$auth_trigger_check$;
+
 INSERT INTO profiles (id, auth_user_id, username, display_name, visibility) VALUES
 ('10000000-0000-4000-8000-000000000001','20000000-0000-4000-8000-000000000001','zuno_test_owner','Test owner','private'),
 ('10000000-0000-4000-8000-000000000002','20000000-0000-4000-8000-000000000002','zuno_test_viewer','Test viewer','private')
