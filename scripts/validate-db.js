@@ -27,7 +27,7 @@ if(!/create\s+constraint\s+trigger\s+ledger_postings_balanced/i.test(sql))proble
 if(!/unique\s*\(provider\s*,\s*provider_event_id\)/i.test(sql))problems.push('provider webhook event idempotency constraint missing');
 if(!/America\/Jamaica/.test(sql))problems.push('ranking timezone requirement America/Jamaica missing');
 if(!/grant\s+execute\s+on\s+function\s+claim_background_job/i.test(sql))problems.push('worker job claim function is not explicitly service-role gated');
-if(!/grant\s+execute\s+on\s+function\s+queue_media_processing_job/i.test(sql))problems.push('media queue function is not service-role gated');
+if(!/grant\s+execute\s+on\s+function\s+(?:public\.)?queue_media_processing_job/i.test(sql) || !/grant\s+execute\s+on\s+function\s+(?:public\.)?queue_media_processing_job\([^;]+\)\s+to\s+service_role/i.test(sql))problems.push('media queue function is not service-role gated');
 if(!/create policy posts_select on posts for select using\s*\(can_view_post\(id\)\)/i.test(sql))problems.push('posts SELECT policy must enforce audience and bilateral block rules');
 console.log(JSON.stringify({ok:problems.length===0,migrationFiles:migrations.length,sqlFiles:sqlFiles.length,tables:tables.length,rlsTables:enabled.size,problems},null,2));
 process.exit(problems.length===0?0:1);
