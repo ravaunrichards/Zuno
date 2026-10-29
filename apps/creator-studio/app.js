@@ -252,8 +252,123 @@ function mountCreatorSubscriptions(){
  loadCreatorSubscribers();
 }
 
+
+const payoutBalance=document.getElementById('creator-payout-balance');
+const payoutEligibility=document.getElementById('creator-payout-eligibility');
+const payoutHistory=document.getElementById('creator-payout-history');
+const payoutRequestButton=document.getElementById('creator-payout-request');
+function payoutText(message,isError=false){
+ const target=document.getElementById('creator-payout-request-status');
+ if(target){target.textContent=message;target.classList.toggle('is-error',Boolean(isError));}
+}
+function moneyMinor(value,currency='USD'){
+ return new Intl.NumberFormat(undefined,{style:'currency',currency}).format(Number(value||0)/100);
+}
+function payoutLabel(code){
+ return String(code||'').replace(/^PAYOUTS?_?/,'').replace(/_/g,' ').toLowerCase();
+}
+function getPayoutRequestKey(){
+ try{
+  const old=JSON.parse(localStorage.getItem('zuno:payout-request')||'null');
+  if(old&&typeof old.key==='string'&&old.key.length>=16)return old;
+ }catch(_){}
+ const key=window.crypto?.randomUUID?.()||null;
+ if(!key)throw new Error('Secure request IDs require an updated browser over HTTPS.');
+ const saved={key,payoutId:null};
+ try{localStorage.setItem('zuno:payout-request',JSON.stringify(saved));}catch(_){}
+ return saved;
+}
+function payoutHistoryCard(payout){
+ const card=el('article','studio-list-item');
+ card.append(el('strong','',moneyMinor(payout.amountMinor,payout.currency)+' · '+payout.state));
+ card.append(el('span','',new Date(payout.createdAt).toLocaleString()));
+ if(payout.providerBatchId)card.append(el('code','', 'PayPal batch '+payout.providerBatchId));
+ if(payout.failureCode)card.append(el('p','micro','Provider failure: '+payoutLabel(payout.failureCode)));
+ return card;
+}
+async function loadCreatorPayouts(){
+ if(!payoutBalance)return;
+ if(!getSession()){
+  payoutBalance.textContent='Sign in to load earnings and payout eligibility.';
+  if(payoutEligibility)payoutEligibility.textContent='Only authenticated creators can submit payout details.';
+  if(payoutRequestButton)payoutRequestButton.disabled=true;
+  if(payoutHistory)payoutHistory.replaceChildren(el('div','empty-state','Sign in to load payout history.'));
+  return;
+ }
+ try{
+  const result=await requestJson('/api/payouts/mine');
+  payoutBalance.textContent='Available earnings: '+moneyMinor(result.available?.amountMinor||0,result.available?.currency||'USD')+
+   ' · Minimum: '+moneyMinor(result.minimum?.amountMinor||0,result.minimum?.currency||'USD');
+  const destination=result.destination;
+  const lines=[];
+  if(destination)lines.push('Recipient: '+destination.maskedEmail+' · '+destination.countryCode);
+  else lines.push('No PayPal destination saved.');
+  if(destination)lines.push('Recipient readiness: '+(destination.providerRecipientReady?'ready':'review required'));
+  if(result.eligibility?.reasons?.length)lines.push('Not ready: '+result.eligibility.reasons.map(payoutLabel).join(', '));
+  else lines.push('Payout eligibility gates are cleared.');
+  if(payoutEligibility)payoutEligibility.textContent=lines.join(' · ');
+  if(payoutRequestButton)payoutRequestButton.disabled=!Boolean(result.eligibility?.eligible);
+  if(payoutHistory){
+   payoutHistory.replaceChildren();
+   const payouts=Array.isArray(result.payouts)?result.payouts:[];
+   if(!payouts.length)payoutHistory.append(el('div','empty-state','No payout requests yet.'));
+   payouts.forEach(p=>payoutHistory.append(payoutHistoryCard(p)));
+   try{
+    const saved=JSON.parse(localStorage.getItem('zuno:payout-request')||'null');
+    const previous=saved&&payouts.find(p=>p.id===saved.payoutId);
+    if(previous&&['paid','failed'].includes(previous.state))localStorage.removeItem('zuno:payout-request');
+   }catch(_){}
+  }
+ }catch(error){
+  payoutBalance.textContent=error.message||'Payout readiness unavailable.';
+  if(payoutRequestButton)payoutRequestButton.disabled=true;
+ }
+}
+function mountCreatorPayouts(){
+ const form=document.getElementById('creator-payout-destination-form');
+ const email=document.getElementById('creator-payout-email');
+ const country=document.getElementById('creator-payout-country');
+ form?.addEventListener('submit',async event=>{
+  event.preventDefault();
+  if(!getSession()){payoutText('Sign in as a creator first.',true);return;}
+  const countryCode=country?.value.trim().toUpperCase()||'';
+  if(!/^[A-Z]{2}$/.test(countryCode)){payoutText('Enter a two-letter country code.',true);return;}
+  const button=document.getElementById('creator-payout-save');if(button)button.disabled=true;
+  payoutText('Encrypting and saving recipient securely…');
+  try{
+   const result=await requestJson('/api/payouts/destination',{method:'POST',body:{paypalEmail:email?.value||'',countryCode}});
+   if(email)email.value='';
+   payoutText(result.message||'Recipient saved. Review is still required.');
+   await loadCreatorPayouts();
+  }catch(error){payoutText(error.message||'Payout destination could not be saved.',true);}
+  finally{if(button)button.disabled=false;}
+ });
+ payoutRequestButton?.addEventListener('click',async()=>{
+  if(!getSession()){payoutText('Sign in before requesting a payout.',true);return;}
+  payoutRequestButton.disabled=true;
+  try{
+   const key=getPayoutRequestKey();
+   payoutText('Reserving available creator earnings and submitting a PayPal payout…');
+   const result=await requestJson('/api/payouts/request',{method:'POST',headers:{'Idempotency-Key':key.key},body:{}});
+   if(result.payout?.id){
+    try{localStorage.setItem('zuno:payout-request',JSON.stringify({key:key.key,payoutId:result.payout.id}));}catch(_){}
+   }
+   payoutText(result.message||('Payout '+(result.payout?.state||'submitted')+'.'));
+   await loadCreatorPayouts();
+  }catch(error){
+   if(error.code==='PAYOUT_PREVIOUS_ATTEMPT_FAILED'){try{localStorage.removeItem('zuno:payout-request');}catch(_){}}
+   payoutText(error.message||'Payout was not submitted. Check the saved status before retrying.',true);
+   await loadCreatorPayouts();
+  }
+ });
+ document.getElementById('creator-payout-refresh')?.addEventListener('click',loadCreatorPayouts);
+ window.addEventListener('zuno:session-change',loadCreatorPayouts);
+ loadCreatorPayouts();
+}
+
 mountAuth();
 mountCreatorSubscriptions();
+mountCreatorPayouts();
 async function refreshAll(){await Promise.all([loadLibrary(),loadPosts(),loadAnalytics()]);}
 window.addEventListener('zuno:session-change',refreshAll);
 refreshAll();

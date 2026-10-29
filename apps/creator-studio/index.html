@@ -14,7 +14,24 @@
 </form>
 <div class="subscription-list-block"><div class="subscription-list-heading"><h3>Your membership tiers</h3><button type="button" class="secondary" id="creator-tiers-refresh">Refresh</button></div><div id="creator-tier-list" class="studio-list"><div class="empty-state">Sign in to manage membership tiers.</div></div></div>
 <div class="subscription-list-block"><div class="subscription-list-heading"><h3>Subscribers</h3><button type="button" class="secondary" id="creator-subscribers-refresh">Refresh</button></div><div id="creator-subscriber-list" class="studio-list"><div class="empty-state">Subscriber status comes from the provider-backed database.</div></div></div>
-<p class="micro">Creator payouts remain disabled until payout eligibility, compliance and reconciliation are verified.</p>
+
+<div class="subscription-list-block creator-payout-block" id="creator-payouts">
+ <div class="subscription-list-heading"><h3>PayPal creator payouts</h3><button type="button" class="secondary" id="creator-payout-refresh">Refresh</button></div>
+ <p class="micro">Your PayPal recipient is encrypted before storage. Payout eligibility is reviewed by finance/admin. Earnings remain reserved while PayPal processes a payout; a verified provider success is required before the payout is marked paid.</p>
+ <div class="creator-payout-balance" id="creator-payout-balance" aria-live="polite">Sign in to load your available earnings.</div>
+ <form id="creator-payout-destination-form" class="creator-payout-form">
+  <label for="creator-payout-email">PayPal recipient email</label><input id="creator-payout-email" name="paypalEmail" type="email" maxlength="127" autocomplete="email" placeholder="PayPal account email" required>
+  <label for="creator-payout-country">Country of payout recipient</label><input id="creator-payout-country" name="countryCode" minlength="2" maxlength="2" pattern="[A-Za-z]{2}" autocomplete="country" placeholder="JM" required>
+  <button class="secondary" id="creator-payout-save" type="submit">Save encrypted destination</button>
+  <p id="creator-payout-destination-status" class="micro" role="status">Recipient review is required before any payout can be sent.</p>
+ </form>
+ <div class="creator-payout-eligibility" id="creator-payout-eligibility" role="status">Eligibility is checked by the server.</div>
+ <button class="primary" id="creator-payout-request" type="button" disabled>Request creator payout</button>
+ <p id="creator-payout-request-status" class="micro" role="status"></p>
+ <div class="subscription-list-heading"><h3>Payout history</h3></div>
+ <div id="creator-payout-history" class="studio-list"><div class="empty-state">Sign in to load payout history.</div></div>
+</div>
+
 </div></section></div><footer>Creator Studio preview · Files selected here remain local until a real upload endpoint confirms success.</footer><dialog class="studio-auth-dialog" id="auth-dialog" aria-labelledby="auth-title">
 <form method="dialog" class="studio-auth-dialog-top"><div><span class="kicker">YOUR ZUNO ACCOUNT</span><h2 id="auth-title">Welcome back.</h2></div><button type="submit" class="secondary" value="cancel" aria-label="Close">Close</button></form>
 <div class="studio-auth-modes"><button type="button" data-auth-mode="signin">Sign in</button><button type="button" data-auth-mode="signup">Create account</button></div>

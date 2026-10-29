@@ -47,9 +47,66 @@ async function loadIntegrations(){
  catch(error){setHealthStatus(error.status===403?'This account is not authorized to inspect integrations.':(error.message||'Integration readiness unavailable.'),true);}
  finally{if(healthButton){healthButton.disabled=false;healthButton.textContent='Refresh status';}}
 }
+
+const payoutProfilesList=document.getElementById('payout-profiles-list');
+function payoutProfileCard(profile){
+ const card=node('article','admin-payout-card');
+ const heading=node('div','admin-report-heading');
+ heading.append(node('strong','',profile.recipientMasked+' · '+profile.countryCode),
+   node('time','',profile.reviewedAt?'Reviewed '+new Date(profile.reviewedAt).toLocaleString():'Awaiting review'));
+ card.append(heading,node('code','',profile.creatorId));
+ card.append(node('p','admin-payout-meta','Country: '+profile.countryEligibility+' · Identity: '+(profile.identityVerified?'verified':'not verified')+
+  ' · Compliance: '+profile.complianceState+' · Recipient: '+(profile.providerRecipientReady?'ready':'not ready')+
+  ' · Risk hold: '+(profile.riskHold?'active':'clear')));
+ const form=node('form','admin-payout-review-form');
+ function addCheck(name,labelText,checked){
+  const label=node('label','admin-payout-check');
+  const input=node('input','');input.type='checkbox';input.name=name;input.checked=Boolean(checked);
+  const textNode=node('span','',labelText);
+  label.append(input,textNode);form.append(label);
+ }
+ addCheck('identityVerified','Identity verified',profile.identityVerified);
+ addCheck('countryEligible','Country/provider eligibility confirmed',profile.countryEligibility==='eligible');
+ addCheck('complianceClear','Compliance checks cleared',profile.complianceState==='cleared');
+ addCheck('providerRecipientReady','PayPal recipient ready',profile.providerRecipientReady);
+ addCheck('riskHold','Risk hold',profile.riskHold);
+ const note=node('input','admin-payout-review-note');note.type='text';note.name='reviewNote';note.maxLength=500;note.placeholder='Review reason / audit note';note.value=profile.reviewNote||'';note.setAttribute('aria-label','Review reason or audit note');
+ const submit=node('button','admin-primary','Save review');submit.type='submit';form.append(note,submit);
+ form.addEventListener('submit',async event=>{
+  event.preventDefault();submit.disabled=true;
+  const value=name=>Boolean(form.elements.namedItem(name)?.checked);
+  try{
+   await requestJson('/api/admin/payout-profiles/'+encodeURIComponent(profile.creatorId)+'/review',{
+    method:'PATCH',body:{
+     identityVerified:value('identityVerified'),countryEligible:value('countryEligible'),
+     complianceClear:value('complianceClear'),providerRecipientReady:value('providerRecipientReady'),
+     riskHold:value('riskHold'),reviewNote:note.value.trim()||null
+    }
+   });
+   card.append(node('p','admin-success','Payout review saved and audit-recorded.'));
+   await loadPayoutProfiles();
+  }catch(error){card.append(node('p','admin-error',error.message||'Payout review could not be saved.'));}
+  finally{submit.disabled=false;}
+ });
+ card.append(form);
+ return card;
+}
+async function loadPayoutProfiles(){
+ if(!payoutProfilesList)return;
+ if(!getSession()){placeholder(payoutProfilesList,'Sign in with a finance or administrator role.');return;}
+ placeholder(payoutProfilesList,'Loading encrypted payout profiles and review state…');
+ try{
+  const result=await requestJson('/api/admin/payout-profiles');
+  payoutProfilesList.replaceChildren();
+  if(!result.profiles?.length){placeholder(payoutProfilesList,'No creator payout destinations are waiting in the database.');return;}
+  result.profiles.forEach(profile=>payoutProfilesList.append(payoutProfileCard(profile)));
+ }catch(error){placeholder(payoutProfilesList,error.status===403?'This account needs the finance or administrator role.':(error.message||'Payout review queue unavailable.'));}
+}
+
+document.getElementById('load-payout-profiles')?.addEventListener('click',loadPayoutProfiles);
 document.getElementById('load-reports')?.addEventListener('click',loadReports);
 document.getElementById('report-state-filter')?.addEventListener('change',loadReports);
 document.getElementById('load-audit')?.addEventListener('click',loadAudit);
 healthButton?.addEventListener('click',loadIntegrations);
-window.addEventListener('zuno:session-change',()=>{loadOverview();loadReports();loadAudit();loadIntegrations();});
-mountAuth();loadOverview();loadReports();
+window.addEventListener('zuno:session-change',()=>{loadOverview();loadReports();loadAudit();loadIntegrations();loadPayoutProfiles();});
+mountAuth();loadOverview();loadReports();loadPayoutProfiles();
