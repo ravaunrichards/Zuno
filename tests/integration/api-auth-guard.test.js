@@ -90,6 +90,10 @@ test('community creation rejects unauthenticated requests',async()=>{
  const response=await post(await start(),'/api/communities');
  ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
 });
+test('search endpoint rejects unauthenticated requests',async()=>{
+ const response=await get(await start(),'/api/search?q=zuno&type=all');
+ ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
+});
 test('event RSVP rejects unauthenticated requests',async()=>{
  const response=await post(await start(),'/api/events/10000000-0000-4000-8000-000000000001/rsvp');
  ok(response.status===401);ok(response.body.code==='AUTH_REQUIRED');
