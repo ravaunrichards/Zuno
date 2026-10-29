@@ -21,7 +21,7 @@ alter table public.wallet_restrictions enable row level security;
 create or replace function public.enforce_active_wallet_restriction()
 returns trigger
 language plpgsql security definer
-set search_path=public,pg_temp as $
+set search_path=public,pg_temp as $$
 declare
  v_profile_id uuid;
 begin
@@ -33,7 +33,7 @@ begin
  end if;
  return new;
 end;
-$;
+$$;
 revoke all on function public.enforce_active_wallet_restriction() from public;
 drop trigger if exists gift_delivery_wallet_restriction on public.gift_deliveries;
 create trigger gift_delivery_wallet_restriction

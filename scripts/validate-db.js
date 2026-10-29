@@ -17,10 +17,10 @@ for(const item of contents){
   if(quoteCount%2!==0)problems.push('unbalanced $$ delimiters: '+path.relative(DB,item.file));
 }
 const sql=contents.map((item)=>item.sql).join('\n');
-const tableMatches=[...sql.matchAll(/create\s+table\s+if\s+not\s+exists\s+([a-z_][a-z0-9_]*)/gi)].map((m)=>m[1].toLowerCase());
+const tableMatches=[...sql.matchAll(/create\s+table\s+if\s+not\s+exists\s+(?:public\.)?([a-z_][a-z0-9_]*)/gi)].map((m)=>m[1].toLowerCase());
 const tables=[...new Set(tableMatches)];
 for(const name of new Set(tableMatches.filter((name,index)=>tableMatches.indexOf(name)!==index)))problems.push('duplicate table definition: '+name);
-const enabled=new Set([...sql.matchAll(/alter\s+table\s+([a-z_][a-z0-9_]*)\s+enable\s+row\s+level\s+security/gi)].map((m)=>m[1].toLowerCase()));
+const enabled=new Set([...sql.matchAll(/alter\s+table\s+(?:public\.)?([a-z_][a-z0-9_]*)\s+enable\s+row\s+level\s+security/gi)].map((m)=>m[1].toLowerCase()));
 for(const table of tables)if(!enabled.has(table))problems.push('RLS not enabled on '+table);
 if(/\b(drop\s+table|truncate)\b/i.test(sql))problems.push('destructive table operation found in migrations/seeds');
 if(!/create\s+constraint\s+trigger\s+ledger_postings_balanced/i.test(sql))problems.push('balanced-ledger deferred constraint trigger missing');
