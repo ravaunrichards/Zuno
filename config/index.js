@@ -15,7 +15,7 @@ function load(env = process.env) {
   const supabase = {
     url: String(env.SUPABASE_URL || '').trim(),
     anonKey: String(env.SUPABASE_ANON_KEY || '').trim(),
-    serviceRoleKey: String(env.SUPABASE_SECRET_KEY || env.SUPABASE_SERVICE_ROLE_KEY || '').trim(),
+    serviceRoleKey: String(env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_SECRET_KEY || '').trim(),
     jwtSecret: String(env.SUPABASE_JWT_SECRET || '').trim(),
   };
   const livekit = {
