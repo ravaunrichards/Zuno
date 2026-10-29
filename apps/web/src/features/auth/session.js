@@ -135,21 +135,39 @@ export async function signIn(email, password) {
 
 export async function signUp({ email, password, username, displayName }) {
   if (typeof email !== 'string' || !email.trim()) throw new Error('Enter a valid email address.');
-  if (typeof password !== 'string' || password.length < 8) throw new Error('Use a password with at least 8 characters.');
+  if (typeof password !== 'string' || password.length < 8 || password.length > 128) {
+    throw new Error('Use a password between 8 and 128 characters.');
+  }
+  const normalizedEmail = email.trim().toLowerCase();
   const normalizedUsername = String(username || '').trim().toLowerCase();
   if (!/^[a-z0-9_.]{3,30}$/.test(normalizedUsername)) {
     throw new Error('Username must be 3–30 characters using letters, numbers, underscores or periods.');
   }
-  const redirect = encodeURIComponent(authRedirectUrl('confirmed'));
-  const response = await authRequest('/auth/v1/signup?redirect_to=' + redirect, {
-    email: email.trim(),
-    password,
-    data: {
+
+  // ZUNO's server creates the Auth identity with email_confirm=true, so this
+  // signup path does not send a confirmation email or depend on SMTP limits.
+  // The service-role credential remains exclusively on the backend.
+  const config = await getPublicConfig();
+  const apiRoot = config.apiBaseUrl || apiBaseUrl();
+  if (!apiRoot) throw new Error('ZUNO registration API is not configured.');
+  const registrationUrl = new URL('/api/auth/signup', apiRoot);
+  await fetchJson(registrationUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({
+      email: normalizedEmail,
+      password,
       username: normalizedUsername,
-      display_name: String(displayName || normalizedUsername).trim().slice(0, 80)
-    }
+      displayName: String(displayName || normalizedUsername).trim().slice(0, 80)
+    })
   });
-  if (response.access_token) persistSession(response);
+
+  // Use the regular password grant to establish the same Supabase session as
+  // sign-in. The client never receives the service-role key.
+  const response = await authRequest('/auth/v1/token?grant_type=password', {
+    email: normalizedEmail, password
+  });
+  if (!persistSession(response)) throw new Error('Supabase did not return a valid session after signup.');
   return response;
 }
 
