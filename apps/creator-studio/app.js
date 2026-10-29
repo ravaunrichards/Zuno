@@ -1,8 +1,10 @@
+import { mountProductLinks } from '../web/src/components/product-links.js';
 import { requestJson } from '../web/src/services/api-client.js';
 import { getSession } from '../web/src/features/auth/session.js';
 import { mountAuth } from '../web/src/features/auth/auth-ui.js';
 import { uploadAndProcess } from '../web/src/features/creation/media-upload.js';
 
+mountProductLinks();
 const fileInput=document.getElementById('media-file');
 const chooseButton=document.getElementById('choose-file');
 const fileStatus=document.getElementById('file-status');

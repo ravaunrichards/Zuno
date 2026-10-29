@@ -32,7 +32,8 @@ for(const name of chosen){
  const htmlPath=path.join(output,'index.html');
  let html=fs.readFileSync(htmlPath,'utf8');
  if(!html.includes('./runtime-config.js'))html=html.replace('</head>','<script src="./runtime-config.js"></script></head>');
- if(name==='creator-studio')html=html.replace('<script src="./app.js"></script>','<script type="module" src="./app.js"></script>');
+ html=html.replace(/<script(?: type="module")? src="\.\/app\.js"><\/script>/,'<script type="module" src="./app.js"></script>');
  fs.writeFileSync(htmlPath,html);
 }
+if (!process.argv[2]) fs.writeFileSync(path.join(ROOT,'dist','index.html'), '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=./web/index.html"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ZUNO</title></head><body><p>Opening <a href="./web/index.html">ZUNO</a>…</p></body></html>' + String.fromCharCode(10));
 console.log('Built static application bundles: '+chosen.join(', '));

@@ -30,6 +30,7 @@ pnpm run validate:assets
 pnpm run validate:db
 pnpm run test
 pnpm run build:web
+pnpm run build:apps
 ```
 
 Review `.env.example` before configuring local services. Never commit actual keys or production data. Database changes must be applied in numeric order to a disposable PostgreSQL/Supabase project before a shared environment.
@@ -50,3 +51,8 @@ ZUNO is intended to combine social networking, video and photo publishing, disco
 Latest documented CI evidence (commit `41ee1320e7a4734670493485ae0576f52836e678`, 2026-10-29): 77 automated tests passed, 10/10 web checks passed, and the disposable PostgreSQL 16 run successfully applied migrations `0001`–`0017` and passed RLS, economy and moderation smoke checks. Android build, security checks and web accessibility/bundle budget also passed on that commit. Check the current Actions page for results after later commits. These checks do not substitute for provider sandbox or production verification.
 
 See `docs/status/implementation-register.md`, `docs/architecture/repository-map.md`, `docs/database/migrations.md`, and `docs/integrations/provider-readiness.md`.
+
+
+### Multi-app local previews
+
+The development preview commands serve the shared `dist/` root so each app's links to the web client resolve correctly. Run `pnpm serve:web` and open `http://127.0.0.1:3000/`; admin uses port 3002 at `/admin/index.html`, Creator Studio uses port 3003 at `/creator-studio/index.html`, and TV uses port 3004 at `/tv/index.html`. Configure `ZUNO_PUBLIC_API_BASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and optionally `ZUNO_PUBLIC_WEB_BASE_URL` to enable connected provider workflows. Camera and microphone permissions are allowed only for same-origin web pages by the local static server.

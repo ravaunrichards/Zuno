@@ -1,7 +1,9 @@
+import { mountProductLinks } from '../web/src/components/product-links.js';
 import { requestJson } from '../web/src/services/api-client.js';
 import { getSession } from '../web/src/features/auth/session.js';
 import { mountAuth } from '../web/src/features/auth/auth-ui.js';
 
+mountProductLinks();
 const healthButton=document.getElementById('check-health');
 const healthOutput=document.getElementById('health-output');
 const moderationList=document.getElementById('moderation-list');

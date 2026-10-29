@@ -42,8 +42,8 @@ function createStaticServer(rootDir){
       'Content-Length':stat.size,
       'X-Content-Type-Options':'nosniff',
       'Referrer-Policy':'strict-origin-when-cross-origin',
-      'Permissions-Policy':'camera=(), microphone=(), geolocation=()',
-      'Content-Security-Policy':"default-src 'self'; connect-src 'self' http://localhost:4000; img-src 'self' data:; style-src 'self'; script-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
+      'Permissions-Policy':'camera=(self), microphone=(self), geolocation=()',
+      'Content-Security-Policy':"default-src 'self'; connect-src 'self' http://localhost:4000 https://*.supabase.co ws: wss:; img-src 'self' data: blob: https://*.supabase.co; media-src 'self' blob: https://*.supabase.co; style-src 'self'; script-src 'self'; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'"
     };
     res.writeHead(200,headers);
     if(req.method==='HEAD')return res.end();
