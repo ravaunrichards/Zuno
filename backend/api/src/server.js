@@ -258,9 +258,13 @@ const server = http.createServer(async (req, res) => {
         if (body.event_type === 'CHECKOUT.ORDER.APPROVED') {
           const providerOrderId = String(resource.id || '');
           if (providerOrderId) {
-            await adminRest(config, 'payment_orders', query({
+            const approvedCoin=await adminRest(config, 'payment_orders', query({
               provider_order_id: 'eq.' + providerOrderId, state: 'eq.created'
             }), 'PATCH', { state: 'approved', updated_at: new Date().toISOString() });
+            if(!approvedCoin.ok){
+              const approvedCommerce=await selectAdminRows(config,'commerce_orders',query({select:'id',provider_order_id:'eq.'+providerOrderId,status:'eq.pending_payment',limit:'1'}));
+              if(!approvedCommerce.ok||!approvedCommerce.rows.length){processing='failed';errorCode='APPROVED_ORDER_LOOKUP_FAILED';}
+            }
           }
         } else if (body.event_type === 'PAYMENT.CAPTURE.COMPLETED') {
           const relatedIds = resource.supplementary_data && resource.supplementary_data.related_ids || {};
@@ -271,19 +275,44 @@ const server = http.createServer(async (req, res) => {
           if (!providerOrderId || !captureId || !Number.isFinite(amount)) {
             processing = 'failed'; errorCode = 'CAPTURE_WEBHOOK_FIELDS_MISSING';
           } else {
-            const credit = await adminRpc(config, 'credit_captured_coin_order', {
-              p_provider_order_id: providerOrderId, p_capture_id: captureId,
-              p_capture_amount: amount, p_currency: currency
-            });
-            if (!credit.ok) { processing = 'failed'; errorCode = 'CAPTURE_CREDIT_RECONCILIATION_FAILED'; }
+            const coinOrder = await selectAdminRows(config, 'payment_orders', query({
+              select: 'id', provider_order_id: 'eq.' + providerOrderId, limit: '1'
+            }));
+            if (coinOrder.ok && coinOrder.rows.length) {
+              const credit = await adminRpc(config, 'credit_captured_coin_order', {
+                p_provider_order_id: providerOrderId, p_capture_id: captureId,
+                p_capture_amount: amount, p_currency: currency
+              });
+              if (!credit.ok) { processing = 'failed'; errorCode = 'CAPTURE_CREDIT_RECONCILIATION_FAILED'; }
+            } else {
+              const commerceOrder = await selectAdminRows(config, 'commerce_orders', query({
+                select: 'id', provider_order_id: 'eq.' + providerOrderId, limit: '1'
+              }));
+              if (commerceOrder.ok && commerceOrder.rows.length) {
+                const completed = await adminRpc(config, 'complete_commerce_order', {
+                  p_order_id: commerceOrder.rows[0].id,p_provider_capture_id: captureId,
+                  p_capture_amount: amount,p_currency: currency
+                });
+                if (!completed.ok) { processing = 'failed'; errorCode = 'COMMERCE_CAPTURE_RECONCILIATION_FAILED'; }
+              } else { processing = 'failed'; errorCode = 'CAPTURE_ORDER_NOT_FOUND'; }
+            }
           }
         } else if (body.event_type === 'PAYMENT.CAPTURE.DENIED') {
           const relatedIds = resource.supplementary_data && resource.supplementary_data.related_ids || {};
           if (relatedIds.order_id) {
-            await adminRest(config, 'payment_orders', query({
-              provider_order_id: 'eq.' + String(relatedIds.order_id),
-              state: 'in.(created,approved)'
-            }), 'PATCH', { state: 'failed', updated_at: new Date().toISOString() });
+            const providerOrderId=String(relatedIds.order_id);
+            const deniedCoin=await selectAdminRows(config,'payment_orders',query({select:'id',provider_order_id:'eq.'+providerOrderId,limit:'1'}));
+            if(deniedCoin.ok&&deniedCoin.rows.length){
+              await adminRest(config, 'payment_orders', query({
+                provider_order_id: 'eq.' + providerOrderId,state:'in.(created,approved)'
+              }), 'PATCH', { state: 'failed', updated_at: new Date().toISOString() });
+            }else{
+              const deniedCommerce=await selectAdminRows(config,'commerce_orders',query({select:'id,buyer_id',provider_order_id:'eq.'+providerOrderId,status:'eq.pending_payment',limit:'1'}));
+              if(deniedCommerce.ok&&deniedCommerce.rows.length){
+                const cancelled=await adminRpc(config,'cancel_commerce_order',{p_order_id:deniedCommerce.rows[0].id,p_buyer_profile_id:deniedCommerce.rows[0].buyer_id});
+                if(!cancelled.ok){processing='failed';errorCode='COMMERCE_DENIED_ORDER_RELEASE_FAILED';}
+              }
+            }
           }
         } else if (body.event_type === 'PAYMENT.CAPTURE.REFUNDED') {
           const related = resource.supplementary_data && resource.supplementary_data.related_ids || {};
@@ -1361,6 +1390,179 @@ const server = http.createServer(async (req, res) => {
       const result = await rowsForUser(session, 'communities', { select: 'id,owner_id,name,access,created_at', order: 'created_at.desc', limit: '50' });
       if (!result.ok || !Array.isArray(result.data)) return badDatabase(res, result, 'COMMUNITIES_UNAVAILABLE');
       return json(res, 200, { ok: true, communities: result.data });
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api/marketplace/listings') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const rawSearch = String(url.searchParams.get('q') || '').normalize('NFKC').trim();
+      const category = String(url.searchParams.get('category') || '').trim().slice(0,80);
+      if (rawSearch && !/^[\p{L}\p{N}\p{Zs}._'-]{2,80}$/u.test(rawSearch)) return error(res, 400, 'INVALID_MARKETPLACE_SEARCH');
+      const params = {
+        select: 'id,seller_id,title,description,category,currency,price_minor,status,created_at',
+        status: 'eq.active', order: 'created_at.desc', limit: String(asSafeInt(url.searchParams.get('limit'), 24, 1, 60))
+      };
+      if (category) params.category = 'eq.' + category;
+      if (rawSearch) params.title = 'ilike.*' + rawSearch.replace(/[.*]/g, '') + '*';
+      const listings = await rowsForUser(session, 'marketplace_listings', params);
+      if (!listings.ok || !Array.isArray(listings.data)) return badDatabase(res, listings, 'MARKETPLACE_LISTINGS_UNAVAILABLE');
+      const ids = listings.data.map(item => item.id).filter(uuid);
+      const inventory = ids.length ? await rowsForUser(session, 'listing_inventory', {
+        select: 'listing_id,quantity_available,quantity_reserved', listing_id: profileIdIn(ids)
+      }) : { ok: true, data: [] };
+      if (!inventory.ok || !Array.isArray(inventory.data)) return badDatabase(res, inventory, 'MARKETPLACE_INVENTORY_UNAVAILABLE');
+      const inventoryById = new Map(inventory.data.map(item => [item.listing_id,item]));
+      const sellerIds = [...new Set(listings.data.map(item => item.seller_id).filter(uuid))];
+      const sellers = sellerIds.length ? await rowsForUser(session,'profiles',{select:'id,username,display_name,avatar_url,is_verified',id:profileIdIn(sellerIds)}) : {ok:true,data:[]};
+      const sellerById = new Map((sellers.data||[]).map(item=>[item.id,item]));
+      return json(res,200,{ok:true,listings:listings.data.map(item=>{
+        const stock=inventoryById.get(item.id);
+        return {
+          id:item.id,title:item.title,description:item.description||'',category:item.category,
+          currency:item.currency,priceMinor:Number(item.price_minor),status:item.status,
+          availableQuantity:stock?Math.max(0,Number(stock.quantity_available)-Number(stock.quantity_reserved)):0,
+          seller:profileProjection(sellerById.get(item.seller_id)),createdAt:item.created_at
+        };
+      })});
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api/marketplace/listings/mine') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const listings = await rowsForUser(session,'marketplace_listings',{
+        select:'id,seller_id,title,description,category,currency,price_minor,status,created_at',
+        seller_id:'eq.'+session.profile.id,order:'created_at.desc',limit:'100'
+      });
+      if(!listings.ok||!Array.isArray(listings.data))return badDatabase(res,listings,'MY_LISTINGS_UNAVAILABLE');
+      const ids=listings.data.map(item=>item.id).filter(uuid);
+      const stock=ids.length?await rowsForUser(session,'listing_inventory',{select:'listing_id,quantity_available,quantity_reserved',listing_id:profileIdIn(ids)}):{ok:true,data:[]};
+      const stockById=new Map((stock.data||[]).map(item=>[item.listing_id,item]));
+      return json(res,200,{ok:true,listings:listings.data.map(item=>{
+        const inventory=stockById.get(item.id);
+        return {id:item.id,title:item.title,description:item.description||'',category:item.category,priceMinor:Number(item.price_minor),currency:item.currency,status:item.status,quantityAvailable:inventory?Number(inventory.quantity_available):null,quantityReserved:inventory?Number(inventory.quantity_reserved):null,createdAt:item.created_at};
+      })});
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/marketplace/listings') {
+      const session=await requireSession(req,res);
+      if(!session.ok)return;
+      const body=await readBody(req);
+      const title=typeof body.title==='string'?body.title.trim():'';
+      const description=typeof body.description==='string'?body.description.trim():'';
+      const category=typeof body.category==='string'?body.category.trim():'';
+      const priceMinor=Number(body.priceMinor);
+      const quantity=Number(body.quantity);
+      if(title.length<2||title.length>160)return error(res,400,'MARKETPLACE_LISTING_TITLE_INVALID');
+      if(category.length<2||category.length>80)return error(res,400,'MARKETPLACE_LISTING_CATEGORY_INVALID');
+      if(description.length>4000||!Number.isSafeInteger(priceMinor)||priceMinor<1||priceMinor>100000000000)return error(res,400,'MARKETPLACE_LISTING_PRICE_INVALID');
+      if(!Number.isSafeInteger(quantity)||quantity<0||quantity>1000000)return error(res,400,'MARKETPLACE_LISTING_QUANTITY_INVALID');
+      const rawKey=String(req.headers['idempotency-key']||body.idempotencyKey||'');
+      if(!/^[A-Za-z0-9._:-]{16,180}$/.test(rawKey))return error(res,400,'IDEMPOTENCY_KEY_REQUIRED');
+      if(!config.configured.supabase)return error(res,503,'DATABASE_NOT_CONFIGURED');
+      const created=await adminRpc(config,'create_marketplace_listing',{
+        p_listing_id:randomUUID(),p_seller_profile_id:session.profile.id,p_title:title,
+        p_description:description||null,p_category:category,p_price_minor:priceMinor,p_quantity:quantity,p_idempotency_key:rawKey
+      });
+      if(!created.ok)return badDatabase(res,created,'MARKETPLACE_LISTING_CREATE_FAILED');
+      const listingId=typeof created.data==='string'?created.data.replace(/^"|"$/g,''):Array.isArray(created.data)?created.data[0]:created.data&&created.data.create_marketplace_listing;
+      if(!uuid(String(listingId||'')))return error(res,503,'MARKETPLACE_LISTING_CREATE_RESULT_INVALID');
+      const found=await rowsForUser(session,'marketplace_listings',{select:'id,title,description,category,currency,price_minor,status,created_at',id:'eq.'+listingId,limit:'1'});
+      if(!found.ok||!found.data||!found.data[0])return error(res,503,'MARKETPLACE_LISTING_READBACK_FAILED');
+      return json(res,201,{ok:true,listing:{id:found.data[0].id,title:found.data[0].title,description:found.data[0].description||'',category:found.data[0].category,priceMinor:Number(found.data[0].price_minor),currency:found.data[0].currency,status:found.data[0].status,createdAt:found.data[0].created_at}});
+    }
+
+    const listingStateMatch=url.pathname.match(/^\/api\/marketplace\/listings\/([0-9a-f-]+)\/status$/i);
+    if(req.method==='PATCH'&&listingStateMatch){
+      const session=await requireSession(req,res);
+      if(!session.ok)return;
+      const listingId=listingStateMatch[1];
+      if(!uuid(listingId))return error(res,400,'INVALID_LISTING_ID');
+      const body=await readBody(req);
+      const state=['draft','active','paused','sold_out'].includes(body.status)?body.status:null;
+      if(!state)return error(res,400,'MARKETPLACE_LISTING_STATE_INVALID');
+      const result=await adminRpc(config,'set_marketplace_listing_state',{p_listing_id:listingId,p_seller_profile_id:session.profile.id,p_state:state});
+      if(!result.ok)return badDatabase(res,result,'MARKETPLACE_LISTING_STATUS_UPDATE_FAILED');
+      return json(res,200,{ok:true,listing:{id:listingId,status:typeof result.data==='string'?result.data.replace(/^"|"$/g,''):state}});
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api/marketplace/orders') {
+      const session=await requireSession(req,res);
+      if(!session.ok)return;
+      const result=await rowsForUser(session,'commerce_orders',{select:'id,buyer_id,currency,subtotal_minor,tax_minor,shipping_minor,total_minor,status,idempotency_key,provider_order_id,provider_approval_url,provider_capture_id,created_at,updated_at',buyer_id:'eq.'+session.profile.id,order:'created_at.desc',limit:'100'});
+      if(!result.ok||!Array.isArray(result.data))return badDatabase(res,result,'COMMERCE_ORDERS_UNAVAILABLE');
+      const ids=result.data.map(item=>item.id).filter(uuid);
+      const lineItems=ids.length?await rowsForUser(session,'commerce_order_items',{select:'id,order_id,listing_id,seller_id,quantity,unit_price_minor,line_total_minor',order_id:profileIdIn(ids),order:'created_at.desc',limit:'500'}):{ok:true,data:[]};
+      if(!lineItems.ok||!Array.isArray(lineItems.data))return badDatabase(res,lineItems,'COMMERCE_ORDER_ITEMS_UNAVAILABLE');
+      const itemMap=new Map();
+      lineItems.data.forEach(item=>{if(!itemMap.has(item.order_id))itemMap.set(item.order_id,[]);itemMap.get(item.order_id).push({id:item.id,listingId:item.listing_id,sellerId:item.seller_id,quantity:Number(item.quantity),unitPriceMinor:Number(item.unit_price_minor),lineTotalMinor:Number(item.line_total_minor)});});
+      return json(res,200,{ok:true,orders:result.data.map(item=>({id:item.id,status:item.status,currency:item.currency,subtotalMinor:Number(item.subtotal_minor),taxMinor:Number(item.tax_minor),shippingMinor:Number(item.shipping_minor),totalMinor:Number(item.total_minor),providerCaptureId:item.provider_capture_id||null,createdAt:item.created_at,items:itemMap.get(item.id)||[]}))});
+    }
+
+    if(req.method==='POST'&&url.pathname==='/api/marketplace/orders'){
+      const session=await requireSession(req,res);
+      if(!session.ok)return;
+      if(!config.configured.paypal)return error(res,503,'PAYMENTS_NOT_CONFIGURED','PayPal Developer credentials are required for marketplace checkout.');
+      if(config.paypal.env==='live'&&(!config.features.productionPayments||!config.paypal.webhookId))return error(res,503,'PRODUCTION_CHECKOUT_DISABLED');
+      const body=await readBody(req);
+      const items=Array.isArray(body.items)?body.items:[];
+      if(items.length<1||items.length>20||items.some(item=>!item||!uuid(item.listingId)||!Number.isSafeInteger(Number(item.quantity))||Number(item.quantity)<1||Number(item.quantity)>100))return error(res,400,'MARKETPLACE_ORDER_ITEMS_INVALID');
+      const normalized=items.map(item=>({listingId:item.listingId,quantity:Number(item.quantity)})).sort((a,b)=>a.listingId.localeCompare(b.listingId));
+      if(new Set(normalized.map(item=>item.listingId)).size!==normalized.length)return error(res,400,'MARKETPLACE_ORDER_ITEM_DUPLICATE');
+      const rawKey=String(req.headers['idempotency-key']||body.idempotencyKey||'');
+      if(!/^[A-Za-z0-9._:-]{16,180}$/.test(rawKey))return error(res,400,'IDEMPOTENCY_KEY_REQUIRED');
+      const created=await adminRpc(config,'create_commerce_order',{p_buyer_profile_id:session.profile.id,p_items:normalized,p_idempotency_key:rawKey});
+      if(!created.ok)return badDatabase(res,created,'COMMERCE_ORDER_CREATE_FAILED');
+      const orderId=typeof created.data==='string'?created.data.replace(/^"|"$/g,''):Array.isArray(created.data)?created.data[0]:created.data&&created.data.create_commerce_order;
+      if(!uuid(String(orderId||'')))return error(res,503,'COMMERCE_ORDER_RESULT_INVALID');
+      const findOrder=()=>selectAdminRows(config,'commerce_orders',query({select:'id,buyer_id,total_minor,currency,status,provider_order_id,provider_approval_url,provider_capture_id,request_hash',id:'eq.'+orderId,buyer_id:'eq.'+session.profile.id,limit:'1'}));
+      const orderResult=await findOrder();
+      if(!orderResult.ok||!orderResult.rows[0])return error(res,503,'COMMERCE_ORDER_READBACK_FAILED');
+      let order=orderResult.rows[0];
+      if(order.status==='paid')return json(res,200,{ok:true,idempotent:true,order:{id:order.id,status:order.status,totalMinor:Number(order.total_minor),captureId:order.provider_capture_id}});
+      if(order.provider_order_id&&order.provider_approval_url)return json(res,200,{ok:true,idempotent:true,order:{id:order.id,status:order.status,totalMinor:Number(order.total_minor),approvalUrl:order.provider_approval_url,providerOrderId:order.provider_order_id}});
+      if(order.status!=='pending_payment')return error(res,409,'COMMERCE_ORDER_NOT_OPEN');
+      const returnUrl=new URL('/',config.appBaseUrl);returnUrl.searchParams.set('commerce','return');returnUrl.searchParams.set('order',order.id);
+      const cancelUrl=new URL('/',config.appBaseUrl);cancelUrl.searchParams.set('commerce','cancel');cancelUrl.searchParams.set('order',order.id);
+      const providerOrder=await paypal.createOrder(config.paypal,{amountUSD:Number(order.total_minor)/100,referenceId:'commerce:'+order.id,requestId:order.id,returnUrl:returnUrl.toString(),cancelUrl:cancelUrl.toString()});
+      if(!providerOrder.ok||!providerOrder.orderId||!providerOrder.approvalUrl){
+        await adminRpc(config,'cancel_commerce_order',{p_order_id:order.id,p_buyer_profile_id:session.profile.id});
+        return error(res,503,providerOrder.code||'PAYPAL_ORDER_CREATE_FAILED','The provider checkout was not created; reserved inventory was released.');
+      }
+      const saved=await adminRest(config,'commerce_orders',query({id:'eq.'+order.id,buyer_id:'eq.'+session.profile.id}), 'PATCH', {provider_order_id:providerOrder.orderId,provider_approval_url:providerOrder.approvalUrl,updated_at:new Date().toISOString()});
+      if(!saved.ok)return error(res,503,'COMMERCE_PROVIDER_ORDER_PERSIST_FAILED','Provider checkout exists but reconciliation is required. Do not submit a new order.');
+      return json(res,201,{ok:true,order:{id:order.id,status:order.status,totalMinor:Number(order.total_minor),currency:order.currency,providerOrderId:providerOrder.orderId,approvalUrl:providerOrder.approvalUrl}});
+    }
+
+    const commerceCaptureMatch=url.pathname.match(/^\/api\/marketplace\/orders\/([0-9a-f-]+)\/capture$/i);
+    if(req.method==='POST'&&commerceCaptureMatch){
+      const session=await requireSession(req,res);
+      if(!session.ok)return;
+      if(!config.configured.paypal)return error(res,503,'PAYMENTS_NOT_CONFIGURED');
+      const orderId=commerceCaptureMatch[1];
+      if(!uuid(orderId))return error(res,400,'INVALID_COMMERCE_ORDER_ID');
+      const found=await selectAdminRows(config,'commerce_orders',query({select:'id,buyer_id,total_minor,currency,status,provider_order_id,provider_capture_id',id:'eq.'+orderId,buyer_id:'eq.'+session.profile.id,limit:'1'}));
+      if(!found.ok)return error(res,503,'COMMERCE_ORDER_UNAVAILABLE');
+      const order=found.rows[0];
+      if(!order)return error(res,404,'COMMERCE_ORDER_NOT_FOUND');
+      if(order.status==='paid')return json(res,200,{ok:true,idempotent:true,order:{id:order.id,status:'paid',captureId:order.provider_capture_id,totalMinor:Number(order.total_minor)}});
+      if(order.status!=='pending_payment'||!order.provider_order_id)return error(res,409,'COMMERCE_ORDER_NOT_OPEN');
+      const captured=await paypal.captureOrder(config.paypal,order.provider_order_id,order.id.replace(/-/g,'')+'m');
+      if(!captured.ok||captured.captureStatus!=='COMPLETED'||!captured.captureId)return error(res,captured.status===503?503:409,captured.code||'PAYPAL_CAPTURE_NOT_CONFIRMED','No marketplace order was marked paid because PayPal did not confirm capture.');
+      if(captured.currency!==order.currency||!Number.isFinite(captured.amountUSD)||Math.round(captured.amountUSD*100)!==Number(order.total_minor))return error(res,409,'COMMERCE_CAPTURE_AMOUNT_MISMATCH');
+      const completed=await adminRpc(config,'complete_commerce_order',{p_order_id:order.id,p_provider_capture_id:captured.captureId,p_capture_amount:captured.amountUSD,p_currency:captured.currency});
+      if(!completed.ok)return error(res,503,'COMMERCE_RECONCILIATION_REQUIRED','PayPal capture needs reconciliation. Do not purchase again.');
+      return json(res,200,{ok:true,order:{id:order.id,status:'paid',captureId:captured.captureId,totalMinor:Number(order.total_minor)}});
+    }
+
+    const commerceCancelMatch=url.pathname.match(/^\/api\/marketplace\/orders\/([0-9a-f-]+)\/cancel$/i);
+    if(req.method==='POST'&&commerceCancelMatch){
+      const session=await requireSession(req,res);
+      if(!session.ok)return;
+      const orderId=commerceCancelMatch[1];
+      if(!uuid(orderId))return error(res,400,'INVALID_COMMERCE_ORDER_ID');
+      const cancelled=await adminRpc(config,'cancel_commerce_order',{p_order_id:orderId,p_buyer_profile_id:session.profile.id});
+      if(!cancelled.ok)return badDatabase(res,cancelled,'COMMERCE_ORDER_CANCEL_FAILED');
+      return json(res,200,{ok:true,order:{id:orderId,status:typeof cancelled.data==='string'?cancelled.data.replace(/^"|"$/g,''):'cancelled'}});
     }
 
     if (req.method === 'POST' && url.pathname === '/api/communities') {
