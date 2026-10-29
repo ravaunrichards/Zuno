@@ -36,8 +36,15 @@ function readBearerToken(req) {
   return match ? match[1] : null;
 }
 
+function supabaseAuthReady(cfg) {
+  return Boolean(cfg && cfg.supabase && cfg.supabase.url && cfg.supabase.anonKey);
+}
+
+// Privileged server-side database access requires the service-role secret.
+// User-scoped reads/writes and authentication must work with a verified user JWT
+// and the public anon key, with RLS enforcing ownership.
 function supabaseReady(cfg) {
-  return Boolean(cfg && cfg.supabase && cfg.supabase.url && cfg.supabase.anonKey && cfg.supabase.serviceRoleKey);
+  return Boolean(supabaseAuthReady(cfg) && cfg.supabase.serviceRoleKey);
 }
 
 async function boundedFetch(url, options = {}, timeoutMs = 6500) {
@@ -79,7 +86,7 @@ async function requestRest(url, headers, method = 'GET', body = null, timeoutMs 
 async function authenticateProfile(req, cfg) {
   const token = readBearerToken(req);
   if (!token) return { ok: false, status: 401, code: 'AUTH_REQUIRED', message: 'A valid ZUNO session is required.' };
-  if (!supabaseReady(cfg)) return { ok: false, status: 503, code: 'AUTH_NOT_CONFIGURED', message: 'Supabase authentication and profile lookup are not configured.' };
+  if (!supabaseAuthReady(cfg)) return { ok: false, status: 503, code: 'AUTH_NOT_CONFIGURED', message: 'Supabase authentication is not configured.' };
 
   try {
     const authUrl = new URL('/auth/v1/user', cfg.supabase.url);
@@ -96,7 +103,9 @@ async function authenticateProfile(req, cfg) {
     });
     const profileUrl = new URL('/rest/v1/profiles?' + query.toString(), cfg.supabase.url);
     const profileResponse = await boundedFetch(profileUrl, {
-      headers: { apikey: cfg.supabase.serviceRoleKey, Authorization: 'Bearer ' + cfg.supabase.serviceRoleKey, Accept: 'application/json' }
+      // The supplied bearer token was just verified with Supabase Auth.
+      // RLS permits the caller to read their own profile; no service role needed.
+      headers: { apikey: cfg.supabase.anonKey, Authorization: 'Bearer ' + token, Accept: 'application/json' }
     });
     if (!profileResponse.ok) return { ok: false, status: 503, code: 'PROFILE_LOOKUP_FAILED', message: 'The authenticated profile could not be verified.' };
     const profiles = await readResponse(profileResponse);
@@ -116,7 +125,7 @@ function restUrl(cfg, tableOrRpc, params, rpc = false) {
 }
 
 async function userRest(cfg, session, table, params = new URLSearchParams(), method = 'GET', body = null) {
-  if (!supabaseReady(cfg)) return { ok: false, status: 503, code: 'DB_NOT_CONFIGURED', data: null };
+  if (!supabaseAuthReady(cfg)) return { ok: false, status: 503, code: 'DB_NOT_CONFIGURED', data: null };
   if (!session || !session.jwt || !session.profile || !session.profile.id) return { ok: false, status: 401, code: 'AUTH_REQUIRED', data: null };
   if (!USER_TABLES.has(table)) return { ok: false, status: 400, code: 'TABLE_NOT_ALLOWED', data: null };
   try {
