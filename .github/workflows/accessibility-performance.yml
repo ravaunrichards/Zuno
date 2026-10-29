@@ -1,0 +1,44 @@
+name: Accessibility and web bundle budget
+on:
+  pull_request:
+    paths:
+      - "apps/web/**"
+      - "frontend/**"
+      - "packages/ui/**"
+      - "packages/design-system/**"
+      - "tests/accessibility/**"
+      - "tests/performance/**"
+      - "scripts/check-web-budget.js"
+      - ".github/workflows/accessibility-performance.yml"
+  push:
+    branches: [main, "zuno-foundation-implementation-*"]
+    paths:
+      - "apps/web/**"
+      - "frontend/**"
+      - "packages/ui/**"
+      - "packages/design-system/**"
+      - "tests/accessibility/**"
+      - "tests/performance/**"
+      - "scripts/check-web-budget.js"
+      - ".github/workflows/accessibility-performance.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  web-accessibility-and-budget:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: pnpm/action-setup@v4
+        with:
+          version: "9"
+      - run: pnpm install --no-frozen-lockfile
+      - name: Static accessibility and interaction tests
+        run: pnpm test
+      - name: Build production web assets
+        run: pnpm --filter @zuno/web build
+      - name: Check built bundle size budget
+        run: node scripts/check-web-budget.js
