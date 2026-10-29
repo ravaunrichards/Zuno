@@ -44,7 +44,7 @@
   },
   "devDependencies": {
     "turbo": "^1.13.0",
-    "typescript": "^5.4.0",
+    "typescript": "^7.0.2",
     "esbuild": "^0.28.2"
   },
   "pnpm": {
