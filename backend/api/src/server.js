@@ -4196,8 +4196,8 @@ async function verifySupabaseAdminCredentials() {
     // First verify the API key at the project gateway using the read-only
     // PostgREST OpenAPI root. This separates an invalid/wrong-project key from
     // any issue specific to Auth Admin. Never log the key or response body.
-    const dataApi = await authProviderRequest(config, '/rest/v1/', { bearer: false, timeoutMs: 5000 });
-    console.info('[auth-config] Supabase Data API key check ' + (dataApi.ok ? 'passed' : 'failed') + ' (HTTP ' + dataApi.status + ')');
+    const dataApi = await authProviderRequest(config, '/rest/v1/', { key: config.supabase.anonKey, bearer: false, timeoutMs: 5000 });
+    console.info('[auth-config] Supabase Data API public-key check ' + (dataApi.ok ? 'passed' : 'failed') + ' (HTTP ' + dataApi.status + ')');
 
     // Then verify the Auth Admin endpoint without creating a test user.
     const result = await authProviderRequest(config, '/auth/v1/admin/users?page=1&per_page=1', { timeoutMs: 5000 });
