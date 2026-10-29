@@ -307,7 +307,7 @@ const server = http.createServer(async (req, res) => {
         if (created.status === 429) return error(res, 429, 'SIGNUP_RATE_LIMITED', 'Signup is temporarily rate limited. Wait before trying again.');
         if ([401, 403].includes(created.status)) {
           return error(res, 503, 'AUTH_ADMIN_KEY_REJECTED',
-            'Supabase rejected the API service admin credential. SUPABASE_SERVICE_ROLE_KEY must be the service_role key for this exact Supabase project.');
+            'Supabase rejected the server-side admin credential. Set SUPABASE_SECRET_KEY to the secret key for this exact project (or SUPABASE_SERVICE_ROLE_KEY to its matching service_role key). Do not use a publishable/anon key for this operation.');
         }
         if (created.status >= 500 || /database error saving new user|database error|trigger|constraint/i.test(providerFailure)) {
           return error(res, 503, 'AUTH_PROFILE_BOOTSTRAP_FAILED',
@@ -4196,7 +4196,8 @@ async function verifySupabaseAdminCredentials() {
     // First verify the API key at the project gateway using the read-only
     // PostgREST OpenAPI root. This separates an invalid/wrong-project key from
     // any issue specific to Auth Admin. Never log the key or response body.
-    const dataApi = await authProviderRequest(config, '/rest/v1/', { key: config.supabase.anonKey, bearer: false, timeoutMs: 5000 });
+    const anonKeyUsesLegacyJwt = !String(config.supabase.anonKey || '').startsWith('sb_publishable_') && !String(config.supabase.anonKey || '').startsWith('sb_secret_');
+    const dataApi = await authProviderRequest(config, '/rest/v1/', { key: config.supabase.anonKey, bearer: anonKeyUsesLegacyJwt, timeoutMs: 5000 });
     console.info('[auth-config] Supabase Data API public-key check ' + (dataApi.ok ? 'passed' : 'failed') + ' (HTTP ' + dataApi.status + ')');
 
     // Then verify the Auth Admin endpoint without creating a test user.
