@@ -51,8 +51,13 @@ async function submitGift(event) {
   const message=document.getElementById('gift-send-message')?.value.trim()||'';
   const giftId=document.getElementById('gift-send-id')?.value||'';
   const liveRoomId=document.getElementById('gift-send-live-room')?.value||'';
-  const key=secureGiftKey();
   if(!/^[a-z0-9_.]{3,30}$/.test(username)){giftSendStatus('Enter the exact ZUNO username.',true);return;}
+  const fingerprint=[giftId,username,liveRoomId,message].join('\u001f');
+  let hash=2166136261;for(let i=0;i<fingerprint.length;i++){hash^=fingerprint.charCodeAt(i);hash=Math.imul(hash,16777619);}
+  const storageKey='zuno:gift-idempotency:'+((hash>>>0).toString(16));
+  let key=null;
+  try { key=localStorage.getItem(storageKey); } catch (_) {}
+  if(!key){key=secureGiftKey();if(key){try{localStorage.setItem(storageKey,key);}catch(_){}}}
   if(!key){giftSendStatus('Secure request IDs require an up-to-date browser over HTTPS.',true);return;}
   const button=document.getElementById('gift-send-submit');if(button)button.disabled=true;
   giftSendStatus('Checking the recipient and sending the gift…');
@@ -60,6 +65,7 @@ async function submitGift(event) {
     const result=await requestJson('/api/gifts/send',{method:'POST',headers:{'Idempotency-Key':key},body:{recipientUsername:username,giftId,message,...(liveRoomId?{liveRoomId}:{})}});
     giftSendStatus('Gift delivered to @'+username+'. '+Number(result.delivery?.priceCoins||selectedGift?.priceCoins||0)+' Z Coins charged.');
     const note=document.getElementById('gift-inspect-note');if(note)note.textContent='Delivery confirmed by the ZUNO server.';
+    try{localStorage.removeItem(storageKey);}catch(_){}
     window.dispatchEvent(new CustomEvent('zuno:wallet-refresh'));
   } catch(error) {
     const messageText=error.status===404?'No ZUNO account was found with that username.':error.code==='INSUFFICIENT_FUNDS'?'Your Z Coins balance is too low.':error.code==='GIFT_LOCKED'?'Your gifter level has not unlocked this gift yet.':(error.message||'Gift delivery could not be confirmed.');
