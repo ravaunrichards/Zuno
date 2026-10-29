@@ -224,7 +224,9 @@ function mountCreatorSubscriptions(){
   if(benefitLines.length>10||benefitLines.some(x=>x.length>160)){
     report('Limit benefits to 10 lines and 160 characters each.',true);return;
   }
-  const key=window.crypto?.randomUUID?.();
+  let key=null;
+  try{key=localStorage.getItem('zuno:creator-tier-idempotency-key');}catch(_){}
+  if(!key){key=window.crypto?.randomUUID?.()||null;try{if(key)localStorage.setItem('zuno:creator-tier-idempotency-key',key);}catch(_){} }
   if(!key){report('Secure request IDs require a modern browser over HTTPS.',true);return;}
   if(submit)submit.disabled=true;
   report('Creating PayPal product and monthly billing plan…');
@@ -234,6 +236,7 @@ function mountCreatorSubscriptions(){
     body:{title:name,monthlyPriceMinor:Math.round(amount*100),benefits:benefitLines}
    });
    report('Membership tier '+result.tier.title+' is enabled with a provider-backed monthly plan.');
+   try{localStorage.removeItem('zuno:creator-tier-idempotency-key');}catch(_){}
    if(title)title.value='';
    if(benefits)benefits.value='';
    await Promise.all([loadCreatorTiers(),loadCreatorSubscribers()]);

@@ -1389,7 +1389,8 @@ const server = http.createServer(async (req, res) => {
       if (!tier || !tier.provider_plan_id) return error(res, 404, 'CREATOR_SUBSCRIPTION_TIER_NOT_FOUND');
       if (tier.creator_id === session.profile.id) return error(res, 400, 'SELF_SUBSCRIPTION_FORBIDDEN');
       if (subscription) {
-        if (!subscription.provider_subscription_id) return error(res, 409, 'CREATOR_SUBSCRIPTION_INITIALIZATION_IN_PROGRESS');
+        // Reuse the same local subscription ID as PayPal-Request-Id after an ambiguous provider timeout.
+        // PayPal idempotency lets a retry recover the same provider subscription without creating a second one.
       } else {
         const existingOpen = await selectAdminRows(config, 'creator_subscriptions', query({
           select: 'id,state,provider_subscription_id,provider_approval_url,current_period_end',
