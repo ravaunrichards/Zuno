@@ -191,11 +191,28 @@ export function mountAuth() {
         await signIn(emailInput.value, password.value);
       }
 
-      const result = await requestJson('/api/profile/me');
+      let profileResult;
+      try {
+        profileResult = await requestJson('/api/profile/me');
+      } catch (profileError) {
+        // Supabase login can succeed even if the ZUNO profile/API is temporarily
+        // unavailable. Preserve the authenticated session and explain that
+        // profile-backed features are not ready instead of claiming login failed.
+        if (!getSession()) throw profileError;
+        pendingConfirmationEmail = '';
+        if (resendButton) resendButton.hidden = true;
+        refreshTrigger();
+        setStatus(profileError.code === 'PROFILE_NOT_PROVISIONED'
+          ? 'Your credentials were accepted, but your ZUNO profile has not been provisioned yet. The account is signed in; profile features will work after provisioning is repaired.'
+          : 'Your credentials were accepted and a session is active, but ZUNO could not load your profile from the API. Check the API service and try again.');
+        window.dispatchEvent(new CustomEvent('zuno:session-change'));
+        return;
+      }
+
       pendingConfirmationEmail = '';
       if (resendButton) resendButton.hidden = true;
       refreshTrigger();
-      setStatus('Signed in as @' + result.profile.username + '.');
+      setStatus('Signed in as @' + profileResult.profile.username + '.');
       window.dispatchEvent(new CustomEvent('zuno:session-change'));
       window.setTimeout(() => { if (dialog.open) dialog.close(); }, 450);
     } catch (error) {
