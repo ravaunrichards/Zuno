@@ -356,6 +356,22 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, { ok: true, count: gifts.length, gifts });
     }
 
+    if (req.method === 'GET' && url.pathname === '/api/live/rooms/mine') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const result = await selectAdminRows(config, 'live_rooms', query({
+        select: 'id,host_id,title,category,state,is_private,started_at,ended_at,created_at',
+        host_id: 'eq.' + session.profile.id,
+        order: 'created_at.desc', limit: '25'
+      }));
+      if (!result.ok) return badDatabase(res, result, 'LIVE_OWN_ROOMS_UNAVAILABLE');
+      return json(res, 200, { ok: true, rooms: result.rows.map((room) => ({
+        id: room.id, title: room.title || 'LIVE room', category: room.category || 'General',
+        state: room.state, isPrivate: Boolean(room.is_private), startedAt: room.started_at || null,
+        endedAt: room.ended_at || null, createdAt: room.created_at
+      })) });
+    }
+
     if (req.method === 'GET' && url.pathname === '/api/live/rooms') {
       const roomQuery = query({ select: 'id,host_id,title,category,state,is_private,started_at', state: 'eq.live', is_private: 'eq.false', order: 'started_at.desc.nullslast', limit: '24' });
       const rooms = await selectAdminRows(config, 'live_rooms', roomQuery);
@@ -386,6 +402,7 @@ const server = http.createServer(async (req, res) => {
       if (title.length < 2 || title.length > 120) return error(res, 400, 'LIVE_ROOM_TITLE_INVALID');
       if (category.length < 2 || category.length > 80) return error(res, 400, 'LIVE_ROOM_CATEGORY_INVALID');
       if (body.isPrivate !== undefined && typeof body.isPrivate !== 'boolean') return error(res, 400, 'INVALID_LIVE_ROOM_PRIVACY');
+      if (!config.configured.livekit) return error(res, 503, 'LIVE_NOT_CONFIGURED', 'LiveKit URL, API key and API secret must be configured. No room was created.');
       const roomId = randomUUID();
       const token = livekit.mintToken(config.livekit, { identity: session.profile.id, room: roomId, canPublish: true, canSubscribe: true, ttlSeconds: 900 });
       if (!token.ok) return error(res, token.status || 503, token.code || 'LIVE_NOT_CONFIGURED', token.message || 'LiveKit is not configured. No room was created.');
@@ -430,6 +447,7 @@ const server = http.createServer(async (req, res) => {
       if (!session.ok) return;
       const roomId = liveRoomJoinMatch[1];
       if (!uuid(roomId)) return error(res, 400, 'INVALID_ROOM_ID');
+      if (!config.configured.livekit) return error(res, 503, 'LIVE_NOT_CONFIGURED', 'LiveKit is not configured. No participant was joined.');
       const joined = await adminRpc(config, 'join_live_room', { p_room_id: roomId, p_profile_id: session.profile.id });
       if (!joined.ok) return badDatabase(res, joined, 'LIVE_ROOM_JOIN_FAILED');
       const role = typeof joined.data === 'string' ? joined.data.replace(/^"|"$/g,'') : joined.data && joined.data.join_live_room;
@@ -475,7 +493,18 @@ const server = http.createServer(async (req, res) => {
       const rooms = await selectAdminRows(config, 'live_rooms', query({ select: 'id,host_id', id: 'eq.' + roomId, limit: '1' }));
       if (!rooms.ok) return badDatabase(res, rooms);
       if (!rooms.rows[0]) return error(res, 404, 'LIVE_ROOM_NOT_FOUND');
-      if (rooms.rows[0].host_id !== session.profile.id) return error(res, 403, 'LIVE_HOST_REQUIRED');
+      if (rooms.rows[0].host_id !== session.profile.id) {
+        const own = await selectAdminRows(config, 'guest_requests', query({
+          select: 'id,room_id,requester_id,state,created_at,resolved_at',
+          room_id: 'eq.' + roomId, requester_id: 'eq.' + session.profile.id,
+          order: 'created_at.desc', limit: '1'
+        }));
+        if (!own.ok) return badDatabase(res, own);
+        const row = own.rows[0];
+        return json(res, 200, { ok: true, request: row ? {
+          id: row.id, roomId: row.room_id, state: row.state, createdAt: row.created_at, resolvedAt: row.resolved_at
+        } : null });
+      }
       const pending = await selectAdminRows(config, 'guest_requests', query({
         select: 'id,room_id,requester_id,state,created_at', room_id: 'eq.' + roomId, state: 'eq.pending',
         order: 'created_at.asc', limit: '50'
@@ -511,15 +540,12 @@ const server = http.createServer(async (req, res) => {
         if (!result.ok) return badDatabase(res, result, 'LIVE_GUEST_REJECT_FAILED');
         return json(res, 200, { ok: true, requestId, state: 'rejected' });
       }
-      const requesterId = requestRows.rows[0].requester_id;
-      const token = livekit.mintToken(config.livekit, { identity: requesterId, room: roomId, canPublish: true, canSubscribe: true, ttlSeconds: 900 });
-      if (!token.ok) return error(res, token.status || 503, token.code || 'LIVE_NOT_CONFIGURED', token.message || 'LiveKit is not configured.');
       const accepted = await adminRpc(config, 'accept_live_guest_request', { p_request_id: requestId, p_host_profile_id: session.profile.id });
       if (!accepted.ok) return badDatabase(res, accepted, 'LIVE_GUEST_ACCEPT_FAILED');
       return json(res, 200, {
         ok: true, requestId, state: 'accepted',
-        guest: { profileId: requesterId },
-        livekit: { url: token.url, token: token.token, expiresAt: token.expiresAt }
+        guest: { profileId: requestRows.rows[0].requester_id },
+        next: 'The guest must use their own signed-in session to join and obtain their own publishing token.'
       });
     }
 
