@@ -20,6 +20,16 @@ function post(port,path) {
   });
 }
 
+function patch(port,path) {
+  return new Promise((resolve,reject)=>{
+    const req=http.request({hostname:'127.0.0.1',port,path,method:'PATCH',headers:{'Content-Type':'application/json'}},res=>{
+      let data='';res.setEncoding('utf8');res.on('data',chunk=>data+=chunk);
+      res.on('end',()=>{try{resolve({status:res.statusCode,body:JSON.parse(data)});}catch(e){reject(e);}});
+    });
+    req.on('error',reject);
+    req.end('{}');
+  });
+}
 function get(port,path) {
   return new Promise((resolve,reject)=>{
     const req=http.get({hostname:'127.0.0.1',port,path},res=>{
@@ -45,7 +55,7 @@ test('block, mute and restrict mutations reject unauthenticated access',async()=
 test('profile settings endpoint rejects unauthenticated reads and updates',async()=>{
  const read=await get(await start(),'/api/profile/me');
  ok(read.status===401);ok(read.body.code==='AUTH_REQUIRED');
- const update=await post(await start(),'/api/profile/me');
+ const update=await patch(await start(),'/api/profile/me');
  ok(update.status===401);ok(update.body.code==='AUTH_REQUIRED');
 });
 test('privacy consent and data-rights endpoints reject unauthenticated access',async()=>{
@@ -59,7 +69,7 @@ test('notification preference endpoints reject unauthenticated access',async()=>
  const port=await start();
  const read=await get(port,'/api/notifications/preferences');
  ok(read.status===401);ok(read.body.code==='AUTH_REQUIRED');
- const update=await post(port,'/api/notifications/preferences');
+ const update=await patch(port,'/api/notifications/preferences');
  ok(update.status===401);ok(update.body.code==='AUTH_REQUIRED');
 });
 test('LIVE token endpoint rejects unauthenticated requests',async()=>{
