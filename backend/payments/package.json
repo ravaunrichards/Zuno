@@ -1,0 +1,10 @@
+{
+  "name": "@zuno/backend-payments",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ZUNO payment state policies and provider reconciliation domain",
+  "main": "src/order-policy.js",
+  "scripts": {
+    "check": "node --check src/order-policy.js"
+  }
+}

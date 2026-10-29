@@ -1,0 +1,9 @@
+{
+  "name": "@zuno/payments",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/state-machine.js",
+  "scripts": {
+    "check": "node --check src/coins.js && node --check src/revenue.js && node --check src/state-machine.js"
+  }
+}

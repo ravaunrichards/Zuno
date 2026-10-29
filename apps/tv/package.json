@@ -1,0 +1,10 @@
+{
+  "name": "@zuno/tv",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ZUNO remote-first TV web client",
+  "scripts": {
+    "start": "node ../../scripts/serve-static.js --root apps/tv --port 3004",
+    "check": "node --check app.js"
+  }
+}

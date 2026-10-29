@@ -1,0 +1,10 @@
+{
+  "name": "@zuno/backend-search",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ZUNO query normalization and visibility filters",
+  "main": "src/search.js",
+  "scripts": {
+    "check": "node --check src/search.js"
+  }
+}

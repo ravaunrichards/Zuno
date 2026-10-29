@@ -1,0 +1,10 @@
+{
+  "name": "@zuno/backend-notifications",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ZUNO notification payload safety policy",
+  "main": "src/payload.js",
+  "scripts": {
+    "check": "node --check src/payload.js"
+  }
+}

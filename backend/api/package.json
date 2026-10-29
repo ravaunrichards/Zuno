@@ -1,0 +1,11 @@
+{
+  "name": "@zuno/backend-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ZUNO HTTP API and session authorization boundary",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "check": "node --check src/server.js && node --check src/auth.js"
+  }
+}

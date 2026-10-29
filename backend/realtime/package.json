@@ -1,0 +1,10 @@
+{
+  "name": "@zuno/backend-realtime",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ZUNO LiveKit room and guest state coordination",
+  "main": "src/guest-requests.js",
+  "scripts": {
+    "check": "node --check src/guest-requests.js"
+  }
+}

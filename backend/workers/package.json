@@ -1,0 +1,10 @@
+{
+  "name": "@zuno/backend-workers",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ZUNO durable background job transition policy",
+  "main": "src/job-policy.js",
+  "scripts": {
+    "check": "node --check src/job-policy.js"
+  }
+}

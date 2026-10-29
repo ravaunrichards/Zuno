@@ -1,0 +1,9 @@
+{
+  "name": "@zuno/gift-engine",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/catalog.js",
+  "scripts": {
+    "check": "node --check src/catalog.js && node --check src/delivery.js && node --check src/levels.js && node --check src/rankings.js && node --check src/renderer.js"
+  }
+}

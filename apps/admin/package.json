@@ -1,0 +1,10 @@
+{
+  "name": "@zuno/admin",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ZUNO administrative operations web client",
+  "scripts": {
+    "start": "node ../../scripts/serve-static.js --root apps/admin --port 3002",
+    "check": "node --check app.js"
+  }
+}

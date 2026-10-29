@@ -1,0 +1,10 @@
+{
+  "name": "@zuno/creator-studio",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ZUNO creator publishing workspace",
+  "scripts": {
+    "start": "node ../../scripts/serve-static.js --root apps/creator-studio --port 3003",
+    "check": "node --check app.js"
+  }
+}

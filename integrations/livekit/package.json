@@ -1,0 +1,9 @@
+{
+  "name": "@zuno/integration-livekit",
+  "version": "0.1.0",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "check": "node --check index.js"
+  }
+}

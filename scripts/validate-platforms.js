@@ -9,20 +9,33 @@ const required=[
  'apps/tv/index.html','apps/tv/app.js','apps/admin/index.html','apps/admin/app.js',
  'apps/creator-studio/index.html','apps/creator-studio/app.js',
  'backend/api/src/server.js','database/migrations/0001_core_schema.sql',
- 'database/migrations/0002_rls_policies.sql','database/migrations/0009_operational_jobs_and_delivery.sql',
+ 'database/migrations/0002_rls_policies.sql','database/migrations/0010_close_friends_gifter_progression_and_earnings.sql',
  '.github/workflows/ci.yml','.env.example','README.md','pnpm-workspace.yaml','turbo.json'
 ];
 const missing=required.filter((relative)=>!fs.existsSync(path.join(root,relative)));
 const placeholders=[];
+const ignored=new Set(['node_modules','.git','dist','build','.gradle','release','DerivedData','.next']);
 function walk(folder){
-  if(!fs.existsSync(folder))return;
-  for(const item of fs.readdirSync(folder,{withFileTypes:true})){
-    if(item.isDirectory() && ['node_modules','.git','dist','build','.gradle','release','DerivedData'].includes(item.name)) continue;
-    const full=path.join(folder,item.name);
-    if(item.isDirectory())walk(full);
-    else if(item.name==='.gitkeep'||item.name==='gitkeep.txt')placeholders.push(path.relative(root,full));
-  }
+ if(!fs.existsSync(folder))return;
+ for(const item of fs.readdirSync(folder,{withFileTypes:true})){
+  if(item.isDirectory()&&ignored.has(item.name))continue;
+  const full=path.join(folder,item.name);
+  if(item.isDirectory())walk(full);
+  else if(item.name==='.gitkeep'||item.name==='gitkeep.txt')placeholders.push(path.relative(root,full));
+ }
 }
 walk(root);
-console.log(JSON.stringify({ok:missing.length===0&&placeholders.length===0,requiredChecked:required.length,missing,placeholderFiles:placeholders},null,2));
-process.exit(missing.length||placeholders.length?1:0);
+const packageRoots=['apps','backend','integrations','packages'];
+const missingManifests=[];
+for(const group of packageRoots){
+ const folder=path.join(root,group);
+ if(!fs.existsSync(folder))continue;
+ for(const entry of fs.readdirSync(folder,{withFileTypes:true})){
+  if(!entry.isDirectory())continue;
+  const name=path.join(folder,entry.name);
+  if(!fs.existsSync(path.join(name,'package.json')) && !(group==='apps'&&['android','ios'].includes(entry.name)))missingManifests.push(path.relative(root,name));
+ }
+}
+const result={ok:missing.length===0&&placeholders.length===0&&missingManifests.length===0,requiredChecked:required.length,missing,placeholderFiles:placeholders,missingWorkspaceManifests:missingManifests};
+console.log(JSON.stringify(result,null,2));
+process.exit(result.ok?0:1);
