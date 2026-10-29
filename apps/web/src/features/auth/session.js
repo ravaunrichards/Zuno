@@ -149,6 +149,98 @@ export async function signUp({ email, password, username, displayName }) {
   return response;
 }
 
+
+function authRedirectUrl(state) {
+  const url = new URL(window.location.href);
+  url.search = '';
+  url.hash = '';
+  url.searchParams.set('auth', state);
+  return url.toString();
+}
+
+export async function requestPasswordReset(email) {
+  if (typeof email !== 'string' || !email.trim()) throw new Error('Enter the email address for your ZUNO account.');
+  const redirect = encodeURIComponent(authRedirectUrl('recovery'));
+  return authRequest('/auth/v1/recover?redirect_to=' + redirect, { email: email.trim() });
+}
+
+export async function resendSignupConfirmation(email) {
+  if (typeof email !== 'string' || !email.trim()) throw new Error('Enter the email address for your ZUNO account.');
+  const redirect = encodeURIComponent(authRedirectUrl('confirmed'));
+  return authRequest('/auth/v1/resend?redirect_to=' + redirect, { type: 'signup', email: email.trim() });
+}
+
+export async function updatePassword(password) {
+  if (typeof password !== 'string' || password.length < 8) {
+    throw new Error('Use a new password with at least 8 characters.');
+  }
+  const session = readStoredSession();
+  const accessToken = await getFreshAccessToken();
+  if (!session || !accessToken) throw new Error('Your password-reset session is missing or expired. Request a new reset link.');
+  const config = await getPublicConfig();
+  const url = new URL('/auth/v1/user', config.supabaseUrl);
+  return fetchJson(url, {
+    method: 'PUT',
+    headers: {
+      apikey: config.supabaseAnonKey,
+      Authorization: 'Bearer ' + accessToken,
+      'Content-Type': 'application/json',
+      Accept: 'application/json'
+    },
+    body: JSON.stringify({ password })
+  });
+}
+
+export function consumeAuthRedirect() {
+  if (typeof window === 'undefined') return null;
+  const url = new URL(window.location.href);
+  const hash = new URLSearchParams(url.hash.startsWith('#') ? url.hash.slice(1) : url.hash);
+  const accessToken = hash.get('access_token') || url.searchParams.get('access_token');
+  const refreshToken = hash.get('refresh_token') || url.searchParams.get('refresh_token');
+  const type = hash.get('type') || url.searchParams.get('type') || url.searchParams.get('auth');
+  const providerError = url.searchParams.get('error_description') || hash.get('error_description')
+    || url.searchParams.get('error') || hash.get('error');
+
+  const isCallback = Boolean(providerError || accessToken || refreshToken
+    || url.searchParams.has('auth') || hash.has('type'));
+  if (!isCallback) return null;
+
+  if (providerError) {
+    url.searchParams.delete('error');
+    url.searchParams.delete('error_description');
+    url.searchParams.delete('error_code');
+    url.searchParams.delete('auth');
+    url.hash = '';
+    window.history.replaceState(null, document.title, url.pathname + url.search);
+    return { type, error: String(providerError).replace(/\+/g, ' ').slice(0, 240) };
+  }
+
+  if (accessToken && refreshToken) {
+    persistSession({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      token_type: hash.get('token_type') || url.searchParams.get('token_type') || 'bearer',
+      expires_in: hash.get('expires_in') || url.searchParams.get('expires_in'),
+      expires_at: hash.get('expires_at') || url.searchParams.get('expires_at')
+    });
+  }
+
+  url.searchParams.delete('auth');
+  url.searchParams.delete('access_token');
+  url.searchParams.delete('refresh_token');
+  url.searchParams.delete('expires_in');
+  url.searchParams.delete('expires_at');
+  url.searchParams.delete('token_type');
+  url.searchParams.delete('type');
+  url.hash = '';
+  window.history.replaceState(null, document.title, url.pathname + url.search);
+
+  if (type === 'recovery' && !getSession()) {
+    return { type, error: 'The password-reset link is invalid or expired. Request another reset link.' };
+  }
+  return { type: type || null, error: null };
+}
+
 export async function signOut() {
   const session = readStoredSession();
   if (session) {
