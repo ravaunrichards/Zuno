@@ -20,3 +20,5 @@
   .mobile-nav{gap:0;padding-left:2px;padding-right:2px}
   .mobile-nav a,.mobile-nav button{min-width:0;flex:1;padding:2px 0}
 }
+
+@media(max-width:780px){.messaging-dialog{max-width:calc(100% - 12px)}}

@@ -2349,7 +2349,37 @@ const server = http.createServer(async (req, res) => {
       const ids = [...new Set(memberRows.data.map((row) => row.conversation_id).filter(uuid))];
       const conversationRows = await rowsForUser(session, 'conversations', { select: 'id,is_group,created_at', id: profileIdIn(ids) });
       if (!conversationRows.ok || !Array.isArray(conversationRows.data)) return badDatabase(res, conversationRows, 'CONVERSATIONS_UNAVAILABLE');
-      return json(res, 200, { ok: true, conversations: conversationRows.data });
+      const membersResult = await rowsForUser(session, 'conversation_members', {
+        select: 'conversation_id,profile_id,role,joined_at', conversation_id: profileIdIn(ids), limit: '2500'
+      });
+      if (!membersResult.ok || !Array.isArray(membersResult.data)) return badDatabase(res, membersResult, 'CONVERSATION_MEMBERS_UNAVAILABLE');
+      const memberIds = [...new Set(membersResult.data.map((row) => row.profile_id).filter(uuid))];
+      const profilesResult = memberIds.length ? await rowsForUser(session, 'profiles', {
+        select: 'id,username,display_name,avatar_url,is_verified', id: profileIdIn(memberIds), limit: '500'
+      }) : { ok: true, data: [] };
+      const profileMap = new Map((profilesResult.data || []).map((profile) => [profile.id, profile]));
+      const messageResult = await rowsForUser(session, 'messages', {
+        select: 'id,conversation_id,sender_id,body,created_at,edited_at',
+        conversation_id: profileIdIn(ids), deleted_at: 'is.null', order: 'created_at.desc', limit: '1000'
+      });
+      if (!messageResult.ok || !Array.isArray(messageResult.data)) return badDatabase(res, messageResult, 'CONVERSATION_PREVIEWS_UNAVAILABLE');
+      const latestByConversation = new Map();
+      for (const message of messageResult.data) if (!latestByConversation.has(message.conversation_id)) latestByConversation.set(message.conversation_id, message);
+      const conversations = conversationRows.data.map((conversation) => {
+        const members = membersResult.data.filter((member) => member.conversation_id === conversation.id);
+        const last = latestByConversation.get(conversation.id);
+        return {
+          id: conversation.id, isGroup: Boolean(conversation.is_group), createdAt: conversation.created_at,
+          members: members.map((member) => ({
+            id: member.profile_id, role: member.role,
+            profile: profileProjection(profileMap.get(member.profile_id))
+          })),
+          lastMessage: last ? {
+            id: last.id, senderId: last.sender_id, body: last.body || '', createdAt: last.created_at, editedAt: last.edited_at || null
+          } : null
+        };
+      }).sort((a,b) => new Date(b.lastMessage?.createdAt || b.createdAt) - new Date(a.lastMessage?.createdAt || a.createdAt));
+      return json(res, 200, { ok: true, conversations });
     }
 
     const messageIdMatch=url.pathname.match(/^\/api\/messages\/([0-9a-f-]+)$/i);
@@ -2410,6 +2440,28 @@ const server = http.createServer(async (req, res) => {
       return json(res,201,{ok:true,receipt:Array.isArray(created.data)?created.data[0]:null});
     }
 
+    if(req.method==='GET'&&url.pathname==='/api/calls/incoming'){
+      const session=await requireSession(req,res);if(!session.ok)return;
+      const own=await rowsForUser(session,'call_participants',{
+        select:'call_id,profile_id,last_state,invited_at',profile_id:'eq.'+session.profile.id,last_state:'eq.ringing',left_at:'is.null',limit:'50'
+      });
+      if(!own.ok||!Array.isArray(own.data))return badDatabase(res,own,'INCOMING_CALLS_UNAVAILABLE');
+      const ids=[...new Set(own.data.map(row=>row.call_id).filter(uuid))];
+      if(!ids.length)return json(res,200,{ok:true,calls:[]});
+      const sessions=await rowsForUser(session,'call_sessions',{
+        select:'id,conversation_id,initiated_by,call_type,state,provider_room,created_at',id:profileIdIn(ids),state:'in.(ringing,active)',order:'created_at.desc',limit:'50'
+      });
+      if(!sessions.ok||!Array.isArray(sessions.data))return badDatabase(res,sessions,'INCOMING_CALLS_UNAVAILABLE');
+      const callerIds=[...new Set(sessions.data.map(row=>row.initiated_by).filter(uuid))];
+      const callers=callerIds.length?await rowsForUser(session,'profiles',{select:'id,username,display_name,avatar_url',id:profileIdIn(callerIds)}):{ok:true,data:[]};
+      if(!callers.ok)return badDatabase(res,callers,'CALLER_PROFILES_UNAVAILABLE');
+      const callerMap=new Map((callers.data||[]).map(profile=>[profile.id,profile]));
+      return json(res,200,{ok:true,calls:sessions.data.map(call=>({
+        id:call.id,conversationId:call.conversation_id,callType:call.call_type,state:call.state,createdAt:call.created_at,
+        caller:profileProjection(callerMap.get(call.initiated_by))
+      }))});
+    }
+
     if(req.method==='POST'&&url.pathname==='/api/calls'){
       const session=await requireSession(req,res);if(!session.ok)return;
       if(!config.configured.livekit)return error(res,503,'LIVE_NOT_CONFIGURED','LiveKit must be configured before creating a call.');
@@ -2463,9 +2515,42 @@ const server = http.createServer(async (req, res) => {
       if (!session.ok) return;
       const conversationId = messagesMatch[1];
       if (!uuid(conversationId)) return error(res, 400, 'INVALID_CONVERSATION_ID');
+      const membership = await rowsForUser(session, 'conversation_members', {
+        select: 'conversation_id,profile_id', conversation_id: 'eq.' + conversationId, profile_id: 'eq.' + session.profile.id, limit: '1'
+      });
+      if (!membership.ok) return badDatabase(res, membership, 'CONVERSATION_ACCESS_UNAVAILABLE');
+      if (!membership.data.length) return error(res, 404, 'CONVERSATION_NOT_FOUND');
       const result = await rowsForUser(session, 'messages', { select: 'id,conversation_id,sender_id,body,attachments,created_at,edited_at,deleted_at', conversation_id: 'eq.' + conversationId, deleted_at: 'is.null', order: 'created_at.desc', limit: '100' });
       if (!result.ok || !Array.isArray(result.data)) return badDatabase(res, result, 'MESSAGES_UNAVAILABLE');
-      return json(res, 200, { ok: true, messages: result.data.reverse() });
+      const messageRows = result.data.reverse();
+      const senderIds = [...new Set(messageRows.map((message) => message.sender_id).filter(uuid))];
+      const senders = senderIds.length ? await rowsForUser(session, 'profiles', { select: 'id,username,display_name,avatar_url,is_verified', id: profileIdIn(senderIds) }) : { ok: true, data: [] };
+      if (!senders.ok) return badDatabase(res, senders, 'MESSAGE_SENDER_PROFILES_UNAVAILABLE');
+      const senderMap = new Map((senders.data || []).map((profile) => [profile.id, profile]));
+      const messageIds = messageRows.map((message) => message.id);
+      const reactions = messageIds.length ? await rowsForUser(session, 'message_reactions', {
+        select: 'message_id,profile_id,reaction,created_at', message_id: profileIdIn(messageIds), limit: '1000'
+      }) : { ok: true, data: [] };
+      if (!reactions.ok) return badDatabase(res, reactions, 'MESSAGE_REACTIONS_UNAVAILABLE');
+      const receipts = messageIds.length ? await rowsForUser(session, 'message_read_receipts', {
+        select: 'message_id,profile_id,read_at', message_id: profileIdIn(messageIds), limit: '1000'
+      }) : { ok: true, data: [] };
+      if (!receipts.ok) return badDatabase(res, receipts, 'MESSAGE_RECEIPTS_UNAVAILABLE');
+      const reactionMap = new Map();
+      for (const reaction of reactions.data || []) {
+        if (!reactionMap.has(reaction.message_id)) reactionMap.set(reaction.message_id, []);
+        reactionMap.get(reaction.message_id).push({
+          profileId: reaction.profile_id, reaction: reaction.reaction,
+          mine: reaction.profile_id === session.profile.id
+        });
+      }
+      const receiptMap = new Map();
+      for (const receipt of receipts.data || []) receiptMap.set(receipt.message_id, (receiptMap.get(receipt.message_id) || 0) + 1);
+      return json(res, 200, { ok: true, messages: messageRows.map((message) => ({
+        ...message, sender: profileProjection(senderMap.get(message.sender_id)),
+        reactions: reactionMap.get(message.id) || [], readReceiptCount: receiptMap.get(message.id) || 0,
+        mine: message.sender_id === session.profile.id
+      })) });
     }
 
     if (messagesMatch && req.method === 'POST') {

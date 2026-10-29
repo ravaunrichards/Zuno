@@ -10,6 +10,7 @@ import { mountWallet } from './src/features/auth/wallet.js';
 import { mountCommunities } from './src/features/communities/communities.js';
 import { mountMarketplace } from './src/features/marketplace/marketplace.js';
 import { mountSubscriptions } from './src/features/subscriptions/subscriptions.js';
+import { mountMessaging } from './src/features/messaging.js';
 
 mountNavigation();
 mountSearch();
@@ -21,6 +22,7 @@ mountWallet();
 mountCommunities();
 mountMarketplace();
 mountSubscriptions();
+mountMessaging();
 mountGiftCatalog();
 mountLiveRooms();
 
