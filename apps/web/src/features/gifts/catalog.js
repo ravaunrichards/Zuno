@@ -1,4 +1,5 @@
 import { requestJson } from '../../services/api-client.js';
+import { getSession } from '../auth/session.js';
 import { mountGiftPreviews } from './preview3d.js';
 const PAGE_SIZE = 12;
 const glyphs = { flowers:'✿', celebration:'✦', cosmic:'✧', jamaica:'♬', vehicles:'➤', luxury:'◇', animals:'♧', music:'♫', creator_support:'♡', seasonal:'❋', premium:'✺' };
