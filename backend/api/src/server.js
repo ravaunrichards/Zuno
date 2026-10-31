@@ -1536,8 +1536,10 @@ const server = http.createServer(async (req, res) => {
       const normalizeTime = value => value === null || value === '' ? null : typeof value === 'string' && /^(?:[01]\\d|2[0-3]):[0-5]\\d$/.test(value) ? value : undefined;
       const quietHoursStart = body.quietHoursStart === undefined ? undefined : normalizeTime(body.quietHoursStart);
       const quietHoursEnd = body.quietHoursEnd === undefined ? undefined : normalizeTime(body.quietHoursEnd);
+      const quietHoursPairSupplied = body.quietHoursStart !== undefined || body.quietHoursEnd !== undefined;
       if ((body.quietHoursStart !== undefined && quietHoursStart === undefined) ||
           (body.quietHoursEnd !== undefined && quietHoursEnd === undefined) ||
+          (quietHoursPairSupplied && (quietHoursStart === undefined || quietHoursEnd === undefined)) ||
           ((quietHoursStart === null) !== (quietHoursEnd === null))) {
         return error(res, 400, 'INVALID_QUIET_HOURS');
       }
