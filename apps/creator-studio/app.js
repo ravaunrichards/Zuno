@@ -593,10 +593,11 @@ document.getElementById('save-feed-prefs')?.addEventListener('click',async()=>{
  finally{if(button)button.disabled=false;}
 });
 const notificationKeys=['comments','follows','messages','live','gifts'];
+let studioNotificationTimezone='America/Jamaica';
 async function loadNotificationSettings(){
  if(!getSession()){setStatus('notification-prefs-status','Sign in to load notification preferences.');return;}
  try{
-  const result=await requestJson('/api/notifications/preferences');const prefs=result.preferences||{};const values=prefs.values||{};
+  const result=await requestJson('/api/notifications/preferences');const prefs=result.preferences||{};const values=prefs.values||{};studioNotificationTimezone=prefs.timezone||studioNotificationTimezone;
   notificationKeys.forEach(key=>{const control=document.getElementById('notify-'+key);if(control)control.checked=Boolean(values[key]);});
   const start=document.getElementById('quiet-start');if(start)start.value=prefs.quietHoursStart||'';
   const end=document.getElementById('quiet-end');if(end)end.value=prefs.quietHoursEnd||'';
@@ -611,7 +612,7 @@ document.getElementById('save-notification-prefs')?.addEventListener('click',asy
   const start=document.getElementById('quiet-start')?.value||null;
   const end=document.getElementById('quiet-end')?.value||null;
   if(Boolean(start)!==Boolean(end))throw new Error('Set both quiet-hours times or clear both fields.');
-  const body={values,quietHoursStart:start,quietHoursEnd:end,timezone:'America/Jamaica'};
+  const body={values,quietHoursStart:start,quietHoursEnd:end,timezone:studioNotificationTimezone};
   await requestJson('/api/notifications/preferences',{method:'PATCH',body});
   setStatus('notification-prefs-status','Notification preferences saved to your account.');
  }catch(error){setStatus('notification-prefs-status',error.message||'Notification preferences were not saved.',true);}
