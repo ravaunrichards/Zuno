@@ -1527,6 +1527,65 @@ const server = http.createServer(async (req, res) => {
       const session = await requireSession(req, res);
       if (!session.ok) return;
       const body = await readBody(req);
+      const values = body.values;
+      const allowedValues = new Set(['comments','follows','messages','live','gifts']);
+      if (!values || typeof values !== 'object' || Array.isArray(values)) return error(res, 400, 'INVALID_NOTIFICATION_PREFERENCES');
+      for (const [key, value] of Object.entries(values)) {
+        if (!allowedValues.has(key) || typeof value !== 'boolean') return error(res, 400, 'INVALID_NOTIFICATION_PREFERENCES');
+      }
+      const normalizeTime = value => value === null || value === '' ? null : typeof value === 'string' && /^(?:[01]\\d|2[0-3]):[0-5]\\d$/.test(value) ? value : undefined;
+      const quietHoursStart = body.quietHoursStart === undefined ? undefined : normalizeTime(body.quietHoursStart);
+      const quietHoursEnd = body.quietHoursEnd === undefined ? undefined : normalizeTime(body.quietHoursEnd);
+      if ((body.quietHoursStart !== undefined && quietHoursStart === undefined) ||
+          (body.quietHoursEnd !== undefined && quietHoursEnd === undefined) ||
+          ((quietHoursStart === null) !== (quietHoursEnd === null))) {
+        return error(res, 400, 'INVALID_QUIET_HOURS');
+      }
+      let timezone = body.timezone;
+      if (timezone !== undefined) {
+        if (typeof timezone !== 'string' || timezone.length < 3 || timezone.length > 64) return error(res, 400, 'INVALID_NOTIFICATION_TIMEZONE');
+        try { new Intl.DateTimeFormat('en-US', { timeZone: timezone }).format(); }
+        catch (_) { return error(res, 400, 'INVALID_NOTIFICATION_TIMEZONE'); }
+      }
+      const queryPrefs = {
+        select: 'profile_id,preferences,quiet_hours_start,quiet_hours_end,timezone,updated_at',
+        profile_id: 'eq.' + session.profile.id, limit: '1'
+      };
+      const found = await rowsForUser(session, 'notification_preferences', queryPrefs);
+      if (!found.ok || !Array.isArray(found.data)) return badDatabase(res, found, 'NOTIFICATION_PREFERENCES_UNAVAILABLE');
+      let current = found.data[0];
+      if (!current) {
+        const created = await rowsForUser(session, 'notification_preferences', {
+          select: 'profile_id,preferences,quiet_hours_start,quiet_hours_end,timezone,updated_at'
+        }, { method: 'POST', body: { profile_id: session.profile.id } });
+        if (!created.ok || !Array.isArray(created.data) || !created.data[0]) return badDatabase(res, created, 'NOTIFICATION_PREFERENCES_CREATE_FAILED');
+        current = created.data[0];
+      }
+      const mergedValues = { ...(current.preferences && typeof current.preferences === 'object' && !Array.isArray(current.preferences) ? current.preferences : {}), ...values };
+      const patch = { preferences: mergedValues, updated_at: new Date().toISOString() };
+      if (quietHoursStart !== undefined) patch.quiet_hours_start = quietHoursStart;
+      if (quietHoursEnd !== undefined) patch.quiet_hours_end = quietHoursEnd;
+      if (timezone !== undefined) patch.timezone = timezone;
+      const savedResult = await rowsForUser(session, 'notification_preferences', {
+        profile_id: 'eq.' + session.profile.id,
+        select: 'profile_id,preferences,quiet_hours_start,quiet_hours_end,timezone,updated_at',
+        limit: '1'
+      }, { method: 'PATCH', body: patch });
+      if (!savedResult.ok) return badDatabase(res, savedResult, 'NOTIFICATION_PREFERENCES_UPDATE_FAILED');
+      const saved = Array.isArray(savedResult.data) ? savedResult.data[0] : null;
+      return json(res, 200, { ok: true, preferences: {
+        values: saved && saved.preferences ? saved.preferences : mergedValues,
+        quietHoursStart: saved ? saved.quiet_hours_start : patch.quiet_hours_start ?? current.quiet_hours_start ?? null,
+        quietHoursEnd: saved ? saved.quiet_hours_end : patch.quiet_hours_end ?? current.quiet_hours_end ?? null,
+        timezone: saved ? saved.timezone : patch.timezone || current.timezone || 'America/Jamaica',
+        updatedAt: saved ? saved.updated_at : patch.updated_at
+      }});
+    }
+
+    if (req.method === 'PATCH' && url.pathname === '/api/notifications/preferences') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const body = await readBody(req);
       const allowedFlags = new Set(['push','email','messages','live','creator','communities','events','marketing']);
       if (body.preferences !== undefined && (!body.preferences || typeof body.preferences !== 'object' || Array.isArray(body.preferences))) {
         return error(res, 400, 'INVALID_NOTIFICATION_PREFERENCES');
@@ -2069,6 +2128,39 @@ const server = http.createServer(async (req, res) => {
         reducedMotion: Boolean(prefs.reduced_motion),
         dataSaver: Boolean(prefs.data_saver),
         updatedAt: prefs.updated_at
+      } });
+    }
+
+    if (req.method === 'PATCH' && url.pathname === '/api/feed/preferences') {
+      const session = await requireSession(req, res);
+      if (!session.ok) return;
+      const body = await readBody(req);
+      const patch = {};
+      const allowed = {
+        autoplayVideo: 'autoplay_video',
+        reducedMotion: 'reduced_motion',
+        dataSaver: 'data_saver'
+      };
+      for (const [input, column] of Object.entries(allowed)) {
+        if (body[input] !== undefined) {
+          if (typeof body[input] !== 'boolean') return error(res, 400, 'INVALID_FEED_PREFERENCE');
+          patch[column] = body[input];
+        }
+      }
+      if (!Object.keys(patch).length) return error(res, 400, 'EMPTY_FEED_PREFERENCE_UPDATE');
+      patch.updated_at = new Date().toISOString();
+      const result = await rowsForUser(session, 'feed_preferences', {
+        profile_id: 'eq.' + session.profile.id,
+        select: 'profile_id,preferred_topics,autoplay_video,reduced_motion,data_saver,updated_at',
+        limit: '1'
+      }, { method: 'PATCH', body: patch });
+      if (!result.ok) return badDatabase(res, result, 'FEED_PREFERENCES_UPDATE_FAILED');
+      const saved = Array.isArray(result.data) ? result.data[0] : null;
+      return json(res, 200, { ok: true, preferences: {
+        autoplayVideo: Boolean(saved ? saved.autoplay_video : patch.autoplay_video),
+        reducedMotion: Boolean(saved ? saved.reduced_motion : patch.reduced_motion),
+        dataSaver: Boolean(saved ? saved.data_saver : patch.data_saver),
+        updatedAt: saved ? saved.updated_at : patch.updated_at
       } });
     }
 
