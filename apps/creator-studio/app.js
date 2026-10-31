@@ -719,6 +719,7 @@ function refreshStudioShell(){
   const handle=document.getElementById('studio-user-handle');if(handle)handle.textContent='Sign in to continue';
  }
  Promise.all([loadHomePosts(),loadStudioLiveRooms(),loadIntegrationReadiness()]);
+ if(signed)loadStudioProfile();
  if(studioRoute()==='settings')loadStudioSettings();
 }
 document.getElementById('creator-subscribers-refresh')?.addEventListener('click',loadCreatorSubscribers);
