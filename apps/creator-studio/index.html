@@ -1,43 +1,225 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>ZUNO Creator Studio</title><link rel="stylesheet" href="./styles.css"></head>
-<body><aside class="studio-sidebar"><a class="brand" href="../web/index.html"><span class="mark">Z</span><span>ZUNO <small>CREATOR STUDIO</small></span></a><nav><a class="on" href="#overview">Overview</a><a href="#library">Media library</a><a href="#publish">Prepare a post</a><a href="#analytics">Analytics</a><a href="#monetization">Monetization</a></nav><p class="sidebar-foot">Creator controls require an authenticated account.</p></aside>
-<main class="studio-main"><header><div><span class="kicker">YOUR CREATOR WORKSPACE</span><h1>Make your next idea happen.</h1><p>Prepare, upload, publish, and inspect creator content using ZUNO account and media APIs.</p></div><div class="studio-header-actions"><button class="secondary" id="auth-state-button" type="button">Sign in</button><a class="back-link" href="../web/index.html">← Back to ZUNO</a></div></header>
-<section class="studio-hero" id="overview"><div><span class="kicker">THE CREATOR DESK</span><h2>From first draft to your next story.</h2><p>Choose a media file to prepare a local draft. The file is not uploaded unless a signed-in upload service completes the transfer.</p><button class="primary" id="choose-file">＋ Add media to draft</button><input type="file" id="media-file" accept="image/*,video/*,audio/*" hidden><p id="file-status" role="status">No media selected.</p></div><div class="hero-shapes" aria-hidden="true"><span>▶</span><i></i><b></b></div></section>
-<div class="studio-grid"><section class="studio-card" id="library"><span class="kicker">CONTENT</span><h2>Media library</h2><p>Your uploaded files and processing status load from the authenticated media API.</p><div class="studio-list" id="media-library"><div class="empty-state">Sign in to load your media.</div></div></section><section class="studio-card" id="publish"><span class="kicker">PUBLISHING</span><h2>Prepare a post</h2><label for="caption">Caption or working title</label><textarea id="caption" maxlength="4000" rows="4" placeholder="Give this idea a working title…"></textarea><button class="secondary" id="save-draft">Save local draft</button><div class="publish-controls"><label for="post-audience">Audience</label><select id="post-audience"><option value="public">Public</option><option value="followers">Followers</option><option value="private">Only me</option></select><button class="primary" id="publish-post" type="button">Publish to ZUNO</button></div><p class="micro" id="draft-status" role="status">Local-only draft. Not published.</p><h3>Published posts</h3><div class="studio-list" id="published-posts"><div class="empty-state">Sign in to load posts.</div></div></section><section class="studio-card" id="analytics"><span class="kicker">PERFORMANCE</span><h2>Creator analytics</h2><p>Views, watch time, follower changes and completion come from persisted creator events.</p><div class="studio-metrics" id="analytics-metrics"><div class="empty-state">Sign in to load analytics.</div></div></section><section class="studio-card" id="monetization"><span class="kicker">EARNINGS</span><h2>Monetization</h2><p>Subscriptions, gifts, platform split and payout eligibility are server-authoritative.</p><div class="subscription-manager">
-<form id="creator-tier-form" class="creator-tier-form">
-<h3>Create a recurring membership tier</h3>
-<label for="creator-tier-title">Tier name</label><input id="creator-tier-title" maxlength="80" required placeholder="Supporter, Insider, Backstage…">
-<label for="creator-tier-price">Monthly price (USD)</label><input id="creator-tier-price" type="number" min="1" max="999.99" step="0.01" required value="4.99">
-<label for="creator-tier-benefits">Benefits (one per line, max 10)</label><textarea id="creator-tier-benefits" maxlength="1600" rows="4" placeholder="Members-only posts&#10;Early access&#10;Community badge"></textarea>
-<button class="primary" id="creator-tier-submit" type="submit">Create PayPal membership tier</button>
-<p id="creator-tier-status" class="micro" role="status">A tier is enabled only after PayPal confirms the recurring billing plan exists.</p>
-</form>
-<div class="subscription-list-block"><div class="subscription-list-heading"><h3>Your membership tiers</h3><button type="button" class="secondary" id="creator-tiers-refresh">Refresh</button></div><div id="creator-tier-list" class="studio-list"><div class="empty-state">Sign in to manage membership tiers.</div></div></div>
-<div class="subscription-list-block"><div class="subscription-list-heading"><h3>Subscribers</h3><button type="button" class="secondary" id="creator-subscribers-refresh">Refresh</button></div><div id="creator-subscriber-list" class="studio-list"><div class="empty-state">Subscriber status comes from the provider-backed database.</div></div></div>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#0a0d17">
+  <meta name="description" content="ZUNO Creator Studio — create, publish, understand and manage your creator business.">
+  <title>Creator Studio · ZUNO</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="ic-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+    <symbol id="ic-film" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 4v16M17 4v16M3 9h4m-4 6h4m10-6h4m-4 6h4"/></symbol>
+    <symbol id="ic-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="ic-chart" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m7 14 4-4 3 3 6-7"/></symbol>
+    <symbol id="ic-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+    <symbol id="ic-wallet" viewBox="0 0 24 24"><path d="M20 8V5a2 2 0 0 0-2-2H5a3 3 0 0 0 0 6h15v10a2 2 0 0 1-2 2H5a3 3 0 0 1-3-3V6"/><path d="M16 14h5"/><circle cx="16" cy="14" r="1"/></symbol>
+    <symbol id="ic-radio" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48 0a6 6 0 0 1 0-8.49m11.31-2.83a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/></symbol>
+    <symbol id="ic-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.6a8 8 0 0 1-1.5.9l-.3 1.8h-2.8l-.3-1.8a8 8 0 0 1-1.5-.9l-1.7.6-1.4-2.4 1.4-1.1a8 8 0 0 1 0-1.8l-1.4-1.1 1.4-2.4 1.7.6a8 8 0 0 1 1.5-.9l.3-1.8h2.8l.3 1.8a8 8 0 0 1 1.5.9l1.7-.6 1.4 2.4-1.4 1.1a8 8 0 0 1 0 1.7Z"/></symbol>
+    <symbol id="ic-bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-8 13h4"/></symbol>
+    <symbol id="ic-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></symbol>
+    <symbol id="ic-spark" viewBox="0 0 24 24"><path d="m12 3 1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2L12 3Z"/><path d="m19 15 .9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15Z"/></symbol>
+    <symbol id="ic-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-7-7 7 7-7 7"/></symbol>
+    <symbol id="ic-play" viewBox="0 0 24 24"><path d="m8 5 12 7-12 7V5Z"/></symbol>
+    <symbol id="ic-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></symbol>
+    <symbol id="ic-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="ic-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="ic-users-round" viewBox="0 0 24 24"><path d="M18 21a8 8 0 0 0-16 0"/><circle cx="10" cy="8" r="5"/><path d="M20 8v6m3-3h-6"/></symbol>
+  </svg>
 
-<div class="subscription-list-block creator-payout-block" id="creator-payouts">
- <div class="subscription-list-heading"><h3>PayPal creator payouts</h3><button type="button" class="secondary" id="creator-payout-refresh">Refresh</button></div>
- <p class="micro">Your PayPal recipient is encrypted before storage. Payout eligibility is reviewed by finance/admin. Earnings remain reserved while PayPal processes a payout; a verified provider success is required before the payout is marked paid.</p>
- <div class="creator-payout-balance" id="creator-payout-balance" aria-live="polite">Sign in to load your available earnings.</div>
- <form id="creator-payout-destination-form" class="creator-payout-form">
-  <label for="creator-payout-email">PayPal recipient email</label><input id="creator-payout-email" name="paypalEmail" type="email" maxlength="127" autocomplete="email" placeholder="PayPal account email" required>
-  <label for="creator-payout-country">Country of payout recipient</label><input id="creator-payout-country" name="countryCode" minlength="2" maxlength="2" pattern="[A-Za-z]{2}" autocomplete="country" placeholder="JM" required>
-  <button class="secondary" id="creator-payout-save" type="submit">Save encrypted destination</button>
-  <p id="creator-payout-destination-status" class="micro" role="status">Recipient review is required before any payout can be sent.</p>
- </form>
- <div class="creator-payout-eligibility" id="creator-payout-eligibility" role="status">Eligibility is checked by the server.</div>
- <button class="primary" id="creator-payout-request" type="button" disabled>Request creator payout</button>
- <p id="creator-payout-request-status" class="micro" role="status"></p>
- <div class="subscription-list-heading"><h3>Payout history</h3></div>
- <div id="creator-payout-history" class="studio-list"><div class="empty-state">Sign in to load payout history.</div></div>
-</div>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Creator Studio navigation">
+      <a class="brand" href="../web/index.html" aria-label="ZUNO home">
+        <span class="brand-mark"><span>Z</span></span>
+        <span class="brand-copy">ZUNO <small>CREATOR STUDIO</small></span>
+      </a>
+      <div class="workspace-switcher">
+        <span class="workspace-avatar">C</span>
+        <span><strong>Creator workspace</strong><small>Personal channel</small></span>
+        <span class="switch-chevron">⌄</span>
+      </div>
+      <nav class="studio-nav">
+        <span class="nav-heading">WORKSPACE</span>
+        <a class="nav-link is-active" href="#overview" data-route="overview"><svg><use href="#ic-grid"/></svg><span>Overview</span></a>
+        <a class="nav-link" href="#content" data-route="content"><svg><use href="#ic-film"/></svg><span>Content library</span><span class="nav-count" id="nav-content-count">—</span></a>
+        <a class="nav-link" href="#publish" data-route="publish"><svg><use href="#ic-plus"/></svg><span>Create & publish</span></a>
+        <a class="nav-link" href="#analytics" data-route="analytics"><svg><use href="#ic-chart"/></svg><span>Analytics</span></a>
+        <a class="nav-link" href="#audience" data-route="audience"><svg><use href="#ic-users"/></svg><span>Audience</span></a>
+        <a class="nav-link" href="#monetization" data-route="monetization"><svg><use href="#ic-wallet"/></svg><span>Monetization</span></a>
+        <a class="nav-link" href="#live" data-route="live"><svg><use href="#ic-radio"/></svg><span>LIVE producer</span><span class="live-dot" aria-label="LIVE tools"/></a>
+        <span class="nav-heading nav-heading-spaced">PREFERENCES</span>
+        <a class="nav-link" href="#settings" data-route="settings"><svg><use href="#ic-settings"/></svg><span>Studio settings</span></a>
+      </nav>
+      <div class="sidebar-bottom">
+        <a class="help-link" href="../web/index.html#help"><span class="help-mark">?</span><span>Help & support</span></a>
+        <div class="sidebar-user">
+          <div class="user-avatar" id="studio-avatar">Z</div>
+          <div class="user-copy"><strong id="studio-user-name">Your account</strong><small id="studio-user-handle">Sign in to continue</small></div>
+          <button class="user-menu-button" id="sidebar-auth-button" type="button" aria-label="Account sign in">⋯</button>
+        </div>
+      </div>
+    </aside>
 
-</div></section></div><footer>Creator Studio preview · Files selected here remain local until a real upload endpoint confirms success.</footer><dialog class="studio-auth-dialog" id="auth-dialog" aria-labelledby="auth-title">
-<form method="dialog" class="studio-auth-dialog-top"><div><span class="kicker">YOUR ZUNO ACCOUNT</span><h2 id="auth-title">Welcome back.</h2></div><button type="submit" class="secondary" value="cancel" aria-label="Close">Close</button></form>
-<div class="studio-auth-modes"><button type="button" data-auth-mode="signin">Sign in</button><button type="button" data-auth-mode="signup">Create account</button></div>
-<form id="auth-form">
-<div id="auth-email-field"><label for="auth-email">Email</label><input id="auth-email" name="email" type="email" autocomplete="email" maxlength="254" required></div>
-<div id="auth-signup-fields" hidden><label for="auth-username">Username</label><input id="auth-username" name="username" autocomplete="username" minlength="3" maxlength="30" pattern="[A-Za-z0-9_.]{3,30}"><label for="auth-display-name">Display name</label><input id="auth-display-name" name="displayName" maxlength="80"></div>
-<div id="auth-password-field"><label for="auth-password">Password</label><input id="auth-password" name="password" type="password" minlength="8" autocomplete="current-password" required></div><div id="auth-recovery-fields" hidden><label for="auth-confirm-password">Confirm new password</label><input id="auth-confirm-password" name="confirmPassword" type="password" minlength="8" autocomplete="new-password"></div>
-<div id="auth-extra-actions"><button id="auth-forgot-password" class="secondary" type="button">Forgot password?</button><button id="auth-resend-confirmation" class="secondary" type="button" hidden>Resend confirmation email</button></div><p id="auth-status" role="status"></p><button id="auth-submit" type="submit" class="primary">Sign in</button>
-</form></dialog></main><script src="./runtime-config.js"></script><script type="module" src="./app.js"></script></body></html>
+    <main class="studio-main">
+      <header class="topbar">
+        <div class="breadcrumb"><span>ZUNO</span><span class="breadcrumb-slash">/</span><strong id="page-current">Overview</strong></div>
+        <div class="topbar-actions">
+          <span class="service-indicator" id="integration-status"><i></i> Checking services</span>
+          <button class="icon-button" type="button" id="notifications-shortcut" aria-label="Notifications"><svg><use href="#ic-bell"/></svg></button>
+          <button class="button button-primary button-small" type="button" id="top-create-button"><svg><use href="#ic-plus"/></svg> Create</button>
+          <button class="avatar-button" type="button" id="auth-state-button" aria-label="Sign in">Z</button>
+        </div>
+      </header>
+
+      <section class="studio-page is-active" id="page-overview" data-page="overview">
+        <div class="page-intro">
+          <div><span class="eyebrow">YOUR CREATOR HQ</span><h1>Make something <span>that moves.</span></h1><p>Your content, audience, performance and creator business—together in one workspace.</p></div>
+          <div class="intro-date" id="studio-date"></div>
+        </div>
+        <section class="hero-stage-card">
+          <div class="hero-copy">
+            <span class="hero-label"><span class="status-pulse"></span> CREATOR DESK · ZUNO STUDIO</span>
+            <h2>Your creative world.<br><em>Your rules.</em></h2>
+            <p>Bring an idea in. Shape it, publish it, and understand how it reaches your people.</p>
+            <div class="hero-actions">
+              <button class="button button-primary" type="button" data-go="publish"><svg><use href="#ic-plus"/></svg> Create content</button>
+              <button class="button button-ghost" type="button" data-go="content">Explore library <svg><use href="#ic-arrow"/></svg></button>
+            </div>
+            <div class="hero-footnote"><span class="footnote-icon">✦</span> One studio. Every format. Your audience.</div>
+          </div>
+          <div class="stage-wrap">
+            <canvas id="studio-stage" aria-label="Interactive real-time 3D creator studio model"></canvas>
+            <div class="stage-caption"><span class="stage-caption-dot"></span> INTERACTIVE 3D STAGE <small>Drag to orbit</small></div>
+            <div class="stage-controls"><button type="button" id="stage-reset" aria-label="Reset 3D view">↻</button><button type="button" id="stage-pause" aria-label="Pause 3D animation">Ⅱ</button></div>
+            <div class="stage-fallback" id="stage-fallback" hidden>WebGL is unavailable in this browser. The 3D stage cannot be rendered here.</div>
+          </div>
+        </section>
+        <div class="section-heading"><div><span class="eyebrow">YOUR CHANNEL</span><h2>Performance at a glance</h2></div><button class="text-action" type="button" data-go="analytics">Full analytics <svg><use href="#ic-arrow"/></svg></button></div>
+        <div class="kpi-grid">
+          <article class="kpi-card"><div class="kpi-top"><span>Published posts</span><span class="kpi-icon purple"><svg><use href="#ic-film"/></svg></span></div><strong id="home-kpi-posts">—</strong><small>From your published content</small></article>
+          <article class="kpi-card"><div class="kpi-top"><span>Total views</span><span class="kpi-icon cyan"><svg><use href="#ic-play"/></svg></span></div><strong id="home-kpi-views">—</strong><small>Recorded content views</small></article>
+          <article class="kpi-card"><div class="kpi-top"><span>Followers</span><span class="kpi-icon gold"><svg><use href="#ic-users"/></svg></span></div><strong id="home-kpi-followers">—</strong><small>Your current audience size</small></article>
+          <article class="kpi-card"><div class="kpi-top"><span>Watch time</span><span class="kpi-icon pink"><svg><use href="#ic-clock"/></svg></span></div><strong id="home-kpi-watch">—</strong><small>Recorded viewing time</small></article>
+        </div>
+        <div class="overview-grid">
+          <section class="panel overview-content-panel"><div class="panel-heading"><div><span class="eyebrow">CONTENT</span><h3>Recently published</h3></div><button class="text-action" type="button" data-go="content">View all <svg><use href="#ic-arrow"/></svg></button></div><div class="studio-list" id="home-recent-content"><div class="empty-state">Sign in to load your published content.</div></div></section>
+          <section class="panel overview-live-panel"><div class="panel-heading"><div><span class="eyebrow">BROADCAST</span><h3>Your LIVE rooms</h3></div><span class="section-live-mark"><i></i> LIVE</span></div><div id="home-live-preview" class="live-preview"><div class="empty-state">Sign in to load your LIVE room history.</div></div><button class="button button-secondary button-wide" type="button" data-go="live">Open LIVE producer <svg><use href="#ic-arrow"/></svg></button></section>
+        </div>
+      </section>
+
+      <section class="studio-page" id="page-content" data-page="content">
+        <div class="page-intro page-intro-compact"><div><span class="eyebrow">YOUR WORK, ORGANIZED</span><h1>Content library</h1><p>Browse uploaded media and manage the posts you have published.</p></div><button class="button button-primary" type="button" data-go="publish"><svg><use href="#ic-plus"/></svg> Add content</button></div>
+        <div class="content-toolbar"><div class="content-tabs" role="tablist" aria-label="Content views"><button class="content-tab is-active" type="button" data-content-tab="media">Media assets</button><button class="content-tab" type="button" data-content-tab="posts">Published posts</button></div><button class="button button-secondary button-small" type="button" id="refresh-library">↻ Refresh library</button></div>
+        <section class="panel content-panel" id="library-panel"><div class="panel-heading"><div><span class="eyebrow">UPLOADED MEDIA</span><h3>Your media library</h3></div><span class="panel-meta" id="library-meta">Provider-backed assets</span></div><div class="studio-list media-grid" id="media-library"><div class="empty-state">Sign in to load your media.</div></div></section>
+        <section class="panel content-panel" id="posts-panel" hidden><div class="panel-heading"><div><span class="eyebrow">PUBLISHED</span><h3>Your posts</h3></div><span class="panel-meta">Latest 100 posts</span></div><div class="studio-list post-grid" id="published-posts"><div class="empty-state">Sign in to load your posts.</div></div></section>
+      </section>
+
+      <section class="studio-page" id="page-publish" data-page="publish">
+        <div class="page-intro page-intro-compact"><div><span class="eyebrow">CREATE SOMETHING NEW</span><h1>Publishing desk</h1><p>Prepare your media, set its audience and publish through ZUNO’s authenticated content API.</p></div><div class="connected-label"><i></i> Connected publishing flow</div></div>
+        <div class="publish-layout">
+          <section class="panel composer-panel" id="publish">
+            <div class="panel-heading"><div><span class="eyebrow">CONTENT COMPOSER</span><h3>Build your post</h3></div><span class="draft-badge">LOCAL DRAFT</span></div>
+            <div class="upload-dropzone" id="upload-dropzone"><div class="upload-symbol"><svg><use href="#ic-image"/></svg></div><div><strong>Drop media here or browse files</strong><span>Image, video or audio · selected files stay local until you upload</span></div><button class="button button-secondary button-small" id="choose-file" type="button">Browse files</button><input type="file" id="media-file" accept="image/*,video/*,audio/*" hidden></div>
+            <p class="upload-status" id="file-status" role="status">No media selected.</p>
+            <label class="field-label" for="caption">Caption</label><textarea id="caption" class="studio-textarea" maxlength="4000" rows="6" placeholder="Tell your story. What should your audience know?"></textarea>
+            <div class="composer-footer"><span class="character-count"><b id="caption-count">0</b> / 4,000</span><button class="button button-secondary button-small" id="save-draft" type="button">Save draft on this device</button></div>
+            <div class="composer-options"><div><label class="field-label" for="post-audience">Who can see this?</label><select id="post-audience" class="studio-select"><option value="public">Public — everyone</option><option value="followers">Followers</option><option value="private">Only me</option></select></div><div class="publish-type-note"><span class="eyebrow">POST FORMAT</span><strong>Detected from your media</strong><small>Text, photo, video and audio posts are supported by the current API.</small></div></div>
+            <div class="composer-actions"><p class="micro" id="draft-status" role="status">Nothing has been published yet.</p><button class="button button-primary" id="publish-post" type="button">Publish to ZUNO <svg><use href="#ic-arrow"/></svg></button></div>
+          </section>
+          <aside class="publish-aside">
+            <section class="panel"><span class="eyebrow">PUBLISHING CHECKLIST</span><h3>Before you publish</h3><ul class="check-list"><li><span>01</span> Add a caption or media asset</li><li><span>02</span> Choose your audience</li><li><span>03</span> Confirm your media upload</li><li><span>04</span> Publish and verify the API result</li></ul></section>
+            <section class="panel"><span class="eyebrow">YOUR WORKFLOW</span><h3>Real upload status</h3><p class="panel-copy">File selection is local. ZUNO only marks media uploaded after the media service validates, stores and processes it.</p><div class="pipeline-steps"><span><i></i> Select</span><span><i></i> Upload</span><span><i></i> Process</span><span><i></i> Publish</span></div></section>
+          </aside>
+        </div>
+      </section>
+
+      <section class="studio-page" id="page-analytics" data-page="analytics">
+        <div class="page-intro page-intro-compact"><div><span class="eyebrow">UNDERSTAND YOUR IMPACT</span><h1>Creator analytics</h1><p>Performance totals returned by ZUNO’s creator analytics service. No generated or sample metrics.</p></div><button class="button button-secondary" type="button" id="refresh-analytics">↻ Refresh metrics</button></div>
+        <div class="analytics-source"><span class="source-check">✓</span><span><strong>Database-backed analytics</strong><small>Totals are supplied by the creator analytics RPC and reflect recorded events.</small></span></div>
+        <div class="studio-metrics analytics-metrics" id="analytics-metrics"><div class="empty-state">Sign in to load creator analytics.</div></div>
+        <section class="panel analytics-note"><span class="eyebrow">HOW TO READ THIS</span><h3>Recorded activity, not estimates</h3><p class="panel-copy">Views, completed views, watch time, followers, comments and reactions are returned by the backend. Missing or unavailable metrics remain unavailable; the dashboard will not invent values or growth percentages.</p></section>
+      </section>
+
+      <section class="studio-page" id="page-audience" data-page="audience">
+        <div class="page-intro page-intro-compact"><div><span class="eyebrow">YOUR COMMUNITY</span><h1>Audience</h1><p>Understand your recorded follower reach and manage your provider-confirmed paid members.</p></div><span class="connected-label"><i></i> Live account data</span></div>
+        <div class="audience-kpis"><article class="kpi-card"><span>Followers</span><strong id="audience-follower-count">—</strong><small>Current profile total</small></article><article class="kpi-card"><span>Paid subscribers</span><strong id="audience-subscriber-count">—</strong><small>Creator subscription records</small></article><article class="kpi-card"><span>Published posts</span><strong id="audience-post-count">—</strong><small>Your published content</small></article></div>
+        <section class="panel"><div class="panel-heading"><div><span class="eyebrow">MEMBERSHIPS</span><h3>Subscriber activity</h3></div><button class="button button-secondary button-small" id="creator-subscribers-refresh" type="button">↻ Refresh</button></div><div id="creator-subscriber-list" class="studio-list"><div class="empty-state">Sign in to load subscriber status.</div></div></section>
+      </section>
+
+      <section class="studio-page" id="page-monetization" data-page="monetization">
+        <div class="page-intro page-intro-compact"><div><span class="eyebrow">BUILD YOUR CREATOR BUSINESS</span><h1>Monetization</h1><p>Membership plans, paid subscribers, creator earnings and PayPal payout readiness.</p></div><span class="finance-lock"><svg><use href="#ic-shield"/></svg> Server-authoritative balances</span></div>
+        <div class="monetization-layout">
+          <section class="panel monetization-main"><div class="panel-heading"><div><span class="eyebrow">RECURRING MEMBERSHIPS</span><h3>Your membership tiers</h3></div><button type="button" class="button button-secondary button-small" id="creator-tiers-refresh">↻ Refresh</button></div>
+            <form id="creator-tier-form" class="creator-tier-form">
+              <h4>Create a membership tier</h4><label for="creator-tier-title">Tier name</label><input id="creator-tier-title" maxlength="80" required placeholder="Supporter, Insider, Backstage…">
+              <label for="creator-tier-price">Monthly price (USD)</label><input id="creator-tier-price" type="number" min="1" max="999.99" step="0.01" required value="4.99">
+              <label for="creator-tier-benefits">Member benefits · one per line</label><textarea id="creator-tier-benefits" maxlength="1600" rows="4" placeholder="Members-only posts&#10;Early access&#10;Community badge"></textarea>
+              <div class="form-submit-row"><p id="creator-tier-status" class="micro" role="status">A tier is enabled only after PayPal confirms a recurring billing plan.</p><button class="button button-primary" id="creator-tier-submit" type="submit">Create PayPal tier</button></div>
+            </form>
+            <div class="subscription-list-block"><div class="panel-heading"><h4>Saved tiers</h4></div><div id="creator-tier-list" class="studio-list"><div class="empty-state">Sign in to manage membership tiers.</div></div></div>
+            <div class="subscription-list-block"><div class="panel-heading"><h4>Subscribers</h4></div><div id="creator-subscriber-list-monetization" class="studio-list"><div class="empty-state">Subscriber status is provider-backed.</div></div></div>
+          </section>
+          <aside class="panel payout-panel" id="creator-payouts"><div class="panel-heading"><div><span class="eyebrow">CREATOR EARNINGS</span><h3>PayPal payouts</h3></div><button type="button" class="button button-secondary button-small" id="creator-payout-refresh">↻</button></div>
+            <p class="panel-copy">Your available balance and eligibility are checked by ZUNO. A payout is not marked paid until a verified PayPal success is reconciled.</p>
+            <div class="creator-payout-balance" id="creator-payout-balance" aria-live="polite">Sign in to load available earnings.</div>
+            <form id="creator-payout-destination-form" class="creator-payout-form">
+              <label for="creator-payout-email">PayPal recipient email</label><input id="creator-payout-email" name="paypalEmail" type="email" maxlength="127" autocomplete="email" placeholder="PayPal account email" required>
+              <label for="creator-payout-country">Recipient country code</label><input id="creator-payout-country" name="countryCode" minlength="2" maxlength="2" pattern="[A-Za-z]{2}" autocomplete="country" placeholder="JM" required>
+              <button class="button button-secondary button-wide" id="creator-payout-save" type="submit">Save encrypted destination</button>
+              <p id="creator-payout-destination-status" class="micro" role="status">Recipient review is required before a payout can be sent.</p>
+            </form>
+            <div class="creator-payout-eligibility" id="creator-payout-eligibility" role="status">Eligibility is checked by the server.</div>
+            <button class="button button-primary button-wide" id="creator-payout-request" type="button" disabled>Request creator payout</button>
+            <p id="creator-payout-request-status" class="micro" role="status"></p>
+            <div class="subscription-list-block"><div class="panel-heading"><h4>Payout history</h4></div><div id="creator-payout-history" class="studio-list"><div class="empty-state">Sign in to load payout history.</div></div></div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="studio-page" id="page-live" data-page="live">
+        <div class="page-intro page-intro-compact"><div><span class="eyebrow">BROADCAST CONTROL</span><h1>LIVE producer</h1><p>Prepare your broadcast here, then enter the real ZUNO LIVE room for camera, guests, chat and audience interaction.</p></div><a class="button button-primary" href="../web/index.html#live">Open LIVE experience <svg><use href="#ic-arrow"/></svg></a></div>
+        <section class="live-separation-card"><div class="live-separation-icon"><svg><use href="#ic-radio"/></svg></div><div><span class="eyebrow">TWO PURPOSE-BUILT EXPERIENCES</span><h2>Creator Studio prepares.<br><em>LIVE brings it to life.</em></h2><p>The studio manages your creator work. The LIVE room owns the real-time camera, microphone, participants, chat, moderation and audience session. This page never imitates a live room or fabricates viewer counts.</p><a href="../web/index.html#live" class="text-action">Go to ZUNO LIVE <svg><use href="#ic-arrow"/></svg></a></div></section>
+        <section class="panel"><div class="panel-heading"><div><span class="eyebrow">YOUR BROADCAST HISTORY</span><h3>Rooms connected to your account</h3></div><button class="button button-secondary button-small" id="refresh-live-rooms" type="button">↻ Refresh</button></div><div id="live-room-list" class="studio-list"><div class="empty-state">Sign in to load your LIVE room records.</div></div></section>
+      </section>
+
+      <section class="studio-page" id="page-settings" data-page="settings">
+        <div class="page-intro page-intro-compact"><div><span class="eyebrow">CONTROL YOUR WORKSPACE</span><h1>Studio settings</h1><p>Manage your public creator profile, accessibility preferences, notifications and workspace appearance.</p></div><span class="finance-lock"><svg><use href="#ic-shield"/></svg> Account-protected</span></div>
+        <div class="settings-layout">
+          <section class="panel settings-panel"><div class="panel-heading"><div><span class="eyebrow">PUBLIC IDENTITY</span><h3>Creator profile</h3></div></div><form id="studio-profile-form" class="settings-form">
+            <label for="studio-display-name">Display name</label><input id="studio-display-name" maxlength="80" autocomplete="nickname">
+            <label for="studio-bio">Creator bio</label><textarea id="studio-bio" rows="4" maxlength="1000"></textarea>
+            <label for="studio-visibility">Profile visibility</label><select id="studio-visibility" class="studio-select"><option value="public">Public</option><option value="private">Private</option><option value="restricted">Restricted</option></select>
+            <div class="form-submit-row"><p id="studio-profile-status" class="micro" role="status">Sign in to load your creator profile.</p><button type="submit" class="button button-primary" id="save-studio-profile">Save profile</button></div>
+          </form></section>
+          <section class="panel settings-panel"><div class="panel-heading"><div><span class="eyebrow">ACCESSIBILITY & DATA</span><h3>Viewing preferences</h3></div></div><div class="setting-row"><span><strong>Autoplay video</strong><small>Allow videos to start automatically in the app.</small></span><input id="pref-autoplay" type="checkbox" class="switch"></div><div class="setting-row"><span><strong>Reduce motion</strong><small>Respect your reduced-motion preference across ZUNO.</small></span><input id="pref-reduced-motion" type="checkbox" class="switch"></div><div class="setting-row"><span><strong>Data saver</strong><small>Prefer lower data usage for supported experiences.</small></span><input id="pref-data-saver" type="checkbox" class="switch"></div><div class="form-submit-row"><p id="feed-prefs-status" class="micro" role="status">Preferences load from your account.</p><button type="button" class="button button-primary" id="save-feed-prefs">Save preferences</button></div></section>
+          <section class="panel settings-panel"><div class="panel-heading"><div><span class="eyebrow">NOTIFICATIONS</span><h3>What you hear about</h3></div></div><div class="setting-row"><span><strong>Comments and replies</strong><small>Updates on discussion around your content.</small></span><input id="notify-comments" type="checkbox" class="switch"></div><div class="setting-row"><span><strong>New followers</strong><small>When someone follows your profile.</small></span><input id="notify-follows" type="checkbox" class="switch"></div><div class="setting-row"><span><strong>Direct messages</strong><small>Messages and conversation activity.</small></span><input id="notify-messages" type="checkbox" class="switch"></div><div class="setting-row"><span><strong>LIVE activity</strong><small>Broadcast and guest activity notifications.</small></span><input id="notify-live" type="checkbox" class="switch"></div><div class="setting-row"><span><strong>Gifts and earnings</strong><small>Gift, subscription and payout updates.</small></span><input id="notify-gifts" type="checkbox" class="switch"></div><div class="quiet-hours"><div><label for="quiet-start">Quiet hours start</label><input id="quiet-start" type="time"></div><div><label for="quiet-end">Quiet hours end</label><input id="quiet-end" type="time"></div></div><div class="form-submit-row"><p id="notification-prefs-status" class="micro" role="status">Notification settings load from your account.</p><button type="button" class="button button-primary" id="save-notification-prefs">Save notifications</button></div></section>
+          <section class="panel settings-panel"><div class="panel-heading"><div><span class="eyebrow">WORKSPACE DISPLAY</span><h3>Appearance</h3></div></div><div class="setting-row"><span><strong>Light theme</strong><small>Change this browser’s Creator Studio appearance only.</small></span><input id="theme-toggle" type="checkbox" class="switch"></div><p class="panel-copy">Appearance is stored on this device. Your account, privacy and notification settings are stored separately by ZUNO.</p></section>
+        </div>
+        <section class="settings-links"><a href="../web/index.html#settings"><svg><use href="#ic-shield"/></svg><span><strong>Account security & privacy</strong><small>Open the main ZUNO account settings.</small></span><svg class="link-arrow"><use href="#ic-arrow"/></svg></a><a href="../web/index.html#help"><span class="help-mark">?</span><span><strong>Help & support</strong><small>Get help with your ZUNO account.</small></span><svg class="link-arrow"><use href="#ic-arrow"/></svg></a></section>
+      </section>
+      <footer class="studio-footer"><span>© ZUNO · Creator Studio</span><span>Real account data · No generated metrics</span></footer>
+    </main>
+  </div>
+
+  <dialog class="studio-auth-dialog" id="auth-dialog" aria-labelledby="auth-title">
+    <form method="dialog" class="studio-auth-dialog-top"><div><span class="eyebrow">YOUR ZUNO ACCOUNT</span><h2 id="auth-title">Welcome back.</h2></div><button type="submit" class="button button-secondary" value="cancel" aria-label="Close">Close</button></form>
+    <div class="studio-auth-modes"><button type="button" data-auth-mode="signin">Sign in</button><button type="button" data-auth-mode="signup">Create account</button></div>
+    <form id="auth-form">
+      <div id="auth-email-field"><label for="auth-email">Email</label><input id="auth-email" name="email" type="email" autocomplete="email" maxlength="254" required></div>
+      <div id="auth-signup-fields" hidden><label for="auth-username">Username</label><input id="auth-username" name="username" autocomplete="username" minlength="3" maxlength="30" pattern="[A-Za-z0-9_.]{3,30}"><label for="auth-display-name">Display name</label><input id="auth-display-name" name="displayName" maxlength="80"></div>
+      <div id="auth-password-field"><label for="auth-password">Password</label><input id="auth-password" name="password" type="password" minlength="8" autocomplete="current-password" required></div><div id="auth-recovery-fields" hidden><label for="auth-confirm-password">Confirm new password</label><input id="auth-confirm-password" name="confirmPassword" type="password" minlength="8" autocomplete="new-password"></div>
+      <div id="auth-extra-actions"><button id="auth-forgot-password" class="button button-secondary" type="button">Forgot password?</button><button id="auth-resend-confirmation" class="button button-secondary" type="button" hidden>Resend confirmation email</button></div>
+      <p id="auth-status" role="status"></p><button id="auth-submit" type="submit" class="button button-primary">Sign in</button>
+    </form>
+  </dialog>
+
+  <script src="./runtime-config.js"></script>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
