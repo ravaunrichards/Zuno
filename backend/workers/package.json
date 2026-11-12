@@ -9,6 +9,6 @@
     "start": "node src/notification-dispatcher.js"
   },
   "dependencies": {
-    "web-push": "^3.6.7"
+    "web-push": "^4.0.0"
   }
 }
